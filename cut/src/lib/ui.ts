@@ -60,6 +60,38 @@ export function budgetUse(count: number, durationSec: number, rate: { min: numbe
   return { perMinute, status: 'ok' };
 }
 
+/** Duração de saída no header: `m:ss` (ou `h:mm:ss`). */
+export function formatClock(sec: number): string {
+  const total = Math.max(0, Math.round(sec));
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = String(total % 60).padStart(2, '0');
+  return h > 0 ? `${h}:${String(m).padStart(2, '0')}:${s}` : `${m}:${s}`;
+}
+
+export interface ActivityChip {
+  id: 'job' | 'claude';
+  label: string;
+  tone: 'peri' | 'coral' | 'emerald';
+  /** 0–100 quando há progresso conhecido */
+  percent: number | null;
+}
+
+/** O que está rodando em segundo plano, para o header: render/eval/export e a sessão do Claude. */
+export function activityChips(input: {
+  job: { kind: string; status: string } | null;
+  progress: { percent: number } | null;
+  claudeRunning: boolean;
+}): ActivityChip[] {
+  const chips: ActivityChip[] = [];
+  if (input.job?.status === 'running') {
+    const percent = input.progress ? Math.min(100, Math.max(0, Math.round(input.progress.percent))) : null;
+    chips.push({ id: 'job', label: percent === null ? `${input.job.kind}…` : `${input.job.kind} ${percent}%`, tone: 'peri', percent });
+  }
+  if (input.claudeRunning) chips.push({ id: 'claude', label: 'Claude editando…', tone: 'coral', percent: null });
+  return chips;
+}
+
 /** Linha de log do job → progresso, quando o processo não escreve live.json (ex.: "  42%"). */
 export function percentFromLine(line: string): number | null {
   const match = /(\d{1,3}(?:[.,]\d+)?)\s?%/.exec(line);

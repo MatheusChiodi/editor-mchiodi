@@ -2,6 +2,7 @@ import { useState } from 'react';
 
 import { canRedo, canUndo } from '../../../src/cut/history.ts';
 import { SHORTCUTS } from '../lib/keys.ts';
+import { activityChips, formatClock } from '../lib/ui.ts';
 import { currentEdl, discardEdits, pendingOps, redoEdit, saveEdits, store, undoEdit, useEditor } from '../store.ts';
 import { Badge, Button, Kbd, Modal } from './ui.tsx';
 
@@ -16,20 +17,47 @@ export function TopBar() {
   const notes = useEditor((state) => state.preview?.notes ?? '');
   const saving = useEditor((state) => state.saving);
   const conflict = useEditor((state) => state.conflict !== null);
+  const connected = useEditor((state) => state.connected);
+  const durationSec = useEditor((state) => (state.preview?.timeline ?? state.project?.timeline)?.durationSec ?? null);
+  const job = useEditor((state) => state.job);
+  const progress = useEditor((state) => state.jobProgress);
+  const claudeRunning = useEditor((state) => state.claudeRunning);
+  const chips = activityChips({ job, progress, claudeRunning });
   const [help, setHelp] = useState(false);
   const [message, setMessage] = useState('');
 
   return (
     <header className="flex h-11 shrink-0 items-center gap-3 border-b border-paper/10 bg-s900/60 px-3">
-      <a href="/" className="font-display text-[15px] leading-none">
+      <a href="/" className="font-display text-[15px] leading-none" title="voltar à lista de projetos">
         MChiodi <span className="text-coral italic">Cut</span>
       </a>
       <span className="h-4 w-px bg-paper/15" />
+      <span
+        className={`h-2 w-2 shrink-0 rounded-full ${connected ? 'bg-emerald' : 'animate-pulse bg-peach'}`}
+        title={connected ? 'conectado: versões novas, render e Claude chegam ao vivo' : 'sem conexão com o servidor do mce cut; reconectando…'}
+      />
       <span className="font-semibold text-s300">{slug}</span>
       <Badge tone="emerald">v{latest}</Badge>
       <button type="button" onClick={() => store.set({ right: 'level' })} title="nível de edição (só você troca)">
         <Badge tone={level !== savedLevel ? 'peach' : 'peri'}>nível {level}</Badge>
       </button>
+      {durationSec !== null && (
+        <span className="font-mono text-[11px] text-s300/60" title={pending > 0 ? 'duração de saída com as edições não salvas' : 'duração de saída'}>
+          {formatClock(durationSec)}
+        </span>
+      )}
+      {chips.map((chip) => (
+        <button
+          key={chip.id}
+          type="button"
+          onClick={() => store.set(chip.id === 'job' ? { right: 'render' } : { left: 'claude' })}
+          title={chip.id === 'job' ? 'ver o render' : 'ver a sessão do Claude'}
+          className="relative overflow-hidden rounded"
+        >
+          <Badge tone={chip.tone}>{chip.label}</Badge>
+          {chip.percent !== null && <span className="absolute bottom-0 left-0 h-px bg-paper/70" style={{ width: `${chip.percent}%` }} />}
+        </button>
+      ))}
 
       <div className="mx-2 flex min-w-0 flex-1 items-center gap-2">
         {pending > 0 ? (
@@ -71,7 +99,7 @@ export function TopBar() {
         onClick={() => void saveEdits(message.trim() || undefined).then(() => setMessage(''))}
         title={conflict ? 'resolva o conflito antes' : 'salvar como nova versão (Ctrl+S)'}
       >
-        {saving ? 'salvando…' : `salvar v${(latest ?? 0) + 1}`}
+        {saving ? 'salvando…' : pending > 0 ? `salvar v${(latest ?? 0) + 1} · ${steps}` : `salvar v${(latest ?? 0) + 1}`}
       </Button>
       <Button tone="ghost" small onClick={() => setHelp(true)} title="atalhos">
         ?

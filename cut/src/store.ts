@@ -63,6 +63,8 @@ export interface EditorState {
   jobProgress: { label: string; percent: number; etaSec: number | null } | null;
   evals: EvalPayload | null;
   claudeRunning: boolean;
+  /** SSE com o servidor aberto (versões externas, jobs e Claude chegam por ele) */
+  connected: boolean;
   claudeEvents: ClaudeEvent[];
   claudeDone: ClaudeDone | null;
   toasts: Toast[];
@@ -101,6 +103,7 @@ const initial: EditorState = {
   jobProgress: null,
   evals: null,
   claudeRunning: false,
+  connected: false,
   claudeEvents: [],
   claudeDone: null,
   toasts: [],
@@ -249,8 +252,8 @@ function connectEvents(slug: string): void {
     store.set({ claudeRunning: false, claudeDone: data as unknown as ClaudeDone });
     toast(data.proposedVersion ? `Claude propôs a v${String(data.proposedVersion)}` : 'Claude terminou sem nova versão', data.proposedVersion ? 'ok' : 'warn');
   });
-  events.onerror = () => store.set({ hint: { tone: 'warn', text: 'conexão com o servidor caiu; tentando de novo…' } });
-  events.onopen = () => store.set((state) => (state.hint?.text.startsWith('conexão') ? { hint: null } : {}));
+  events.onerror = () => store.set({ connected: false, hint: { tone: 'warn', text: 'conexão com o servidor caiu; tentando de novo…' } });
+  events.onopen = () => store.set((state) => (state.hint?.text.startsWith('conexão') ? { connected: true, hint: null } : { connected: true }));
 }
 
 /** Versão nova (SSE, hello): recarrega se não há edição local; senão, conflito explícito. */
