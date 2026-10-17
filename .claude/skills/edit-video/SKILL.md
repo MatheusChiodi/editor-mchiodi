@@ -118,7 +118,18 @@ pnpm mce eval <slug>          # mede o vídeo renderizado e gera imagens
 - `cena-sem-modelo`: o overlay usa uma cena sob medida que não deixou modelo reutilizável; crie o modelo e use `scene:modelos/<Nome>` (§3, §6).
 - **aviso**: abra a imagem citada e decida. `corte-em-som` e `palavra-perdida-no-corte` pedem afastar a borda do clipe
   (~0.1s) e conferir na `mce view`.
-- Abra as imagens listadas no fim e confira o que não se mede: salto visual, legenda cobrindo algo, texto ilegível,
+- `sem-respiro`: borda a menos de 30 ms de uma palavra (a que fica perde o ataque; a cortada vaza). Aplique o `start`/`end`
+  sugerido; "palavras coladas" = não há pausa ali, mova a borda para outra pausa. `salto-de-nivel`: o fundo de sala ou o volume da
+  fala muda no corte; `clique`: degrau de amostra na junção (confira `audio.cutFadeMs`).
+- `jump-cut`: mesmo plano com salto visível. É sugestão: no `limpa` é aceito; nos outros níveis só disfarce (zoom punch no clipe
+  seguinte ou transição calm, como a mensagem dá) os que incomodam **na prancha**, respeitando o espaçamento de zoom do nível.
+- `legenda-sobre-grafico`: lower third, CTA, citação ou texto na base dividindo a faixa com a legenda; `hidesCaptions: true` ou mova
+  o gráfico para uma pausa.
+- **Prancha de contato** (`renders/<versão>/eval/contact-sheet.png`, caminho no fim do `eval`): os cortes mais suspeitos, um por
+  linha, último quadro antes | primeiro depois, com os achados de cada um. Abra **só ela** primeiro: salto de enquadramento,
+  rosto/gesto pulando, quadro preto ou gráfico entrando torto aparecem ali. Só abra a `mce view` do corte que a prancha deixar em
+  dúvida. `--views <n>` controla quantos cortes entram.
+- Abra as imagens listadas no fim e confira o que não se mede: legenda cobrindo algo, texto ilegível,
   gráfico fora de hora. Problema visual também gera nova versão da EDL.
 - Parou de melhorar ou chegou à 3ª volta: siga com a melhor versão e registre o que ficou pendente (`pnpm mce note ... -k pendencia`).
 

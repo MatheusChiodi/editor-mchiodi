@@ -220,6 +220,7 @@ export function buildReport(input: ReportInput): string {
     for (const finding of evaluation.findings) {
       lines.push(`- ${finding.severity === 'error' ? 'ERRO' : 'aviso'} \`${finding.check}\`: ${finding.message}`);
     }
+    if (evaluation.contactSheet) lines.push(`- prancha de contato dos cortes suspeitos: \`${evaluation.contactSheet}\``);
     lines.push('');
   });
 
