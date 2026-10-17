@@ -36,6 +36,7 @@ import { generateSfx, listAssets } from '../assets/library.ts';
 import { collectEvaluations, evaluate, formatReport } from '../eval/index.ts';
 import { writeReport } from '../report/write.ts';
 import { render, renderDir } from '../render/index.ts';
+import { EXPORT_FITS, EXPORT_FORMATS, type ExportFit, type ExportFormat, planExport } from '../render/formats.ts';
 import { SHORTS_MAX_SEC } from '../render/shorts.ts';
 import { applySuggestion, formatSuggestions, suggestShorts } from '../render/shorts-suggest.ts';
 import { formatFocusPlan, planShortFocus } from '../render/shorts-focus.ts';
@@ -198,6 +199,51 @@ program
       }),
     );
     log(`${result.file}\n${formatClock(result.durationSec)} de vídeo em ${formatClock(result.elapsedSec, 0)}`);
+  });
+
+program
+  .command('export <project>')
+  .description('Exporta em 16x9, 9x16 ou 1x1 para celular pelo render da EDL → renders/<projeto>-<formato>.mp4 + .srt ao lado')
+  .option('-f, --format <formato>', `formato: ${EXPORT_FORMATS.join(' | ')}`, '16x9')
+  .option('--fit <modo>', `9x16/1x1 do vídeo inteiro: ${EXPORT_FITS.join(' | ')} (padrão blur-pad)`)
+  .option('--focus <x>', 'center-crop: posição do recorte, 0 = esquerda, 1 = direita', Number)
+  .option('--shorts', '9x16 do trecho de edl.shorts pelo render de Short (foco da EDL, gráficos re-diagramados)')
+  .option('-v, --edl <n>', 'versão da EDL (padrão: a mais recente)', Number)
+  .action(async (project: string, options: { format: string; fit?: string; focus?: number; shorts?: boolean; edl?: number }) => {
+    if (!EXPORT_FORMATS.includes(options.format as ExportFormat)) throw new Error(`--format aceita ${EXPORT_FORMATS.join(', ')}`);
+    if (options.fit && !EXPORT_FITS.includes(options.fit as ExportFit)) throw new Error(`--fit aceita ${EXPORT_FITS.join(', ')}`);
+    const paths = requireProject(project);
+    const current = loadEdl(paths, options.edl);
+    const plan = planExport(
+      current,
+      { format: options.format as ExportFormat, fit: options.fit as ExportFit | undefined, focusX: options.focus, scope: options.shorts ? 'shorts' : 'full' },
+      paths.rendersDir,
+      project,
+    );
+    const result = await tracked(project, 'final', (onProgress) => render(paths, current, { mode: 'final', export: plan, onProgress, log }));
+    log(`${result.file}\n${plan.srt}\n${plan.size.width}x${plan.size.height} · teto ${plan.maxrateK} kb/s · ${formatClock(result.durationSec)} em ${formatClock(result.elapsedSec, 0)}`);
+  });
+
+program
+  .command('cut [project]')
+  .description('MChiodi Cut: editor visual local sobre a EDL (servidor em 127.0.0.1 + UI de cut/dist); sem projeto, lista os projetos')
+  .option('--port <n>', 'porta (padrão: a primeira livre a partir de 4870)', Number)
+  .option('--no-open', 'não abre o navegador')
+  .action(async (project: string | undefined, options: { port?: number; open: boolean }) => {
+    const [{ startCutServer }, { findFreePort }, { openInBrowser }] = await Promise.all([
+      import('../cut/server.ts'),
+      import('../preview/studio.ts'),
+      import('../preview/session.ts'),
+    ]);
+    if (project) requireProject(project);
+    else log(`projetos: ${listProjects().join(', ') || '(nenhum)'}`);
+    const server = await startCutServer({ port: options.port ?? (await findFreePort(4870)), log });
+    const hasUi = existsSync(join(ROOT, 'cut', 'dist', 'index.html'));
+    const url = `${server.url}/${project ? `?p=${project}` : ''}`;
+    log(hasUi ? `MChiodi Cut: ${url}` : `API do MChiodi Cut: ${server.url}/api (a UI ainda não foi construída em cut/dist)`);
+    log('encerrar: Ctrl+C');
+    if (hasUi && options.open && !(await openInBrowser(url))) log('não consegui abrir o navegador; abra a URL acima');
+    await new Promise<void>((done) => process.once('SIGINT', () => void server.close().then(done)));
   });
 
 const shorts = program.command('shorts').description('Short vertical: escolha do trecho');

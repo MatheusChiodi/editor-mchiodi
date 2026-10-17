@@ -1,4 +1,4 @@
-import { copyFileSync, mkdirSync } from 'node:fs';
+import { copyFileSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import type { Analysis, Transcript } from '../analyze/types.ts';
@@ -11,6 +11,8 @@ import { type ProjectPaths, readJson, writeJson } from '../project/paths.ts';
 import { missingScenes, syncScenes } from '../scenes/sync.ts';
 import { collectSfx, gainFilter, limiterFilter, type MusicBed, voiceChain } from './audio.ts';
 import { bumperDurations } from './bumpers.ts';
+import { buildSrt } from './srt.ts';
+import type { ExportPlan } from './formats.ts';
 import { prepareDenoise } from './denoise.ts';
 import { compose, measureChain, totalDuration } from './compose.ts';
 import { renderCut } from './cuts.ts';
@@ -32,6 +34,8 @@ export interface RenderOptions {
   variant?: RenderVariant;
   /** pula a camada do Remotion: só cortes e áudio (iteração rápida de ritmo) */
   skipOverlay?: boolean;
+  /** exportação (`mce export`): formato, reenquadramento e teto de bitrate; entrega em renders/<slug>-<formato>.mp4 + .srt */
+  export?: ExportPlan;
   onProgress?: ProgressFn;
   log?: (message: string) => void;
 }
@@ -72,10 +76,11 @@ export async function render(paths: ProjectPaths, source: Edl, options: RenderOp
   const analysis = readJson<Analysis>(paths.analysis);
   const transcript = readJson<Transcript>(paths.words);
   const final = options.mode === 'final';
-  const variant = options.variant ?? 'main';
+  const plan = options.export ?? null;
+  const variant = plan?.variant ?? options.variant ?? 'main';
   const shorts = variant === 'shorts';
   const edl = shorts ? shortsEdl(source) : source;
-  const dir = renderDir(paths, source, options.mode, variant);
+  const dir = plan ? join(paths.rendersDir, `v${source.version}-${plan.dirName}`) : renderDir(paths, source, options.mode, variant);
   mkdirSync(dir, { recursive: true });
 
   const { fps } = edl.output;
@@ -183,7 +188,8 @@ export async function render(paths: ProjectPaths, source: Edl, options: RenderOp
   );
   if (missing.length) log(`aviso: assets não encontrados (ignorados): ${[...new Set(missing)].join(', ')}`);
 
-  const names = outputNames(options.mode, variant);
+  // exportação não substitui a entrega (output/final.mp4): é um arquivo à parte em renders/
+  const names = plan ? { file: `${plan.dirName}.mp4`, delivered: null } : outputNames(options.mode, variant);
   const file = join(dir, names.file);
   const composeOptions = {
     durationSec: timeline.durationSec,
@@ -214,6 +220,8 @@ export async function render(paths: ProjectPaths, source: Edl, options: RenderOp
     output: file,
     graphFile: join(dir, 'compose.graph.txt'),
     quality: final ? 'final' : 'preview',
+    reformat: plan?.reformat ?? null,
+    maxrateK: plan?.maxrateK,
     onProgress: options.onProgress,
   });
 
@@ -222,5 +230,11 @@ export async function render(paths: ProjectPaths, source: Edl, options: RenderOp
     copyFileSync(file, join(paths.outputDir, names.delivered));
   }
   const durationSec = totalDuration({ ...composeOptions, hasIntro: intro !== null, hasOutro: outro !== null });
+  if (plan) {
+    copyFileSync(file, plan.file);
+    // legenda ao lado do vídeo, no tempo do arquivo (depois da vinheta de abertura)
+    writeFileSync(plan.srt, buildSrt(transcript.words, timeline, edl.captions, intro !== null ? bumpers.introSec : 0), 'utf8');
+    return { file: plan.file, dir, timeline, durationSec, elapsedSec: (Date.now() - startedAt) / 1000 };
+  }
   return { file, dir, timeline, durationSec, elapsedSec: (Date.now() - startedAt) / 1000 };
 }

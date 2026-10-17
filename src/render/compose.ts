@@ -30,6 +30,8 @@ export interface ComposeGraphOptions {
   layout?: PlacedLayout[];
   /** b-roll por cima do footage, abaixo dos gráficos (`file` já resolvido) */
   broll?: PlacedBroll[];
+  /** exportação em outro formato: linhas que levam o quadro pronto `[vout]` a `[vfmt]` (ver render/formats.ts) */
+  reformat?: string[] | null;
 }
 
 type InputFlags = Pick<ComposeGraphOptions, 'hasOverlay' | 'music' | 'sfx' | 'hasIntro' | 'hasOutro' | 'layout' | 'broll'>;
@@ -119,6 +121,7 @@ export function buildComposeGraph(options: ComposeGraphOptions): string {
       fps: options.fps,
       rate: AUDIO_RATE,
     }),
+    ...(options.reformat ?? []),
   );
   return lines.join(';\n');
 }
@@ -139,6 +142,8 @@ export interface ComposeOptions extends Omit<ComposeGraphOptions, 'hasOverlay' |
   output: string;
   graphFile: string;
   quality: Quality;
+  /** teto de bitrate (kb/s) da exportação para celular; bufsize = 2× */
+  maxrateK?: number;
   onProgress?: ProgressFn;
 }
 
@@ -171,8 +176,9 @@ export async function compose(options: ComposeOptions): Promise<void> {
     [
       ...composeArgs(options),
       '-/filter_complex', options.graphFile,
-      '-map', '[vout]', '-map', '[aout]',
+      '-map', options.reformat?.length ? '[vfmt]' : '[vout]', '-map', '[aout]',
       ...(await videoEncodeArgs(options.quality)),
+      ...(options.maxrateK ? ['-maxrate', `${options.maxrateK}k`, '-bufsize', `${options.maxrateK * 2}k`] : []),
       '-c:a', 'aac', '-b:a', options.quality === 'final' ? '320k' : '160k', '-ar', String(AUDIO_RATE),
       '-t', duration.toFixed(3),
       '-movflags', '+faststart',
