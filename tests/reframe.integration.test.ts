@@ -120,8 +120,7 @@ describe('reenquadramento do palco (integração com o ffmpeg)', () => {
     const output = join(dir, 'window-zoom.mp4');
     const lines = buildLayoutGraph({ camera: '[camera]', screenInput: 1, layout: windowLayouts(items, FPS), width: WIDTH, height: HEIGHT, output: '[laid]' });
     expect(lines.join(';')).toContain('eval=frame');
-    writeFileSync(graph, [`[0:v]null[camera]`, ...lines, '[laid]format=yuv420p[v]'].join(';
-'), 'utf8');
+    writeFileSync(graph, [`[0:v]null[camera]`, ...lines, '[laid]format=yuv420p[v]'].join(';\n'), 'utf8');
     await ffmpeg(['-i', source, '-i', screen, '-/filter_complex', graph, '-map', '[v]', '-an', '-c:v', 'libx264', '-preset', 'ultrafast', '-qp', '10', output]);
     expect(await frameCount(output)).toBe(FRAMES);
     const body = windowBodyRect();
