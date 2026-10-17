@@ -23,6 +23,8 @@ export interface CutGraphOptions {
   sourceFrames?: number;
   /** cadeia que leva o quadro da fonte ao tamanho de saída; padrão: só redimensionar (o Short recorta em 9:16) */
   prep?: string;
+  /** `vidstabtransform` (ver stabilize.ts): entra logo após o `fps`, antes do `prep`, 1 frame por frame */
+  stabilize?: string;
   /**
    * Gravação de tela (entrada 1 do ffmpeg) cortada nos mesmos pontos da câmera, saindo em [scut].
    * `align` é a cadeia que a coloca na linha do tempo da câmera (ver `screenAlign`).
@@ -92,7 +94,8 @@ export function buildCutGraph(timeline: Timeline, options: CutGraphOptions): str
   const into = new Map(planned.map((transition) => [transition.index, transition]));
 
   const lines: string[] = [
-    `[0:v]fps=${fps}:start_time=0,${options.prep ?? `scale=${options.width}:${options.height}:flags=lanczos,setsar=1`},format=yuv420p,split=${count}${labels('vs')}`,
+    // a estabilização vê os mesmos frames que o pré-passo analisou: depois do fps, antes de qualquer escala/recorte
+    `[0:v]fps=${fps}:start_time=0,${options.stabilize ? `${options.stabilize},` : ''}${options.prep ?? `scale=${options.width}:${options.height}:flags=lanczos,setsar=1`},format=yuv420p,split=${count}${labels('vs')}`,
     // first_pts=0 alinha o áudio ao zero do vídeo: os recortes abaixo contam amostras
     `[${options.audioInput ?? 0}:a]aresample=${AUDIO_RATE}:async=1:first_pts=0,aformat=channel_layouts=stereo,asplit=${count}${labels('as')}`,
   ];

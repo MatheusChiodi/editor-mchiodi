@@ -147,6 +147,17 @@ os `xfade` misturam a imagem dos dois lados; os `stinger` são cortinas nas core
 `preset`: `none | neutral | warm | cool | punchy`; ajustes finos `exposure` (-1..1), `contrast`, `saturation`, `sharpen` (0..1), `lut` (arquivo `.cube` em `assets/luts`).
 Um grade só para o vídeo inteiro.
 
+## Estabilização (`stabilize`)
+
+`{ "enabled": false, "shakiness": 5, "smoothing": 15, "zoom": 0, "reason": "" }` (padrão desligado; EDL sem o campo = desligado).
+- `shakiness` 1–10: quanto a câmera treme (calibra a detecção). `smoothing` 1–60: frames de cada lado na suavização
+  (maior = câmera mais flutuante). `zoom` 0–20: % extra sobre o zoom fixo ótimo que esconde as bordas.
+- Vidstab do ffmpeg em dois passos: `vidstabdetect` em pré-passo sobre o arquivo que o corte lê (proxy no preview, original
+  no final), em cache em `analysis/stabilize/` (chave: caminho + tamanho + mtime + fps + `shakiness`); `vidstabtransform` entra
+  no grafo de corte logo após o `fps`, antes de escala, recorte do Short, zooms, efeitos e reframe. Não muda frames nem áudio.
+- Mudar `smoothing`/`zoom` não refaz a análise. Sem libvidstab no ffmpeg (`pnpm mce doctor`), avisa e renderiza sem estabilizar.
+- Quando usar: STYLE.md §4. Diga o porquê em `reason`.
+
 ## Capítulos (`chapters`)
 
 `[{ "title": "Gancho", "at": 0.5 }, ...]`: mínimo 3, o primeiro vira 0:00, pelo menos 10s entre eles. Saem em `capitulos.txt` pelo `pnpm mce report`.

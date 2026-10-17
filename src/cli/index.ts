@@ -18,7 +18,7 @@ import { activityFile, appendActivity, withActivity } from '../project/activity.
 import { loadAmbient, loadItems } from '../project/dashboard-data.ts';
 import { loadConfig } from '../config.ts';
 import { run } from '../lib/exec.ts';
-import { createVramSampler, deepFilterCheck, doctorLines, queryVram, type ToolCheck } from '../project/health.ts';
+import { createVramSampler, deepFilterCheck, doctorLines, queryVram, type ToolCheck, vidstabCheck } from '../project/health.ts';
 import { resolveDeepFilterBinary } from '../render/denoise.ts';
 import { clearLive, liveFile, type LiveTask, trackProgress, writeLive } from '../project/live.ts';
 import { projectPaths, readJson, requireProject, ROOT, slugFromFile } from '../project/paths.ts';
@@ -38,6 +38,7 @@ import { buildChapters, buildReport, renderChapters } from '../report/index.ts';
 import { bumperDurations } from '../render/bumpers.ts';
 import { render, renderDir } from '../render/index.ts';
 import { rankShortCandidates } from '../render/shorts.ts';
+import { hasVidstab } from '../render/stabilize.ts';
 import { registerAnalogies } from '../analogy/cli.ts';
 import { registerPack } from '../pack/cli.ts';
 import { registerTech } from '../tech/cli.ts';
@@ -288,7 +289,7 @@ program
 
 program
   .command('doctor')
-  .description('Confere as ferramentas externas: ffmpeg, ffprobe, deep-filter (denoise neural, opcional) e GPU')
+  .description('Confere as ferramentas externas: ffmpeg, ffprobe, deep-filter (denoise neural, opcional), vidstab (estabilização, opcional) e GPU')
   .action(async () => {
     const version = async (name: string): Promise<ToolCheck> => {
       try {
@@ -303,6 +304,7 @@ program
       await version('ffmpeg'),
       await version('ffprobe'),
       deepFilterCheck(resolveDeepFilterBinary({ env: process.env, configPath: loadConfig().denoise.deepFilterPath, platform: process.platform, exists: existsSync })),
+      vidstabCheck(await hasVidstab()),
       { name: 'nvidia-smi', ok: vram !== null, detail: vram ? `VRAM ${vram.usedMb}/${vram.totalMb} MB` : 'sem GPU NVIDIA visível; transcrição em CPU é bem mais lenta', required: false },
     ];
     log(doctorLines(checks).join('\n'));

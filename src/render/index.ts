@@ -18,6 +18,7 @@ import { effectFilters, placeEffects } from './effects.ts';
 import { placeLayout, resolveScreen, screenAlign } from './layout.ts';
 import { buildOverlayProps, overlayFile, renderBumper, renderOverlay } from './overlay.ts';
 import { shortsEdl, SHORTS_MAX_SEC, verticalCrop } from './shorts.ts';
+import { prepareStabilize } from './stabilize.ts';
 import { placeStages, reframeFilters, windowLayouts } from './reframe.ts';
 import { gradeFilters, placeZooms, zoomFilters } from './video.ts';
 
@@ -100,13 +101,18 @@ export async function render(paths: ProjectPaths, source: Edl, options: RenderOp
   // a voz limpa vem do arquivo original mesmo no preview: o proxy tem as mesmas amostras no mesmo lugar
   const denoise = await prepareDenoise(edl.audio.denoise, edl.source.path, paths.analysisDir, { ...config.denoise, configPath: config.denoise.deepFilterPath, log });
 
+  // a análise é do arquivo que o corte lê (proxy no preview, original no final): o .trf é em pixels daquele quadro
+  const cutSource = final ? edl.source.path : analysis.proxy;
+  const stabilize = await prepareStabilize(edl.stabilize, cutSource, paths.analysisDir, { fps, log });
+
   const cut = join(dir, 'cut.mkv');
   await renderCut(timeline, {
     audioSource: denoise.audioSource ?? undefined,
     screen: screenSource ? { align: screenAlign(edl.layout.screen!.offsetSec, fps) } : undefined,
     screenSource: screenSource ?? undefined,
     screenOutput: screenCut ?? undefined,
-    source: final ? edl.source.path : analysis.proxy,
+    source: cutSource,
+    stabilize: stabilize.transform ?? undefined,
     output: cut,
     graphFile: join(dir, 'cut.graph.txt'),
     quality: final ? 'mezzanine' : 'preview',

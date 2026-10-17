@@ -111,6 +111,13 @@ export function deepFilterCheck(lookup: DeepFilterLookup): ToolCheck {
   return { ...base, ok: false, detail: 'não encontrado no PATH (nem MCE_DEEPFILTER / denoise.deepFilterPath); "deepfilter" cai para afftdn' };
 }
 
+/** O vidstab é opcional: sem ele, `stabilize.enabled` avisa e o render segue sem estabilizar. */
+export function vidstabCheck(available: boolean): ToolCheck {
+  return available
+    ? { name: 'vidstab', ok: true, detail: 'ffmpeg com vidstabdetect/vidstabtransform; stabilize disponível', required: false }
+    : { name: 'vidstab', ok: false, detail: 'ffmpeg sem libvidstab; stabilize é ignorado (com aviso)', required: false };
+}
+
 /** Linhas do `mce doctor`: uma por ferramenta, `ok`/`falta`/`opcional`. */
 export function doctorLines(checks: ToolCheck[]): string[] {
   const width = Math.max(...checks.map((check) => check.name.length));

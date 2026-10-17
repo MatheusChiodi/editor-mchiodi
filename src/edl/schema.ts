@@ -145,6 +145,21 @@ export const gradeSchema = z.object({
   sharpen: z.number().min(0).max(1).default(0),
 });
 
+/**
+ * Estabilização de câmera na mão (ffmpeg vidstab): análise em pré-passo, em cache, e transformação no
+ * grafo de corte antes de escala/zoom/reframe. Sem o vidstab no ffmpeg, avisa e segue sem estabilizar.
+ */
+export const stabilizeSchema = z.object({
+  enabled: z.boolean().default(false),
+  /** quanto a câmera treme (1 = pouco, 10 = muito); calibra a detecção */
+  shakiness: z.number().int().min(1).max(10).default(5),
+  /** frames de cada lado na suavização do movimento: maior = câmera mais "flutuante" */
+  smoothing: z.number().int().min(1).max(60).default(15),
+  /** zoom extra em %, somado ao zoom ótimo que esconde as bordas pretas */
+  zoom: z.number().min(0).max(20).default(0),
+  reason: z.string().default(''),
+});
+
 export const audioSchema = z.object({
   targetLufs: z.number().default(-14),
   truePeakDb: z.number().default(-1.5),
@@ -236,6 +251,7 @@ export const edlSchema = z
     sfx: z.array(sfxSchema).default([]),
     music: musicSchema.nullable().default(null),
     grade: gradeSchema.default(gradeSchema.parse({})),
+    stabilize: stabilizeSchema.default(stabilizeSchema.parse({})),
     audio: audioSchema.default(audioSchema.parse({})),
     layout: layoutSchema.default(layoutSchema.parse({})),
     chapters: z.array(chapterSchema).default([]),
@@ -313,6 +329,7 @@ export type Transition = z.infer<typeof transitionSchema>;
 export type Effect = z.infer<typeof effectSchema>;
 export type Grade = z.infer<typeof gradeSchema>;
 export type AudioSettings = z.infer<typeof audioSchema>;
+export type StabilizeSettings = z.infer<typeof stabilizeSchema>;
 export type CaptionSettings = z.infer<typeof captionsSchema>;
 
 export function parseEdl(data: unknown): Edl {
