@@ -7,7 +7,9 @@
   "scripts": {
     "mce": "tsx src/cli/index.ts",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p cut",
+    "cut:dev": "vite --config cut/vite.config.ts",
+    "cut:build": "vite build --config cut/vite.config.ts",
     "studio": "remotion studio motion/src/index.ts",
     "watch": "tsx src/cli/index.ts watch",
     "install-cli": "tsx scripts/install-cli.ts",
@@ -24,6 +26,7 @@
     "@remotion/cli": "4.0.534",
     "@remotion/google-fonts": "4.0.534",
     "@remotion/media": "4.0.534",
+    "@remotion/player": "4.0.534",
     "@remotion/renderer": "4.0.534",
     "@remotion/three": "4.0.534",
     "@remotion/transitions": "4.0.534",
@@ -38,13 +41,18 @@
     "zod": "^4.6.6"
   },
   "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
     "@types/node": "^26.6.5",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@types/three": "^0.186.0",
+    "@vitejs/plugin-react": "^6.1.2",
     "devicon": "^2.17.0",
+    "playwright-core": "^1.64.1",
+    "tailwindcss": "^4.3.3",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",
+    "vite": "^8.3.4",
     "vitest": "^5.0.3"
   }
 }

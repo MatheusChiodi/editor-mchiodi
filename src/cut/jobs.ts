@@ -47,6 +47,17 @@ export function mceArgs(slug: string, request: JobRequest): string[] {
   }
 }
 
+/**
+ * Onde o `mce render` deixa o vídeo de cada job (relativo à pasta do projeto), para a UI abrir o resultado.
+ * Mesma convenção de `renderDir`/`outputNames` (src/render/index.ts): renders/v<N>-[shorts-]<modo>/.
+ */
+export function jobOutputRel(kind: JobKind, version: number): string | null {
+  if (kind === 'render') return `renders/v${version}-preview/preview.mp4`;
+  if (kind === 'final') return `renders/v${version}-final/final.mp4`;
+  if (kind === 'shorts') return `renders/v${version}-shorts-final/shorts-final.mp4`;
+  return null;
+}
+
 /** `mce eval` sai com 2 quando a avaliação reprova: o processo funcionou, os achados é que pedem correção. */
 export function jobSucceeded(kind: JobKind, code: number | null): boolean {
   return code === 0 || ((kind === 'eval' || kind === 'evalFinal') && code === 2);

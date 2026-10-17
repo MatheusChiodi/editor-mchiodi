@@ -1,16 +1,14 @@
 import { writeFileSync } from 'node:fs';
 
-import { transitions, xfadeArgs } from '../arsenal/transitions.ts';
+import { transitionDuration, transitions, xfadeArgs } from '../arsenal/transitions.ts';
 import type { Transition } from '../edl/schema.ts';
 import type { Timeline } from '../edl/timeline.ts';
 import { ffmpeg, type ProgressFn, type Quality, videoEncodeArgs } from '../lib/ffmpeg.ts';
 
 export const AUDIO_RATE = 48000;
 
-/** Duração efetiva da transição: a pedida na EDL ou a padrão do preset. */
-export function transitionDuration(transition: Pick<Transition, 'type' | 'duration'>): number {
-  return transition.duration ?? transitions[transition.type]?.defaultDuration ?? 0.4;
-}
+// mora no catálogo (módulo puro) para a camada de gráficos do editor no navegador usar a mesma conta
+export { transitionDuration };
 
 export interface CutGraphOptions {
   fps: number;

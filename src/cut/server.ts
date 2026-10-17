@@ -45,7 +45,7 @@
  *        job          { id, kind, status, args }              job começou
  *        job-log      { id, line }
  *        job-progress { id, label, percent, etaSec }         lido de live.json (o mesmo do `mce progress`)
- *        job-done     { id, kind, ok, code, file?, url? }  url = /file?path=... do export
+ *        job-done     { id, kind, ok, code, file?, url? }  url = /file?path=... do vídeo (export e render)
  *        claude       { kind: 'text'|'tool'|'result'|'start', ... }
  *        claude-done  { ok, baseVersion, proposedVersion|null, diff[], result }
  * GET  /api/arsenal?kind=&q=                        → { items[] } (com `gallery` quando há folha) ou { kinds: { [kind]: items[] } }
@@ -74,7 +74,7 @@ import { bumperDurations } from '../render/bumpers.ts';
 import { planExport } from '../render/formats.ts';
 import { buildSrt, importSrt } from '../render/srt.ts';
 import { headlessEnv } from '../watcher/headless.ts';
-import { jobSucceeded, JOB_KINDS, type JobRequest, mceArgs, spawnMce, type SpawnedJob } from './jobs.ts';
+import { jobOutputRel, jobSucceeded, JOB_KINDS, type JobRequest, mceArgs, spawnMce, type SpawnedJob } from './jobs.ts';
 import { ensureProxy, ensureWaveform } from './media.ts';
 import { cutOpSchema, CutOpError } from './ops.ts';
 import {
@@ -328,6 +328,10 @@ export async function startCutServer(options: CutServerOptions = {}): Promise<Cu
     if (request.kind === 'export') {
       const edl = loadEdl(paths, request.edl);
       file = planExport(edl, request.export!, paths.rendersDir, paths.slug).file;
+    } else {
+      const version = request.edl ?? listVersions(paths).at(-1);
+      const rel = version === undefined ? null : jobOutputRel(request.kind, version);
+      file = rel ? join(paths.dir, ...rel.split('/')) : null;
     }
     const job: JobState = { id: `j${++jobCounter}`, kind: request.kind, args, status: 'running', startedAt: Date.now(), endedAt: null, code: null, log: [], file, spawned: null };
     jobs.set(paths.slug, job);

@@ -1,0 +1,61 @@
+@import 'tailwindcss';
+
+/*
+ * Cores e fontes vêm de motion/src/theme.ts (main.tsx escreve as --mc-* no :root a partir dos tokens).
+ * Aqui só se dá nome de classe a elas: bg-night, text-coral, border-s600/40…
+ */
+@theme inline {
+  --color-paper: var(--mc-paper);
+  --color-ink: var(--mc-ink);
+  --color-night: var(--mc-night);
+  --color-coral: var(--mc-coral);
+  --color-coral-deep: var(--mc-coral-deep);
+  --color-emerald: var(--mc-emerald);
+  --color-mint: var(--mc-glow-mint);
+  --color-peri: var(--mc-glow-periwinkle);
+  --color-peach: var(--mc-glow-peach);
+  --color-s900: var(--mc-slate-900);
+  --color-s600: var(--mc-slate-600);
+  --color-s300: var(--mc-slate-300);
+  --font-body: var(--mc-font-body), system-ui, sans-serif;
+  --font-display: var(--mc-font-display), Georgia, serif;
+  --font-mono: var(--mc-font-mono), ui-monospace, monospace;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--mc-night);
+  color: var(--mc-paper);
+  font-family: var(--font-body);
+  font-size: 13px;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--mc-slate-600) 60%, transparent) transparent;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--mc-coral) 45%, transparent);
+}
+
+.hatch {
+  background-image: repeating-linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--mc-coral) 22%, transparent) 0 6px,
+    transparent 6px 12px
+  );
+}
+
+.no-select {
+  user-select: none;
+  -webkit-user-select: none;
+}

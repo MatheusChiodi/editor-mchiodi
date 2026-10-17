@@ -72,3 +72,6 @@ __pycache__/
 *.log
 .DS_Store
 Thumbs.db
+
+# build da UI do MChiodi Cut (pnpm cut:build)
+cut/dist/

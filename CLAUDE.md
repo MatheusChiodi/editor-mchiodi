@@ -50,6 +50,7 @@ src/project/    caminhos, memória por projeto (project.md), status
 src/cli/        comandos `mce`
 motion/src/     Remotion: theme, anim, captions, components/ (+ registry), arsenal/ (entradas, stingers, fx),
                 scene-kit/ (papel e voxel), scenes/<projeto>/
+cut/            UI do MChiodi Cut (React+Vite+Tailwind 4; `pnpm cut:dev`/`cut:build` → cut/dist); lógica pura em cut/src/lib/
 transcriber/    sidecar Python (WhisperX); só `transcribe.py`
 .claude/        skills (edit-video, edl-reference), agents (motion-designer), settings
 projects/<slug>/{analysis,edl,renders}/ + project.md     (fora do git)
