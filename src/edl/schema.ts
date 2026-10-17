@@ -209,13 +209,21 @@ export const layoutSchema = z.object({
     .default([]),
 });
 
+export const focusKeyframesSchema = z
+  .array(z.object({ t: seconds, x: z.number().min(0).max(1) }))
+  .min(1)
+  .refine((keys) => keys.every((key, index) => index === 0 || key.t >= keys[index - 1]!.t), { message: 'keyframes de foco em ordem de t' });
+
 export const shortsSchema = z
   .object({
     /** trecho da fonte que vira o Short (o melhor momento, escolhido pelo diretor) */
     start: seconds,
     end: seconds,
-    /** onde está o rosto na horizontal (0–1), para o recorte 9:16 */
-    focusX: z.number().min(0).max(1).default(0.5),
+    /**
+     * posição do recorte 9:16 (0 = encostado à esquerda, 1 = à direita): número fixo, `"auto"` (o render detecta o
+     * apresentador e planeja o pan, `pnpm mce shorts focus`) ou keyframes `[{ t, x }]` em segundos da fonte
+     */
+    focusX: z.union([z.number().min(0).max(1), z.literal('auto'), focusKeyframesSchema]).default(0.5),
     reason: z.string().default(''),
   })
   .refine((shorts) => shorts.end > shorts.start, { message: 'end precisa ser maior que start' });
@@ -339,3 +347,5 @@ export function parseEdl(data: unknown): Edl {
 export function formatEdlIssues(error: z.ZodError): string {
   return error.issues.map((issue) => `- ${issue.path.join('.') || '(raiz)'}: ${issue.message}`).join('\n');
 }
+/** foco do Short como está na EDL: número, `"auto"` ou keyframes */
+export type ShortsFocus = z.infer<typeof shortsSchema>['focusX'];

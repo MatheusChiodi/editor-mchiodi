@@ -18,6 +18,7 @@ import { effectFilters, placeEffects } from './effects.ts';
 import { placeLayout, resolveScreen, screenAlign } from './layout.ts';
 import { buildOverlayProps, overlayFile, renderBumper, renderOverlay } from './overlay.ts';
 import { shortsEdl, SHORTS_MAX_SEC, verticalCrop } from './shorts.ts';
+import { resolveShortFocus } from './shorts-focus.ts';
 import { prepareStabilize } from './stabilize.ts';
 import { placeStages, reframeFilters, windowLayouts } from './reframe.ts';
 import { gradeFilters, placeZooms, zoomFilters } from './video.ts';
@@ -105,6 +106,10 @@ export async function render(paths: ProjectPaths, source: Edl, options: RenderOp
   const cutSource = final ? edl.source.path : analysis.proxy;
   const stabilize = await prepareStabilize(edl.stabilize, cutSource, paths.analysisDir, { fps, log });
 
+  // foco do Short: `auto` detecta o apresentador no proxy (cacheado) e planeja o pan em tempo da fonte
+  const focus = shorts ? await resolveShortFocus(paths, source) : null;
+  if (shorts && source.shorts!.focusX === 'auto') log(`foco auto: ${Array.isArray(focus) ? `pan com ${focus.length} keyframes` : `fixo em ${focus}`}`);
+
   const cut = join(dir, 'cut.mkv');
   await renderCut(timeline, {
     audioSource: denoise.audioSource ?? undefined,
@@ -118,7 +123,7 @@ export async function render(paths: ProjectPaths, source: Edl, options: RenderOp
     quality: final ? 'mezzanine' : 'preview',
     fps,
     ...size,
-    prep: shorts ? verticalCrop(source.shorts!.focusX, size) : undefined,
+    prep: focus !== null ? verticalCrop(focus, size) : undefined,
     fadeMs: edl.audio.cutFadeMs,
     transitions: edl.transitions,
     sourceFrames: Math.floor(edl.source.durationSec * fps),

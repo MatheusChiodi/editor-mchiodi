@@ -176,6 +176,17 @@ mensagem traz o `start`/`end` prontos). Declarar não isenta do resto: o respiro
 - `"intro": true` / `"outro": true` emendam a abertura (2,5s) e a tela final (8s) do canal.
 - `"shorts": { "start": 201.0, "end": 262.0, "focusX": 0.5, "reason": "explicação completa em 55s" }`: trecho da fonte que vira o vertical
   (≤ 60s no vídeo final; `pnpm mce shorts suggest <slug>` ranqueia candidatos e imprime o objeto pronto; `--apply <n>` grava como nova versão). Render: `pnpm mce render <slug> --shorts`.
+- `focusX` = posição do recorte 9:16 (0 = encostado à esquerda, 1 = à direita). Três formas:
+  - número (`0.47`): fixo, como sempre;
+  - `"auto"`: o render detecta o apresentador no proxy (movimento + pele por coluna, 2 fps a 192 px, cache em
+    `analysis/focus-detect.json`) e planeja: variação pequena (p90−p10 ≤ 128 px de referência 1920) → fixo na mediana;
+    senão, por trecho contínuo, pan suave (zona morta 80 px, ≤ 240 px/s, aceleração ≤ 480 px/s²). Pan nunca atravessa um
+    corte; no corte o foco reposiciona seco;
+  - keyframes `[{ "t": 231.3, "x": 0.43 }, ...]`: `t` em segundos da FONTE, em ordem; interpolação linear, segura nas pontas.
+  `pnpm mce shorts focus <slug>` mostra o plano (fixo/pan, trechos, keyframes) e salva `analysis/shorts-focus.json`; `--apply` grava o
+  resultado (número ou keyframes) numa nova versão. `--track <arquivo>` importa um track à mão para `analysis/focus-track.json`
+  (`{ "samples": [{ "t": 240, "x": 0.45 }] }`, `x` = CENTRO do apresentador 0–1, não a posição do recorte), que vence o detector;
+  `--redetect` ignora o cache. Keyframes valem para um trecho: o `shorts suggest` troca keyframes herdados por `"auto"`.
 
 ## Tela gravada (`layout`)
 

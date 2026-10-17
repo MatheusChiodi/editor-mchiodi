@@ -180,6 +180,10 @@ ou dá ritmo?". Se a resposta for "é bonito", não entra. O espectador não pod
 - Escala entre 1.08 e 1.18; acima de 1.25 só em piada. Foco no rosto (`y ≈ 0.4`).
 - Zoom entra no corte ou com easing de 0.4s; nunca entra e sai em menos de 1.5s.
 - Alternar escala entre clipes vizinhos disfarça jump cut: usar quando o corte ficaria visível.
+- Short 9:16: o recorte não pode cortar o rosto. Apresentador sentado e parado → foco fixo (`focusX` número ou `"auto"`,
+  que decide sozinho); quem anda pelo quadro → `"auto"` faz pan suave (zona morta 80 px, no máximo 240 px/s, sem
+  tremedeira). Pan nunca atravessa corte: no corte o foco reposiciona seco. Gesto de mão não é motivo para pan;
+  se o detector errar (fundo com pele/movimento), corrija em `analysis/focus-track.json` e rode `pnpm mce shorts focus <slug>`.
 - `stabilize` só em câmera na mão com tremor visível (externa, celular); em tripé ou tela gravada fica desligado: o vidstab corta as bordas (zoom fixo) e pode "nadar" em fundo sem textura.
 
 ## 5. Animações e gráficos

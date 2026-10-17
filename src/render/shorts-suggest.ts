@@ -1,6 +1,6 @@
 import { normalizeToken } from '../analyze/speech.ts';
 import type { Flag, FlagKind, Span, Word } from '../analyze/types.ts';
-import type { Clip, Edl } from '../edl/schema.ts';
+import type { Clip, Edl, ShortsFocus } from '../edl/schema.ts';
 import { round3 } from '../lib/time.ts';
 import type { TechMention } from '../tech/detect.ts';
 
@@ -93,7 +93,7 @@ export type EdgeKind = 'corte' | 'silencio';
 export interface ShortsField {
   start: number;
   end: number;
-  focusX: number;
+  focusX: ShortsFocus;
   reason: string;
 }
 
@@ -120,8 +120,8 @@ export interface SuggestInput {
   silences: Span[];
   flags: Flag[];
   tech: Pick<TechMention, 'tech' | 'name' | 'start' | 'end' | 'confidence'>[];
-  /** foco horizontal já usado na EDL (o candidato herda) */
-  focusX?: number;
+  /** foco horizontal já usado na EDL (o candidato herda; keyframes são de outro trecho e viram `"auto"`) */
+  focusX?: ShortsFocus;
 }
 
 export interface SuggestOptions {
@@ -367,7 +367,7 @@ export function suggestShorts(input: SuggestInput, options: Partial<SuggestOptio
         components,
         opening: window.slice(0, 14).map((item) => item.word.text).join(' '),
         text,
-        shorts: { start: span.start, end: span.end, focusX: input.focusX ?? 0.5, reason: '' },
+        shorts: { start: span.start, end: span.end, focusX: inheritedFocus(input.focusX), reason: '' },
       };
       if (!winner || candidate.score > winner.score) winner = candidate;
     }
@@ -386,6 +386,12 @@ export function suggestShorts(input: SuggestInput, options: Partial<SuggestOptio
     const why = positives(candidate.components);
     return { ...candidate, rank, shorts: { ...candidate.shorts, reason: `mce shorts suggest #${rank} (nota ${candidate.score})${why ? `: ${why}` : ''}` } };
   });
+}
+
+/** Número e `"auto"` valem para qualquer trecho; keyframes não (são tempos do trecho antigo). */
+export function inheritedFocus(focus: ShortsFocus | undefined): ShortsFocus {
+  if (focus === undefined) return 0.5;
+  return Array.isArray(focus) ? 'auto' : focus;
 }
 
 /** Conteúdo da próxima versão da EDL com o candidato em `shorts`; as notes dizem de onde veio e o que havia antes. */

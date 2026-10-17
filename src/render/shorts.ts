@@ -1,4 +1,5 @@
 import type { Clip, Edl } from '../edl/schema.ts';
+import { focusExpr, type ResolvedFocus } from './focus.ts';
 
 export const SHORTS_SIZE = { width: 1080, height: 1920 } as const;
 export const SHORTS_MAX_SEC = 60;
@@ -13,10 +14,17 @@ export function clipsWithin(clips: Pick<Clip, 'id' | 'start' | 'end'>[], start: 
 /**
  * Recorte 9:16 a partir do quadro 16:9: mantém a altura inteira e escolhe a faixa horizontal
  * em volta de `focusX` (0 = esquerda, 1 = direita). Cadeia linear para o grafo de cortes.
+ * Com keyframes, `x` vira expressão em `t`: o `crop` reavalia por frame e roda antes do `trim`,
+ * então `t` é o tempo da FONTE e a contagem de frames não muda.
  */
-export function verticalCrop(focusX: number, size: { width: number; height: number } = SHORTS_SIZE): string {
-  const focus = Math.min(1, Math.max(0, focusX)).toFixed(3);
-  return `crop=w='trunc(ih*9/16/2)*2':h=ih:x='(iw-ow)*${focus}':y=0,scale=${size.width}:${size.height}:flags=lanczos,setsar=1`;
+export function verticalCrop(focus: ResolvedFocus, size: { width: number; height: number } = SHORTS_SIZE): string {
+  return `crop=w='trunc(ih*9/16/2)*2':h=ih:x='(iw-ow)*${focusExpr(focus)}':y=0,scale=${size.width}:${size.height}:flags=lanczos,setsar=1`;
+}
+
+/** Trechos da fonte que aparecem no Short (clipes dentro do trecho), base do planejamento do foco. */
+export function shortsSpans(edl: Pick<Edl, 'clips' | 'shorts'>): { start: number; end: number }[] {
+  if (!edl.shorts) return [];
+  return clipsWithin(edl.clips, edl.shorts.start, edl.shorts.end).map(({ start, end }) => ({ start, end }));
 }
 
 /** EDL derivada para o Short: só os clipes do trecho, 9:16, legenda no estilo shorts, sem gráficos 16:9. */

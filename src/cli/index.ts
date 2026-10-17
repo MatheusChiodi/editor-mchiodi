@@ -38,6 +38,8 @@ import { writeReport } from '../report/write.ts';
 import { render, renderDir } from '../render/index.ts';
 import { SHORTS_MAX_SEC } from '../render/shorts.ts';
 import { applySuggestion, formatSuggestions, suggestShorts } from '../render/shorts-suggest.ts';
+import { formatFocusPlan, planShortFocus } from '../render/shorts-focus.ts';
+import { manualTrackPath, parseFocusTrackFile } from '../analyze/focus.ts';
 import { findTechMentions } from '../tech/detect.ts';
 import { hasVidstab } from '../render/stabilize.ts';
 import { registerAnalogies } from '../analogy/cli.ts';
@@ -227,6 +229,41 @@ shorts
     const chosen = candidates.find((candidate) => candidate.rank === options.apply);
     if (!chosen) throw new Error(`candidato #${options.apply} não existe (${candidates.length} sugeridos)`);
     const saved = saveNewVersion(paths, applySuggestion(current, chosen));
+    log(`aplicado: ${edlPath(paths, saved.version)}`);
+  });
+
+shorts
+  .command('focus <project>')
+  .description('Foco dinâmico do Short: detecta o apresentador (ou lê analysis/focus-track.json) e planeja fixo ou pan suave')
+  .option('-v, --edl <n>', 'versão da EDL (padrão: a mais recente)', Number)
+  .option('--track <file>', 'importa um track à mão ({ samples: [{ t, x }] }, x = centro do apresentador) para analysis/focus-track.json')
+  .option('--redetect', 'refaz a detecção, ignorando o cache')
+  .option('--apply', 'grava o plano em `shorts.focusX` numa nova versão da EDL')
+  .action(async (project: string, options: { edl?: number; track?: string; redetect?: boolean; apply?: boolean }) => {
+    const paths = requireProject(project);
+    const current = loadEdl(paths, options.edl);
+    if (!current.shorts) throw new Error('A EDL não define `shorts`; escolha o trecho antes (pnpm mce shorts suggest)');
+    if (options.track) {
+      const samples = parseFocusTrackFile(readJson(fromUser(options.track)));
+      writeJson(manualTrackPath(paths.analysisDir), { samples });
+      log(`track importado: ${samples.length} amostras → ${manualTrackPath(paths.analysisDir)}`);
+    }
+    const result = await planShortFocus(paths, current, { force: options.redetect, onProgress: consoleProgress() });
+    const file = join(paths.analysisDir, 'shorts-focus.json');
+    writeJson(file, { project: paths.slug, edlVersion: current.version, createdAt: new Date().toISOString(), origin: result.origin, plan: result.plan });
+    log(formatFocusPlan(result));
+    log(`\n${file}`);
+    if (!options.apply) return;
+    const { version: _version, createdAt: _createdAt, ...data } = current;
+    const { plan } = result;
+    const before = current.shorts.focusX;
+    const saved = saveNewVersion(paths, {
+      ...data,
+      shorts: { ...current.shorts, focusX: plan.focus },
+      notes:
+        `Short: foco ${plan.mode === 'fixed' ? `fixo em ${plan.focus as number}` : `em pan (${(plan.focus as unknown[]).length} keyframes)`} pelo mce shorts focus ` +
+        `sobre a v${current.version} (variação do apresentador ${plan.spreadPx.toFixed(0)} px, ${result.origin}; antes: ${Array.isArray(before) ? 'keyframes' : before}).`,
+    });
     log(`aplicado: ${edlPath(paths, saved.version)}`);
   });
 
