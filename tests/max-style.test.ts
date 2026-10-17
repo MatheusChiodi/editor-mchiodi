@@ -283,7 +283,7 @@ describe('EDL: presenter e wipe', () => {
 
   it('presenter ganha foco e fundo padrão, e recusa slot desconhecido', () => {
     const edl = edlWith({ overlays: [{ id: 'a', component: 'SplitExplainer', at: 5, duration: 6, presenter: { slot: 'right' } }] });
-    expect(edl.overlays[0]!.presenter).toEqual({ slot: 'right', focus: { x: 0.5, y: 0.4 }, backdrop: 'paper' });
+    expect(edl.overlays[0]!.presenter).toEqual({ slot: 'right', focus: 'auto', backdrop: 'paper' });
     expect(() => edlWith({ overlays: [{ id: 'a', component: 'SplitExplainer', at: 5, duration: 6, presenter: { slot: 'centro' } }] })).toThrow();
     expect(() => edlWith({ overlays: [{ id: 'a', component: 'Callout', at: 5, duration: 6, wipe: 'explosao' }] })).toThrow();
   });

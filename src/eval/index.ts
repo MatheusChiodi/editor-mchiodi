@@ -19,6 +19,8 @@ import { type ProjectPaths, readJson, writeJson } from '../project/paths.ts';
 import { bumperDurations } from '../render/bumpers.ts';
 import { buildCaptions } from '../render/captions.ts';
 import { AUDIO_RATE } from '../render/cuts.ts';
+import { findFaceOutOfStage } from '../render/stage-focus.ts';
+import { loadStageFocus } from '../render/stage-focus-io.ts';
 import { loadSceneLinks } from '../scenes/models.ts';
 import { findTechMentions } from '../tech/detect.ts';
 import {
@@ -148,6 +150,10 @@ export async function evaluate(paths: ProjectPaths, edl: Edl, file: string, dir:
   const findings: Finding[] = [...findCutWords(edl, source.words, timeline), ...findTightEdges(timeline, source.words), ...findCaptionOverGraphic(placedOverlays, captionSpans), ...lintStyle(edl, timeline, undefined, loadSceneLinks(), source.words, findAnalogies(source.words, buildPhrases(source.words))), ...findMissingTechIcons(edl, timeline, findTechMentions(source.words), levelProfile(edl.level))].map((finding) =>
     finding.at === null ? finding : { ...finding, at: finding.at + introSec },
   );
+
+  // palco que corta o rosto do apresentador (foco fixo copiado, ou apresentador que anda mais que o cartão)
+  const stages = await loadStageFocus(paths, edl, timeline);
+  findings.push(...findFaceOutOfStage(stages.plans).map((finding) => ({ ...finding, at: finding.at === null ? null : finding.at + introSec })));
 
   const [videoSec, audioSec] = await Promise.all([streamDuration(file, 'v:0'), streamDuration(file, 'a:0')]);
   findings.push(...judgeDuration(videoSec, audioSec, expectedSec, edl.output.fps));

@@ -55,7 +55,7 @@ Escreva em poucas linhas, para você mesmo, antes de tocar na EDL:
   `SplitExplainer` com `presenter: right|left`; demonstração em `WindowStage` com `presenter: pip-br`; fonte em `DocQuote`;
   conceito abstrato em cena com `wipe: "tear"`. Depois ancore cada pílula, cartão e palavra no início da palavra falada
   (`pnpm mce words`), menos 2 frames. Meta: algo novo a cada 2–4s, nunca 8s parado, os 7 padrões no mínimo
-  (`pnpm mce level <slug>` mostra quantos faltam). Confira `focus` do rosto com `pnpm mce frame <slug> --at <s>`.
+  (`pnpm mce level <slug>` mostra quantos faltam). No `presenter`, omita `focus` (`"auto"`: o render enquadra o rosto pelo detector); nunca copie `0.47/0.4`. `rosto-fora-do-palco` no eval = troque o foco fixo por `"auto"`.
 - **Ênfase**: zooms (STYLE.md §4), efeitos (`pnpm mce arsenal effects`), transições só em troca de assunto (§6).
 - **Quanto de cada coisa**: o nível decide (STYLE.md §0). `pnpm mce level <slug>` mostra, para a duração deste vídeo,
   quantos zooms, gráficos, cenas, transições, efeitos e SFX o nível pede e quantos a EDL já tem. Em `pro`/`max`, liste
@@ -138,6 +138,8 @@ pnpm mce eval <slug>          # mede o vídeo renderizado e gera imagens
   seguinte ou transição calm, como a mensagem dá) os que incomodam **na prancha**, respeitando o espaçamento de zoom do nível.
 - `legenda-sobre-grafico`: lower third, CTA, citação ou texto na base dividindo a faixa com a legenda; `hidesCaptions: true` ou mova
   o gráfico para uma pausa.
+- `rosto-fora-do-palco`: o cartão do `presenter` deixa parte do rosto de fora. Erro com `focus` fixo: troque por `"auto"` (ou
+  omita). Aviso com `"auto"`: o apresentador anda mais que o cartão; use um `pip-*` ou divida o palco.
 - **Prancha de contato** (`renders/<versão>/eval/contact-sheet.png`, caminho no fim do `eval`): os cortes mais suspeitos, um por
   linha, último quadro antes | primeiro depois, com os achados de cada um. Abra **só ela** primeiro: salto de enquadramento,
   rosto/gesto pulando, quadro preto ou gráfico entrando torto aparecem ali. Só abra a `mce view` do corte que a prancha deixar em

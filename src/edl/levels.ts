@@ -135,7 +135,7 @@ export const MAX_PATTERNS: RequiredPattern[] = [
     feature: 'presenter',
     minPerMinute: 1,
     when: 'sempre que a tela inteira for de conteúdo: o footage encolhe para o cartão em vez de sumir',
-    how: 'no overlay: "presenter": { "slot": "right" | "left" | "pip-br" | "pip-bl" | "pip-tr" | "pip-tl", "focus": { "x": 0.5, "y": 0.4 } }',
+    how: 'no overlay: "presenter": { "slot": "right" | "left" | "pip-br" | "pip-bl" | "pip-tr" | "pip-tl" } (focus "auto" por padrão: o render enquadra o rosto)',
   },
   {
     id: 'explicacao-dividida',

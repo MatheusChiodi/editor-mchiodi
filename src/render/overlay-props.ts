@@ -2,7 +2,7 @@
  * EDL → props da composição `Overlay`, em módulo puro (sem Node): o render usa e o MChiodi Cut também, para que a
  * camada de gráficos do preview no navegador seja a mesma do vídeo final.
  */
-import { isWindowSlot, linkStages, normalizePushes, type PresenterSpec } from '../../motion/src/arsenal/stage.ts';
+import { isWindowSlot, linkStages, normalizePushes, type Point, type PresenterSpec } from '../../motion/src/arsenal/stage.ts';
 import type { OverlayItem, OverlayProps } from '../../motion/src/types.ts';
 import type { VerticalFrame } from '../../motion/src/vertical.ts';
 import type { Word } from '../analyze/types.ts';
@@ -15,25 +15,31 @@ import { effectOverlays, placeEffects } from './effects.ts';
 /**
  * Palco de um overlay. `WindowStage` com `kind: "footage"` é um palco por definição: o footage inteiro (o vídeo
  * já é a tela gravada) encolhe para dentro do corpo da janela, sem precisar de `presenter` na EDL.
- * Camada fixa (`layer: "persistent"`) nunca é palco.
+ * Camada fixa (`layer: "persistent"`) nunca é palco. Foco `"auto"` vem resolvido em `stageFocus` (src/render/stage-focus.ts);
+ * sem ele (editor no navegador, sem detector), cai no padrão antigo.
  */
-export function stagePresenter(overlay: Pick<Overlay, 'component' | 'props' | 'presenter' | 'layer'>): PresenterSpec | null {
+export function stagePresenter(overlay: Pick<Overlay, 'component' | 'props' | 'presenter' | 'layer'> & { id?: string }, stageFocus?: ReadonlyMap<string, Point>): PresenterSpec | null {
   if (overlay.layer === 'persistent') return null;
   if (overlay.component === 'WindowStage' && overlay.props.kind === 'footage') {
     const given = overlay.presenter;
     const slot = given && isWindowSlot(given.slot) ? given.slot : overlay.props.mirror === true ? 'window-right' : 'window';
     return { slot, focus: { x: 0.5, y: 0.5 }, backdrop: given?.backdrop ?? 'paper', ...(given?.transitionSec ? { transitionSec: given.transitionSec } : {}) };
   }
-  return overlay.presenter;
+  if (!overlay.presenter) return null;
+  const { focus, ...rest } = overlay.presenter;
+  return { ...rest, focus: focus === 'auto' ? ((overlay.id && stageFocus?.get(overlay.id)) || AUTO_FALLBACK) : focus };
 }
 
+/** Foco de um palco `"auto"` que não foi resolvido (mesmo valor de DEFAULT_STAGE_FOCUS em stage-focus.ts). */
+const AUTO_FALLBACK: Point = { x: 0.5, y: 0.4 };
+
 /** Traduz a EDL (tempo da fonte) nas props da composição `Overlay` (frames do vídeo final). */
-export function buildOverlayProps(edl: Edl, timeline: Timeline, transcript: { words: Word[] }, vertical?: VerticalFrame): OverlayProps {
+export function buildOverlayProps(edl: Edl, timeline: Timeline, transcript: { words: Word[] }, vertical?: VerticalFrame, stageFocus?: ReadonlyMap<string, Point>): OverlayProps {
   const { fps, width, height } = edl.output;
   const totalFrames = Math.round(timeline.durationSec * fps);
   const presenters = new Map<string, PresenterSpec>();
   const overlays: OverlayItem[] = edl.overlays.map((overlay) => {
-    const presenter = stagePresenter(overlay);
+    const presenter = stagePresenter(overlay, stageFocus);
     if (presenter) presenters.set(overlay.id, presenter);
     const at = sourceToOutput(timeline, overlay.at);
     if (at === null) throw new Error(`Overlay "${overlay.id}" está ancorado num trecho cortado (${overlay.at}s)`);

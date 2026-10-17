@@ -14,7 +14,7 @@ import type { FocusSample } from '../render/focus.ts';
  */
 
 /** Sobe quando a heurística muda: invalida os caches antigos. */
-export const FOCUS_ALGO_VERSION = 2;
+export const FOCUS_ALGO_VERSION = 3;
 
 export interface DetectParams {
   /** quadros por segundo amostrados */
@@ -58,6 +58,8 @@ export interface FrameProfile {
   motion: Float64Array;
   /** pixels de pele por coluna (ponderados) */
   skin: Float64Array;
+  /** 1 onde o pixel é pele (linha a linha), para achar a altura do rosto */
+  skinMask: Uint8Array;
 }
 
 /**
@@ -73,6 +75,7 @@ export function frameProfile(rgb: Uint8Array, previous: Uint8Array | null, width
   const gray = new Uint8Array(width * height);
   const motion = new Float64Array(width);
   const skin = new Float64Array(width);
+  const skinMask = new Uint8Array(width * height);
   for (let y = 0; y < height; y += 1) {
     const weight = rowWeight(y / height);
     for (let x = 0; x < width; x += 1) {
@@ -83,10 +86,13 @@ export function frameProfile(rgb: Uint8Array, previous: Uint8Array | null, width
       const value = luma(r, g, b);
       gray[pixel] = value;
       if (previous) motion[x] = motion[x]! + Math.max(0, Math.abs(value - previous[pixel]!) - MOTION_FLOOR) * weight;
-      if (isSkin(r, g, b)) skin[x] = skin[x]! + weight;
+      if (isSkin(r, g, b)) {
+        skin[x] = skin[x]! + weight;
+        skinMask[pixel] = 1;
+      }
     }
   }
-  return { gray, motion, skin };
+  return { gray, motion, skin, skinMask };
 }
 
 function normalized(values: Float64Array, floor: number): Float64Array {
@@ -140,6 +146,46 @@ export function estimateCenter(motion: Float64Array, skin: Float64Array, height:
   return { x: (weight > 0 ? moment / weight : peak + 0.5) / width, confidence: Math.min(1, Math.max(0, (top - mean) / top)) };
 }
 
+/**
+ * Centro do rosto (frações do quadro) a partir do centro do apresentador `x`. Altura: na faixa de colunas em volta
+ * de `x`, a primeira corrida de linhas com pele (de cima para baixo) é testa→queixo; o cabelo não é pele e o
+ * pescoço, mais estreito, fica abaixo do limiar. Só olha os 80% de cima (mãos e braços moram embaixo). Largura:
+ * centróide da pele nessas linhas numa faixa mais larga (o centro do apresentador puxa para o lado do gesto e do
+ * tronco; o cartão vertical do palco precisa do rosto). `null` quando quase não há pele na faixa.
+ */
+export function estimateFace(skinMask: Uint8Array, width: number, height: number, x: number): { x: number; y: number } | null {
+  const half = Math.max(1, Math.round(width * 0.05));
+  const center = Math.round(x * width);
+  const from = Math.max(0, center - half);
+  const to = Math.min(width - 1, center + half);
+  const rows = Math.max(1, Math.round(height * 0.8));
+  const counts = new Float64Array(rows);
+  for (let y = 0; y < rows; y += 1) {
+    let count = 0;
+    for (let column = from; column <= to; column += 1) count += skinMask[y * width + column]!;
+    counts[y] = count;
+  }
+  const peak = Math.max(...counts);
+  if (peak < (to - from + 1) * 0.2) return null;
+  const threshold = peak * 0.4;
+  const first = counts.findIndex((count) => count >= threshold);
+  let last = first;
+  // tolera uma linha falhada (óculos, sombra) sem sair do rosto
+  while (last + 1 < rows && (counts[last + 1]! >= threshold || (last + 2 < rows && counts[last + 2]! >= threshold))) last += 1;
+  const wide = Math.max(1, Math.round(width * 0.1));
+  let weight = 0;
+  let moment = 0;
+  for (let y = first; y <= last; y += 1) {
+    for (let column = Math.max(0, center - wide); column <= Math.min(width - 1, center + wide); column += 1) {
+      if (skinMask[y * width + column]) {
+        weight += 1;
+        moment += column + 0.5;
+      }
+    }
+  }
+  return { x: weight > 0 ? moment / weight / width : x, y: (first + last + 1) / 2 / height };
+}
+
 /** Acumula o movimento entre quadros (decaimento) e devolve uma amostra por quadro. */
 export class FocusAccumulator {
   private previous: Uint8Array | null = null;
@@ -159,7 +205,13 @@ export class FocusAccumulator {
     for (let x = 0; x < this.width; x += 1) this.motion[x] = MOTION_DECAY * this.motion[x]! + (1 - MOTION_DECAY) * profile.motion[x]!;
     this.previous = profile.gray;
     const { x, confidence } = estimateCenter(this.motion, profile.skin, this.height);
-    const sample = { t: Number((this.index / this.fps).toFixed(3)), x: Number(x.toFixed(4)), confidence: Number(confidence.toFixed(3)) };
+    const face = estimateFace(profile.skinMask, this.width, this.height, x);
+    const sample: FocusSample = {
+      t: Number((this.index / this.fps).toFixed(3)),
+      x: Number(x.toFixed(4)),
+      confidence: Number(confidence.toFixed(3)),
+      ...(face ? { face: { x: Number(face.x.toFixed(4)), y: Number(face.y.toFixed(4)) } } : {}),
+    };
     this.index += 1;
     return sample;
   }
@@ -167,9 +219,17 @@ export class FocusAccumulator {
 
 // ── track externo (correção à mão) ──────────────────────────────────────────────
 
+const trackSample = z.object({
+  t: z.number().nonnegative(),
+  x: z.number().min(0).max(1),
+  /** centro do rosto (frações do quadro), opcional: sem ele o palco usa `x` e a faixa do rosto */
+  face: z.object({ x: z.number().min(0).max(1), y: z.number().min(0).max(1) }).optional(),
+  confidence: z.number().min(0).max(1).default(1),
+});
+
 export const focusTrackFileSchema = z.union([
-  z.object({ samples: z.array(z.object({ t: z.number().nonnegative(), x: z.number().min(0).max(1), confidence: z.number().min(0).max(1).default(1) })).min(1) }),
-  z.array(z.object({ t: z.number().nonnegative(), x: z.number().min(0).max(1), confidence: z.number().min(0).max(1).default(1) })).min(1),
+  z.object({ samples: z.array(trackSample).min(1) }),
+  z.array(trackSample).min(1),
 ]);
 
 /** `analysis/focus-track.json`: `{ samples: [{ t, x, confidence? }] }` (ou só a lista); `x` = centro do apresentador. */

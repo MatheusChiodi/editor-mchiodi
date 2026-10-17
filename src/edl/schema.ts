@@ -69,8 +69,11 @@ export const overlaySchema = z.object({
     .object({
       /** `window`/`window-right`: o footage inteiro vai para dentro da janela do `WindowStage` (o vídeo já é a tela gravada) */
       slot: z.enum(['right', 'left', 'pip-br', 'pip-bl', 'pip-tr', 'pip-tl', 'window', 'window-right']),
-      /** onde está o rosto no footage (0–1) */
-      focus: z.object({ x: z.number().min(0).max(1), y: z.number().min(0).max(1) }).default({ x: 0.5, y: 0.4 }),
+      /**
+       * onde está o rosto no footage (0–1). `"auto"` (padrão): o render acha o apresentador no intervalo do palco
+       * (detector do foco, analysis/focus-detect.json) e enquadra pela proporção do slot (src/render/stage-focus.ts)
+       */
+      focus: z.union([z.literal('auto'), z.object({ x: z.number().min(0).max(1), y: z.number().min(0).max(1) })]).default('auto'),
       /** aproximação do rosto dentro do cartão; sem valor, a padrão do slot */
       zoom: z.number().min(1).max(3).optional(),
       /** fundo atrás do componente; `none` para componente que já pinta o quadro inteiro */

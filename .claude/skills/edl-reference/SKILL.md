@@ -81,9 +81,15 @@ gráficos, e efeito de câmera conta como zoom. No `max` ele lista também os pa
 
 ### Palco e rasgo (linguagem do nível `max`, STYLE.md §0)
 
-- `"presenter": { "slot": "right" | "left" | "pip-br" | "pip-bl" | "pip-tr" | "pip-tl", "focus": { "x": 0.5, "y": 0.4 }, "zoom": 1.3, "backdrop": "paper" }`:
+- `"presenter": { "slot": "right" | "left" | "pip-br" | "pip-bl" | "pip-tr" | "pip-tl", "zoom": 1.3, "backdrop": "paper" }`:
   durante o overlay o footage encolhe para um cartão nesse slot e o resto do quadro vira papel; o componente desenha no papel.
-  Entrada (0,5s) e saída (0,4s) são animadas junto com o footage. `focus` = onde está o rosto na fonte; `zoom` opcional (≥ 1).
+  Entrada (0,5s) e saída (0,4s) são animadas junto com o footage. `zoom` opcional (≥ 1).
+  `focus`: **omita** (ou `"auto"`, o padrão). O render acha o rosto no intervalo do palco (detector do foco, cache em
+  `analysis/focus-detect.json`, track à mão em `analysis/focus-track.json` vence) e enquadra pela proporção do slot: o cartão
+  `right`/`left` mostra só ~27% da largura da fonte e centra o rosto exato; o canto (`pip-*`) tolera mais. O log do render
+  mostra o foco escolhido por palco. **Não copie `{ "x": 0.47, "y": 0.4 }` de outro vídeo nem o `focusX` do Short**: o rosto
+  muda de lugar e o cartão estreito corta metade dele. Número (`{ "x": 0.41, "y": 0.3 }`, onde está o rosto na fonte) só para
+  corrigir o detector; se ele cortar o rosto, o render avisa e o `mce eval` reprova com `rosto-fora-do-palco`.
   Vale para qualquer componente ou cena. Palcos colados (fim de um = início do outro) deslizam o cartão de um slot ao outro.
 - `"wipe": "tear"`: o overlay entra por um rasgo de papel (0,4s); para cena de tela cheia.
 - Componentes da linguagem: `PillStack` (`items[].text/tone/at/strikeAt/indent`, `title`, `corner`), `PhraseReveal` (`text` com `*itálico coral*`

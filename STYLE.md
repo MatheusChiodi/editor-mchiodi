@@ -77,16 +77,17 @@ no teto de 40s. Tela gravada entra na conta dos 80% quando é editada (dentro de
 
 Mínimo por minuto arredonda para baixo e nunca é menos que 1. Stamp, `Callout`, `Counter` e o resto do arsenal continuam valendo por cima disso.
 
-**Palco (`presenter`)**: qualquer overlay pode levar `"presenter": { "slot": ..., "focus": { "x": 0.5, "y": 0.4 }, "zoom": 1.3 }`.
+**Palco (`presenter`)**: qualquer overlay pode levar `"presenter": { "slot": ..., "zoom": 1.3 }`.
 Durante o overlay o footage encolhe para um cartão (borda paper, raio 40, sombra) e o resto do quadro vira papel, onde o
 componente desenha. Slots: `right`/`left` (cartão vertical, 23,5% × 88%) e `pip-br`/`pip-bl`/`pip-tr`/`pip-tl` (quadro de 21% × 36%).
-`focus` é onde está o rosto no footage (`pnpm mce frame <slug> --at <s>` para conferir); `zoom` aproxima. Dois palcos colados
+`focus` fica em `"auto"` (omita): o render acha o rosto no trecho e enquadra pelo slot; número só para corrigir o detector, e o eval acusa
+`rosto-fora-do-palco` se ele cortar o rosto. `zoom` aproxima. Dois palcos colados
 (um termina no frame em que o outro começa) viram um movimento só: o cartão desliza de um slot para o outro. `backdrop`:
 `paper` (padrão), `night` ou `none`.
 
 ```json
 { "id": "ate-aqui", "component": "SplitExplainer", "at": 23.3, "duration": 13.5,
-  "presenter": { "slot": "right", "focus": { "x": 0.48, "y": 0.42 } }, "hidesCaptions": true,
+  "presenter": { "slot": "right" }, "hidesCaptions": true,
   "props": { "eyebrow": "Até aqui", "title": "Você personalizava *como* ele trabalha",
     "cards": [ { "icon": "bolt", "label": "Skills" }, { "icon": "cloud", "label": "Conectores" }, { "icon": "gear", "label": "Ferramentas" } ],
     "revealAt": [6.9, 8.1, 9.6], "note": { "text": "tudo definido nos seus documentos", "at": 11.2 } },

@@ -21,8 +21,8 @@ export interface ShortFocusOptions {
   onProgress?: ProgressFn;
 }
 
-/** Série do apresentador: o track à mão (analysis/focus-track.json) vence o detector. */
-async function loadSamples(paths: ProjectPaths, edl: Edl, options: ShortFocusOptions): Promise<{ samples: FocusSample[]; origin: ShortFocusResult['origin'] }> {
+/** Série do apresentador: o track à mão (analysis/focus-track.json) vence o detector. Short e palcos usam a mesma. */
+export async function loadFocusSamples(paths: ProjectPaths, edl: Edl, options: ShortFocusOptions): Promise<{ samples: FocusSample[]; origin: ShortFocusResult['origin'] }> {
   const manual = manualTrackPath(paths.analysisDir);
   if (existsSync(manual)) return { samples: parseFocusTrackFile(JSON.parse(readFileSync(manual, 'utf8'))), origin: 'manual' };
   const proxy = existsSync(paths.analysis) ? readJson<Analysis>(paths.analysis).proxy : paths.proxy;
@@ -39,7 +39,7 @@ async function loadSamples(paths: ProjectPaths, edl: Edl, options: ShortFocusOpt
 /** Plano de foco para o trecho de `edl.shorts` (detecta ou lê o track, e planeja por trecho contínuo). */
 export async function planShortFocus(paths: ProjectPaths, edl: Edl, options: ShortFocusOptions = {}): Promise<ShortFocusResult> {
   if (!edl.shorts) throw new Error('A EDL não define `shorts` (trecho do vídeo para o formato vertical)');
-  const { samples, origin } = await loadSamples(paths, edl, options);
+  const { samples, origin } = await loadFocusSamples(paths, edl, options);
   const focus = edl.shorts.focusX;
   const plan = planFocus(samples, shortsSpans(edl), {
     crop: cropFraction(edl.source.width, edl.source.height),

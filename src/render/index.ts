@@ -21,6 +21,8 @@ import { placeBroll, placeLayout, resolveScreen, screenAlign } from './layout.ts
 import { buildOverlayProps, overlayFile, renderBumper, renderOverlay } from './overlay.ts';
 import { formatShortsPick, pickShortsOverlays, shortsEdl, shortsFrame, SHORTS_MAX_SEC, verticalCrop } from './shorts.ts';
 import { resolveShortFocus } from './shorts-focus.ts';
+import { formatStageFocus, stageFocusMap } from './stage-focus.ts';
+import { loadStageFocus } from './stage-focus-io.ts';
 import { prepareStabilize } from './stabilize.ts';
 import { placeStages, reframeFilters, windowLayouts } from './reframe.ts';
 import { gradeFilters, placeZooms, zoomFilters } from './video.ts';
@@ -98,7 +100,11 @@ export async function render(paths: ProjectPaths, source: Edl, options: RenderOp
 
   // tela gravada: só entra se a EDL define o arquivo e algum segmento que a use (e nunca no Short)
   // Short: cada overlay do trecho vai para uma caixa vertical que não cobre legenda nem rosto
-  const props = buildOverlayProps(edl, timeline, transcript, shorts ? shortsFrame(edl) : undefined);
+  // palcos: foco "auto" acha o apresentador no intervalo; foco fixo que corta o rosto vira aviso
+  const stageFocus = shorts || options.skipOverlay ? null : await loadStageFocus(paths, edl, timeline, { onProgress: options.onProgress });
+  if (stageFocus?.missing) log(`aviso: foco dos palcos sem detector (${stageFocus.missing})`);
+  for (const line of stageFocus ? formatStageFocus(stageFocus.plans) : []) log(line);
+  const props = buildOverlayProps(edl, timeline, transcript, shorts ? shortsFrame(edl) : undefined, stageFocus ? stageFocusMap(stageFocus.plans) : undefined);
   if (shorts) log(formatShortsPick(pickShortsOverlays(source, timeline)));
   const staged = !options.skipOverlay;
   const layout = shorts ? [] : [...placeLayout(edl.layout.segments, timeline), ...(staged ? windowLayouts(props.overlays, fps) : [])];

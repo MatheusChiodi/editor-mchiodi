@@ -32,6 +32,8 @@ export interface FocusSample {
   x: number;
   /** 0–1: o quanto o detector confia na amostra */
   confidence: number;
+  /** centro do rosto (frações do quadro, y = 0 no topo); só quando o detector achou pele na faixa. Usado pelos palcos */
+  face?: { x: number; y: number };
 }
 
 export interface Span {
