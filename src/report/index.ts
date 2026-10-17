@@ -4,6 +4,7 @@ import { sourceToOutput, type Timeline } from '../edl/timeline.ts';
 import type { EvalReport } from '../eval/index.ts';
 import { formatChapter, formatClock } from '../lib/time.ts';
 import { bumperDurations } from '../render/bumpers.ts';
+import type { RetentionAnalysis } from '../retention/index.ts';
 import { MODELS_PROJECT, modelsOf, type SceneInfo, sceneLinks } from '../scenes/models.ts';
 import { SCENE_PREFIX } from '../scenes/sync.ts';
 
@@ -65,6 +66,8 @@ export interface ReportInput {
   renderedFile: string | null;
   /** cenas e modelos lidos do fonte (`loadScenes()`), para a seção "Modelos"; sem isso a seção sai vazia */
   scenes?: SceneInfo[];
+  /** curva do YouTube importada (`mce retention import`); sem ela a seção "Retenção" não sai */
+  retention?: RetentionAnalysis | null;
 }
 
 export interface ReportModels {
@@ -106,6 +109,35 @@ function modelsSection(edl: Edl, scenes: SceneInfo[]): string[] {
   for (const model of created) lines.push(`- ${line(model)}`);
   if (unmodeled.length) {
     lines.push('', `Cenas sob medida ainda sem modelo (${unmodeled.length}): ${unmodeled.map((key) => `\`${key}\``).join(', ')} → \`pnpm mce scenes audit ${edl.project}\``);
+  }
+  return lines;
+}
+
+/** Seção "Retenção": o que o público fez com o vídeo, ligado aos trechos da EDL. */
+export function retentionSection(retention: RetentionAnalysis): string[] {
+  const pct = (value: number) => `${(value * 100).toFixed(0)}%`;
+  const { summary } = retention;
+  const lines = [
+    '',
+    '## Retenção',
+    '',
+    `- Curva do YouTube importada em ${retention.importedAt.slice(0, 10)} (EDL v${retention.edlVersion}, ${formatClock(retention.durationSec, 0)})`,
+    `- Média ${pct(summary.average)} · aos 30 s ${pct(summary.at30)} · no fim ${pct(summary.end)} · queda típica ${(-summary.typicalPerMin).toFixed(1)} p.p./min`,
+  ];
+  if (retention.drops.length === 0) lines.push('- Nenhuma queda brusca.');
+  else {
+    lines.push('', '| Saída | Fonte | Queda | Clipe | Capítulo | Contexto |', '|---|---|---|---|---|---|');
+    for (const drop of retention.drops) {
+      const { moment } = drop;
+      lines.push(
+        `| ${formatClock(drop.start, 0)}–${formatClock(drop.end, 0)} | ${moment.sourceAt === null ? '(vinheta)' : formatClock(moment.sourceAt, 1)} | ${(drop.amount * 100).toFixed(1)} p.p. | ${moment.clip ? `\`${moment.clip.id}\`` : '—'} | ${moment.chapter ?? '—'} | ${drop.hints.join(', ') || '—'} |`,
+      );
+    }
+    lines.push('', 'Lições:');
+    for (const lesson of retention.lessons) lines.push(`- ${lesson}`);
+  }
+  for (const spike of retention.spikes) {
+    lines.push(`- rewatch +${(spike.amount * 100).toFixed(1)} p.p. em ${formatClock(spike.start, 0)}${spike.moment.overlays.length ? ` (${spike.moment.overlays.join(', ')})` : ''}`);
   }
   return lines;
 }
@@ -204,6 +236,8 @@ export function buildReport(input: ReportInput): string {
     lines.push('', '## Capítulos', '', '```', renderChapters(chapters).trimEnd(), '```');
     for (const problem of problems) lines.push(`- atenção: ${problem}`);
   }
+
+  if (input.retention) lines.push(...retentionSection(input.retention));
 
   lines.push('', '## Autoavaliação', '');
   if (input.evaluations.length === 0) lines.push('Nenhuma avaliação registrada para este projeto.');

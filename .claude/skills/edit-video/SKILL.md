@@ -14,6 +14,8 @@ EDL na skill `edl-reference`.
 - `pnpm mce status <slug>`: se o projeto já existe, continue do "próximo passo" e leia `projects/<slug>/project.md`.
 - Vídeo novo: `pnpm mce analyze "<arquivo>"` (o slug sai do nome do arquivo; `-p <slug>` para escolher).
 - Biblioteca de SFX vazia? `pnpm mce assets init`.
+- Opcional, se já há vídeos com retenção importada: `pnpm mce retention lessons` antes de dirigir. Diz onde o público
+  do canal sai (abertura, explicação longa sem gráfico, troca de capítulo) e o que o faz rever; dirija contra esses padrões.
 - **Nível de edição** (`limpa`, `normal`, `pro`, `max`): é o Matheus quem escolhe. "Edição profissional", "lotada",
   "simples" no pedido → use o nível correspondente; sem menção, vale o padrão (`edit.level`). `pnpm mce levels <nível>`
   mostra os alvos e como dirigir nele. Não troque o nível por conta própria.

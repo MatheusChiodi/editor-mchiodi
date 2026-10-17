@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { Command } from 'commander';
 
@@ -34,13 +34,13 @@ import { ARSENAL_KINDS, type ArsenalKind, catalog, counts, formatCatalog, search
 import { renderGallery } from '../arsenal/gallery.ts';
 import { generateSfx, listAssets } from '../assets/library.ts';
 import { collectEvaluations, evaluate, formatReport } from '../eval/index.ts';
-import { buildChapters, buildReport, renderChapters } from '../report/index.ts';
-import { bumperDurations } from '../render/bumpers.ts';
+import { writeReport } from '../report/write.ts';
 import { render, renderDir } from '../render/index.ts';
 import { rankShortCandidates } from '../render/shorts.ts';
 import { hasVidstab } from '../render/stabilize.ts';
 import { registerAnalogies } from '../analogy/cli.ts';
 import { registerPack } from '../pack/cli.ts';
+import { registerRetention } from '../retention/cli.ts';
 import { registerTech } from '../tech/cli.ts';
 import { bareGroup, userPath } from './invocation.ts';
 
@@ -240,23 +240,9 @@ program
   .description('Gera output/<projeto>/relatorio.md e capitulos.txt a partir da EDL e das avaliações')
   .option('-v, --edl <n>', 'versão da EDL (padrão: a mais recente)', Number)
   .action((project: string, options: { edl?: number }) => {
-    const paths = requireProject(project);
-    const current = loadEdl(paths, options.edl);
-    const timeline = buildTimeline(current.clips, current.output.fps);
-    const finalFile = join(paths.outputDir, 'final.mp4');
-    const report = buildReport({
-      edl: current,
-      timeline,
-      history: listVersions(paths).map((version) => loadEdl(paths, version)),
-      evaluations: collectEvaluations(paths.rendersDir),
-      renderedFile: existsSync(finalFile) ? finalFile : null,
-      scenes: loadScenes(),
-    });
-    mkdirSync(paths.outputDir, { recursive: true });
-    writeFileSync(join(paths.outputDir, 'relatorio.md'), report, 'utf8');
-    const { chapters, problems } = buildChapters(current, timeline, bumperDurations(current).introSec);
-    writeFileSync(join(paths.outputDir, 'capitulos.txt'), renderChapters(chapters), 'utf8');
-    log(`${join(paths.outputDir, 'relatorio.md')}\n${join(paths.outputDir, 'capitulos.txt')} (${chapters.length} capítulos)`);
+    const { report, chapters, count, problems } = writeReport(requireProject(project), options.edl);
+    log(`${report}
+${chapters} (${count} capítulos)`);
     for (const problem of problems) log(`atenção: ${problem}`);
   });
 
@@ -573,6 +559,7 @@ edl
   });
 
 registerPack(program, log, fromUser);
+registerRetention(program, log, fromUser);
 registerAnalogies(program, log);
 registerTech(program, log);
 
