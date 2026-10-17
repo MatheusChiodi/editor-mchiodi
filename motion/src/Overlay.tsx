@@ -14,7 +14,7 @@ export function resolveComponent(name: string): ComponentEntry | undefined {
 }
 
 /** Camada única de gráficos sobre o footage. Renderizada com alfa e composta pelo ffmpeg. */
-export const Overlay: React.FC<OverlayProps> = ({ fps, captions, captionStyle, overlays }) => {
+export const Overlay: React.FC<OverlayProps> = ({ fps, captions, captionStyle, captionPreset, overlays }) => {
   const hidden = overlays
     .filter((item) => item.hidesCaptions)
     .map((item): [number, number] => [item.from, item.from + item.durationInFrames]);
@@ -42,7 +42,7 @@ export const Overlay: React.FC<OverlayProps> = ({ fps, captions, captionStyle, o
           </Sequence>
         );
       })}
-      <Captions captions={captions} style={captionStyle} hidden={hidden} />
+      <Captions captions={captions} style={captionStyle} preset={captionPreset} hidden={hidden} />
     </AbsoluteFill>
   );
 };

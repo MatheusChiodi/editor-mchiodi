@@ -4,6 +4,7 @@ import { EntranceGallery, galleryPages } from './arsenal/EntranceGallery';
 import { Fx, fxVariants } from './arsenal/fx/Fx';
 import { Stinger, stingerVariants } from './arsenal/stingers/Stinger';
 import { Captions } from './captions/Captions';
+import { CAPTION_PRESETS, type CaptionPreset } from './captions/presets';
 import { cineDemos } from './cine/demos';
 import { registry } from './components/registry';
 import { Overlay } from './Overlay';
@@ -29,9 +30,9 @@ const overlayMetadata: CalculateMetadataFunction<OverlayProps> = ({ props }) => 
   defaultProResProfile: '4444',
 });
 
-const CaptionsPreview: React.FC<{ style: CaptionStyle }> = ({ style }) => (
+const CaptionsPreview: React.FC<{ style: CaptionStyle; preset?: CaptionPreset }> = ({ style, preset }) => (
   <Backdrop>
-    <Captions captions={sampleCaptions} style={style} />
+    <Captions captions={sampleCaptions} style={style} preset={preset} />
   </Backdrop>
 );
 
@@ -82,6 +83,21 @@ export const RemotionRoot: React.FC = () => (
         durationInFrames={FPS * 8}
         defaultProps={{ style: 'shorts' as const }}
       />
+      {/* um por estilo (`captions.preset`), nos dois formatos: `pnpm mce still Legendas-<preset>-long` */}
+      {CAPTION_PRESETS.flatMap((preset) =>
+        (['long', 'shorts'] as const).map((style) => (
+          <Composition
+            key={`${preset}-${style}`}
+            id={`Legendas-${preset}-${style}`}
+            component={CaptionsPreview}
+            fps={FPS}
+            width={style === 'long' ? 1920 : 1080}
+            height={style === 'long' ? 1080 : 1920}
+            durationInFrames={FPS * 8}
+            defaultProps={{ style, preset }}
+          />
+        )),
+      )}
     </Folder>
     <Folder name="Entradas">
       {galleryPages.map((ids, index) => (

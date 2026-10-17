@@ -3,6 +3,7 @@ import { AbsoluteFill, interpolate, Sequence, useCurrentFrame, useVideoConfig } 
 
 import { motion, theme } from '../theme';
 import type { CaptionStyle, StyledCaption } from '../types';
+import { ACTIVE_TAIL_MS, type CaptionLook, type CaptionPreset, captionPresets, enforceMaxWords, resolveLook, wordPhase } from './presets';
 
 interface Page {
   startMs: number;
@@ -27,7 +28,112 @@ export function toPages(captions: StyledCaption[]): Page[] {
 
 const HOLD_MS = 280;
 
-const CaptionPage: React.FC<{ page: Page; style: CaptionStyle; offsetMs: number }> = ({ page, style, offsetMs }) => {
+interface WordProps {
+  word: StyledCaption;
+  nowMs: number;
+  look: CaptionLook;
+}
+
+/** Uma palavra da página. Cada estilo muda só como a palavra ativa se destaca; o `padrao` é o visual de sempre. */
+const CaptionWord: React.FC<WordProps> = ({ word, nowMs, look }) => {
+  const { spoken, active, progress } = wordPhase(word, nowMs);
+  const text = word.text.trim();
+  const highlighted = Boolean(word.highlight) && spoken;
+  const pop = interpolate(nowMs, [word.startMs, word.startMs + 110], [0, 1], {
+    easing: motion.enter,
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+  });
+  const base: React.CSSProperties = {
+    display: 'inline-block',
+    color: highlighted ? theme.color[look.highlightColor] : theme.color.white,
+    opacity: spoken ? 1 : look.upcomingOpacity,
+    // contorno escuro atrás do preenchimento: lê em fundo claro ou escuro
+    ...(look.stroke > 0 ? { WebkitTextStroke: `${look.stroke}px ${theme.color.ink}`, paintOrder: 'stroke fill' } : {}),
+    textShadow: look.shadow,
+  };
+
+  switch (look.active) {
+    case 'scale':
+      return (
+        <span
+          style={{
+            ...base,
+            color: active && !highlighted && look.activeColor !== 'white' ? theme.color[look.activeColor] : base.color,
+            scale: String(1 + (active ? look.activeScale : 0) * pop),
+          }}
+        >
+          {text}
+        </span>
+      );
+    case 'pop': {
+      // entra com overshoot (curva pop) quando é dita; depois de falada assenta no tamanho normal
+      const enter = interpolate(nowMs, [word.startMs, word.startMs + motion.fast * 1000], [0.6, 1], {
+        easing: motion.pop,
+        extrapolateLeft: 'clamp',
+        extrapolateRight: 'clamp',
+      });
+      const settle = interpolate(nowMs, [word.endMs + ACTIVE_TAIL_MS, word.endMs + ACTIVE_TAIL_MS + 120], [1, 0], {
+        easing: motion.exit,
+        extrapolateLeft: 'clamp',
+        extrapolateRight: 'clamp',
+      });
+      return (
+        <span style={{ ...base, opacity: spoken ? pop : look.upcomingOpacity, scale: String(enter * (1 + look.activeScale * settle)) }}>
+          {text}
+        </span>
+      );
+    }
+    case 'fill': {
+      // duas camadas iguais: a de cima (cor da marca) é recortada pelo progresso da fala
+      const reveal = spoken ? progress : 0;
+      return (
+        <span style={{ ...base, color: theme.color.white, position: 'relative' }}>
+          {text}
+          <span
+            aria-hidden
+            style={{
+              ...base,
+              position: 'absolute',
+              left: 0,
+              top: 0,
+              color: theme.color[word.highlight ? look.highlightColor : look.activeColor],
+              clipPath: `inset(-20% ${(1 - reveal) * 100}% -20% -10%)`,
+            }}
+          >
+            {text}
+          </span>
+        </span>
+      );
+    }
+    case 'pill': {
+      const show = active ? pop : 0;
+      return (
+        // sobre a pill o contorno escuro some: o fundo já dá o contraste
+        <span style={{ ...base, position: 'relative', ...(active ? { color: theme.color.white, WebkitTextStroke: undefined, textShadow: 'none' } : {}) }}>
+          <span
+            aria-hidden
+            style={{
+              position: 'absolute',
+              inset: '-0.04em -0.22em',
+              borderRadius: theme.radius.panel,
+              background: theme.color[look.activeColor],
+              boxShadow: theme.shadow.card,
+              opacity: show,
+              scale: String(0.85 + 0.15 * show),
+              zIndex: -1,
+            }}
+          />
+          {text}
+        </span>
+      );
+    }
+    case 'none':
+      return <span style={base}>{text}</span>;
+  }
+};
+
+const CaptionPage: React.FC<{ page: Page; style: CaptionStyle; look: CaptionLook; offsetMs: number }> = ({ page, style, look, offsetMs }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const nowMs = offsetMs + (frame / fps) * 1000;
@@ -52,48 +158,27 @@ const CaptionPage: React.FC<{ page: Page; style: CaptionStyle; offsetMs: number 
       <div
         style={{
           display: 'flex',
-          flexWrap: 'wrap',
+          flexWrap: look.singleLine ? 'nowrap' : 'wrap',
+          whiteSpace: look.singleLine ? 'nowrap' : undefined,
           justifyContent: 'center',
-          columnGap: shorts ? 22 : 18,
+          columnGap: look.wordGap,
           rowGap: 6,
           maxWidth: shorts ? 900 : 1500,
           opacity: enter,
           translate: `0 ${(1 - enter) * 14}px`,
           fontFamily: theme.font.body,
-          fontWeight: 800,
-          fontSize: shorts ? 84 : 58,
+          fontWeight: look.fontWeight,
+          fontSize: look.fontSize,
           lineHeight: 1.18,
           letterSpacing: '-0.01em',
-          textTransform: shorts ? 'uppercase' : 'none',
+          textTransform: look.uppercase ? 'uppercase' : 'none',
+          // a pill fica atrás do texto, mas dentro da página
+          isolation: look.active === 'pill' ? 'isolate' : undefined,
         }}
       >
-        {page.words.map((word, index) => {
-          const spoken = nowMs >= word.startMs;
-          const active = spoken && nowMs < word.endMs + 60;
-          const pop = interpolate(nowMs, [word.startMs, word.startMs + 110], [0, 1], {
-            easing: motion.enter,
-            extrapolateLeft: 'clamp',
-            extrapolateRight: 'clamp',
-          });
-          const highlighted = word.highlight && spoken;
-          return (
-            <span
-              key={index}
-              style={{
-                display: 'inline-block',
-                color: highlighted ? theme.color.coral : theme.color.white,
-                opacity: spoken ? 1 : 0.55,
-                scale: String(1 + (active ? 0.05 : 0) * pop),
-                // contorno escuro atrás do preenchimento: lê em fundo claro ou escuro
-                WebkitTextStroke: `${shorts ? 12 : 9}px ${theme.color.ink}`,
-                paintOrder: 'stroke fill',
-                textShadow: '0 6px 18px rgba(0,0,0,0.45)',
-              }}
-            >
-              {word.text.trim()}
-            </span>
-          );
-        })}
+        {page.words.map((word, index) => (
+          <CaptionWord key={index} word={word} nowMs={nowMs} look={look} />
+        ))}
       </div>
     </AbsoluteFill>
   );
@@ -102,11 +187,15 @@ const CaptionPage: React.FC<{ page: Page; style: CaptionStyle; offsetMs: number 
 export const Captions: React.FC<{
   captions: StyledCaption[];
   style: CaptionStyle;
+  /** estilo visual (`captions.preset`); sem valor, o `padrao` */
+  preset?: CaptionPreset;
   /** intervalos (em frames) em que um overlay ocupa a faixa das legendas */
   hidden?: [number, number][];
-}> = ({ captions, style, hidden = [] }) => {
+}> = ({ captions, style, preset = 'padrao', hidden = [] }) => {
   const { fps } = useVideoConfig();
-  const pages = useMemo(() => toPages(captions), [captions]);
+  const look = resolveLook(preset, style);
+  // o pipeline já pagina pelo estilo; aqui só garante o teto (prévias e props antigas)
+  const pages = useMemo(() => toPages(enforceMaxWords(captions, captionPresets[preset].maxWords)), [captions, preset]);
 
   return (
     <AbsoluteFill>
@@ -119,7 +208,7 @@ export const Captions: React.FC<{
         if (hidden.some(([start, end]) => from < end && from + durationInFrames > start)) return null;
         return (
           <Sequence key={index} from={from} durationInFrames={durationInFrames} premountFor={fps}>
-            <CaptionPage page={page} style={style} offsetMs={(from / fps) * 1000} />
+            <CaptionPage page={page} style={style} look={look} offsetMs={(from / fps) * 1000} />
           </Sequence>
         );
       })}

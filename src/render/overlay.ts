@@ -77,6 +77,7 @@ export function buildOverlayProps(edl: Edl, timeline: Timeline, transcript: Tran
     durationInFrames: totalFrames,
     captions: buildCaptions(transcript.words, timeline, edl.captions),
     captionStyle: edl.captions.style,
+    captionPreset: edl.captions.preset,
     overlays,
   };
 }

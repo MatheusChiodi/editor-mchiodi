@@ -1,6 +1,7 @@
 import type { Caption } from '@remotion/captions';
 
 import type { OverlayWipe, StagePlan } from './arsenal/stage';
+import type { CaptionPreset } from './captions/presets';
 
 export type CaptionStyle = 'long' | 'shorts';
 
@@ -31,5 +32,7 @@ export type OverlayProps = {
   durationInFrames: number;
   captions: StyledCaption[];
   captionStyle: CaptionStyle;
+  /** estilo visual das legendas (`captions.preset`); ausente = `padrao` */
+  captionPreset?: CaptionPreset;
   overlays: OverlayItem[];
 };

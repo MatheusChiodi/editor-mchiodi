@@ -233,6 +233,7 @@ e `stinger` (cortina nas cores da marca que cobre o corte). Cada uma traz `energ
 
 - Estilo `long`: até 5 palavras por página, base da tela, branco com contorno `ink`, Inter 800.
 - Estilo `shorts`: até 3 palavras, caixa alta, maiores e mais altas na tela.
+- Estilo visual (`captions.preset`, `pnpm mce arsenal captions`): `padrao` no 16:9 e `bold-shorts` no Short; `karaoke` em tutorial falado, `pop` só em trecho enérgico, `destaque-caixa` sobre fundo agitado/claro, `minimal` em vídeo sóbrio ou tela gravada densa. Um estilo por vídeo.
 - Destaque (`highlights`, em coral): termos técnicos e a palavra que carrega o sentido; no máximo 1 a cada 2 páginas.
 - Grafia de termos técnicos vai em `replacements` (ex.: `"riact" → "React"`).
 - Legenda se esconde quando um gráfico ocupa a base da tela (`hidesCaptions`); nos palcos do nível `max`, ver §0.

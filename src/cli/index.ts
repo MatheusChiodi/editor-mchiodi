@@ -355,7 +355,7 @@ program
 
 program
   .command('arsenal [kind]')
-  .description('Catálogo do que já existe pronto: components | models (modelos de animação reutilizáveis) | themes (temas de universo das analogias) | tech (tecnologias com ícone) | entrances | transitions | effects')
+  .description('Catálogo do que já existe pronto: components | models (modelos de animação reutilizáveis) | themes (temas de universo das analogias) | tech (tecnologias com ícone) | entrances | transitions | effects | captions (estilos de legenda)')
   .option('-s, --search <texto>', 'filtra por id, grupo ou descrição (sem categoria: busca em todas)')
   .option('-v, --verbose', 'mostra como usar cada item na EDL (nos modelos, também os slots)')
   .action((kind: string | undefined, options: { search?: string; verbose?: boolean }) => {
@@ -366,7 +366,7 @@ program
     }
     if (!kind) {
       const totals = counts();
-      for (const name of ARSENAL_KINDS) log(`${name.padEnd(12)} ${totals[name]} ${name === 'models' ? 'modelos de animação (crescem a cada vídeo)' : name === 'tech' ? 'tecnologias com ícone (tech:<id>)' : 'modelos'}   → pnpm mce arsenal ${name}`);
+      for (const name of ARSENAL_KINDS) log(`${name.padEnd(12)} ${totals[name]} ${name === 'models' ? 'modelos de animação (crescem a cada vídeo)' : name === 'tech' ? 'tecnologias com ícone (tech:<id>)' : name === 'captions' ? 'estilos de legenda (captions.preset)' : 'modelos'}   → pnpm mce arsenal ${name}`);
       return;
     }
     if (!ARSENAL_KINDS.includes(kind as ArsenalKind)) throw new Error(`categoria desconhecida: ${kind} (use ${ARSENAL_KINDS.join(', ')})`);

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { CAPTION_PRESETS } from '../../motion/src/captions/presets.ts';
 import { effects } from '../arsenal/effects.ts';
 import { transitions } from '../arsenal/transitions.ts';
 import { DEFAULT_LEVEL, LEVEL_IDS } from './levels.ts';
@@ -37,7 +38,10 @@ export const removalSchema = z.object({
 
 export const captionsSchema = z.object({
   enabled: z.boolean().default(true),
+  /** formato (posição e tamanho base): `long` 16:9, `shorts` 9:16 */
   style: z.enum(['long', 'shorts']).default('long'),
+  /** estilo visual (`pnpm mce arsenal captions`); `padrao` é o de sempre */
+  preset: z.enum(CAPTION_PRESETS).default('padrao'),
   maxWordsPerPage: z.number().int().min(1).max(12).default(5),
   /** palavras que recebem destaque (comparação sem acento/caixa) */
   highlights: z.array(z.string()).default([]),

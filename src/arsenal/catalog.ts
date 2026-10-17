@@ -1,4 +1,5 @@
 import { entrances } from '../../motion/src/arsenal/entrances.ts';
+import { captionPresets } from '../../motion/src/captions/presets.ts';
 import { registry } from '../../motion/src/components/registry.ts';
 import { themeItems } from '../analogy/report.ts';
 import { loadScenes, modelsOf, modelSnippet, type SceneInfo } from '../scenes/models.ts';
@@ -6,8 +7,8 @@ import { techCatalogItems } from '../tech/report.ts';
 import { effects } from './effects.ts';
 import { transitions } from './transitions.ts';
 
-export type ArsenalKind = 'components' | 'models' | 'themes' | 'tech' | 'entrances' | 'transitions' | 'effects';
-export const ARSENAL_KINDS: ArsenalKind[] = ['components', 'models', 'themes', 'tech', 'entrances', 'transitions', 'effects'];
+export type ArsenalKind = 'components' | 'models' | 'themes' | 'tech' | 'entrances' | 'transitions' | 'effects' | 'captions';
+export const ARSENAL_KINDS: ArsenalKind[] = ['components', 'models', 'themes', 'tech', 'entrances', 'transitions', 'effects', 'captions'];
 
 export interface CatalogItem {
   id: string;
@@ -87,6 +88,14 @@ export function catalog(kind: ArsenalKind, scenesDir?: string): CatalogItem[] {
         group: `${preset.category} · ${preset.kind} · ${preset.tone}`,
         description: `${preset.label} — ${preset.description}`,
         usage: `effects[]: { "preset": "${preset.id}", "at": <s>, ${preset.defaultDuration === null ? '"duration": <s>' : `"duration": ${preset.defaultDuration}`}, "intensity": ${preset.defaultIntensity} }`,
+      }));
+    case 'captions':
+      // estilos de legenda (motion/src/captions/presets.ts): valor de `captions.preset`
+      return Object.entries(captionPresets).map(([id, preset]) => ({
+        id,
+        group: `palavra ativa: ${preset.active}${preset.maxWords ? ` · até ${preset.maxWords} palavras` : ''}`,
+        description: `${preset.label} — ${preset.description} Quando: ${preset.when}.`,
+        usage: `captions: { "preset": "${id}" }`,
       }));
   }
 }

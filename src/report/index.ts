@@ -186,7 +186,7 @@ export function buildReport(input: ReportInput): string {
     '',
     '## Acabamento',
     '',
-    `- Legendas: ${edl.captions.enabled ? `estilo \`${edl.captions.style}\`, até ${edl.captions.maxWordsPerPage} palavras por página` : 'desligadas'}${edl.captions.highlights.length ? `; destaques: ${edl.captions.highlights.join(', ')}` : ''}`,
+    `- Legendas: ${edl.captions.enabled ? `estilo \`${edl.captions.style}\` · \`${edl.captions.preset}\`, até ${edl.captions.maxWordsPerPage} palavras por página` : 'desligadas'}${edl.captions.highlights.length ? `; destaques: ${edl.captions.highlights.join(', ')}` : ''}`,
     `- Cor: preset \`${edl.grade.preset}\`${edl.grade.lut ? ` + LUT ${edl.grade.lut}` : ''}${edl.grade.exposure ? `, exposição ${edl.grade.exposure > 0 ? '+' : ''}${edl.grade.exposure}` : ''}${edl.grade.sharpen ? `, nitidez ${edl.grade.sharpen}` : ''}`,
     `- Áudio: alvo ${edl.audio.targetLufs} LUFS, redução de ruído \`${edl.audio.denoise}\`, de-esser ${edl.audio.deesser ? 'ligado' : 'desligado'}, fade de ${edl.audio.cutFadeMs} ms em cada corte`,
     `- Música: ${edl.music ? `${edl.music.file} a ${edl.music.gainDb} dB${edl.music.duck ? ' com ducking' : ''}` : 'nenhuma'}`,

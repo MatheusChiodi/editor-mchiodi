@@ -53,7 +53,12 @@ gráficos, e efeito de câmera conta como zoom. No `max` ele lista também os pa
 
 ## Legendas (`captions`)
 
-- `style`: `long` (base da tela, até 5 palavras) ou `shorts`.
+- `style`: `long` (base da tela, até 5 palavras) ou `shorts`. É o formato (posição e tamanho base); o Short força `shorts`.
+- `preset`: estilo visual, `padrao` (default, o de sempre) · `karaoke` (a palavra falada se preenche de coral) · `pop`
+  (cada palavra surge com escala, até 4 por página) · `destaque-caixa` (pill coral atrás da palavra falada) · `minimal`
+  (uma linha, sem contorno, sombra suave) · `bold-shorts` (caixa alta, enorme, até 3 palavras). O estilo só aperta a
+  paginação (nunca passa do `maxWordsPerPage`) e o Short herda o preset da EDL. Catálogo: `pnpm mce arsenal captions`;
+  prévia: `pnpm mce still Legendas-<preset>-long` (ou `-shorts`).
 - `highlights`: palavras que ficam em coral (comparação sem acento/caixa). Poucas: termos técnicos e a palavra que carrega o sentido.
 - `replacements`: corrige a grafia da transcrição, `"palavra ouvida": "Palavra certa"` (ex.: `"frontient": "front-end"`).
   A chave é a palavra como aparece no `takes.md`, sem pontuação.
