@@ -163,5 +163,6 @@ export const entry: ComponentEntry = {
   component: JsonViewer,
   sample: { ...sample },
   defaultDuration: 8,
+  vertical: { zone: 'full' },
   description: 'JSON identado e colorido com uma chave em destaque; use quando a fala aponta um campo específico de uma resposta de API ou de um arquivo de configuração.',
 };

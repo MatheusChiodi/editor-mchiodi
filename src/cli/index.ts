@@ -1,10 +1,11 @@
-import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { Command } from 'commander';
 
 import { analyze } from '../analyze/index.ts';
 import { extractFrame, renderTimelineView, sourceBands, viewPath } from '../analyze/timeline-view.ts';
 import type { Analysis, Transcript } from '../analyze/types.ts';
+import { findReverts, formatRevert } from '../edl/decisions.ts';
 import { diffEdl, draftEdl, edlPath, listVersions, loadEdl, saveNewVersion, validateEdl } from '../edl/store.ts';
 import { formatLevels, LEVEL_IDS, type LevelId, levelProfile, parseLevel } from '../edl/levels.ts';
 import { buildTimeline } from '../edl/timeline.ts';
@@ -16,9 +17,12 @@ import { formatClock } from '../lib/time.ts';
 import { appendNote, describeStatus, type NoteKind } from '../project/memory.ts';
 import { activityFile, appendActivity, withActivity } from '../project/activity.ts';
 import { loadAmbient, loadItems } from '../project/dashboard-data.ts';
-import { createVramSampler, queryVram } from '../project/health.ts';
+import { loadConfig } from '../config.ts';
+import { run } from '../lib/exec.ts';
+import { createVramSampler, deepFilterCheck, doctorLines, queryVram, type ToolCheck, vidstabCheck } from '../project/health.ts';
+import { resolveDeepFilterBinary } from '../render/denoise.ts';
 import { clearLive, liveFile, type LiveTask, trackProgress, writeLive } from '../project/live.ts';
-import { projectPaths, readJson, requireProject, ROOT, slugFromFile } from '../project/paths.ts';
+import { projectPaths, readJson, requireProject, ROOT, slugFromFile, writeJson } from '../project/paths.ts';
 import { renderDashboard, shouldColor, watchInterval } from '../project/dashboard.ts';
 import { runDashboard } from '../project/dashboard-watch.ts';
 import { listProjects } from '../project/pipeline.ts';
@@ -31,12 +35,19 @@ import { ARSENAL_KINDS, type ArsenalKind, catalog, counts, formatCatalog, search
 import { renderGallery } from '../arsenal/gallery.ts';
 import { generateSfx, listAssets } from '../assets/library.ts';
 import { collectEvaluations, evaluate, formatReport } from '../eval/index.ts';
-import { buildChapters, buildReport, renderChapters } from '../report/index.ts';
-import { bumperDurations } from '../render/bumpers.ts';
+import { writeReport } from '../report/write.ts';
 import { render, renderDir } from '../render/index.ts';
-import { rankShortCandidates } from '../render/shorts.ts';
+import { EXPORT_FITS, EXPORT_FORMATS, type ExportFit, type ExportFormat, planExport } from '../render/formats.ts';
+import { SHORTS_MAX_SEC } from '../render/shorts.ts';
+import { applySuggestion, formatSuggestions, suggestShorts } from '../render/shorts-suggest.ts';
+import { formatFocusPlan, planShortFocus } from '../render/shorts-focus.ts';
+import { manualTrackPath, parseFocusTrackFile } from '../analyze/focus.ts';
+import { findTechMentions } from '../tech/detect.ts';
+import { hasVidstab } from '../render/stabilize.ts';
 import { registerAnalogies } from '../analogy/cli.ts';
+import { registerBroll } from '../broll/cli.ts';
 import { registerPack } from '../pack/cli.ts';
+import { registerRetention } from '../retention/cli.ts';
 import { registerTech } from '../tech/cli.ts';
 import { bareGroup, userPath } from './invocation.ts';
 
@@ -192,22 +203,116 @@ program
   });
 
 program
-  .command('shorts <project>')
-  .description('Sugere trechos (≤ 60s no vídeo final) para o Short; o diretor escolhe e grava em edl.shorts')
+  .command('export <project>')
+  .description('Exporta em 16x9, 9x16 ou 1x1 para celular pelo render da EDL → renders/<projeto>-<formato>.mp4 + .srt ao lado')
+  .option('-f, --format <formato>', `formato: ${EXPORT_FORMATS.join(' | ')}`, '16x9')
+  .option('--fit <modo>', `9x16/1x1 do vídeo inteiro: ${EXPORT_FITS.join(' | ')} (padrão blur-pad)`)
+  .option('--focus <x>', 'center-crop: posição do recorte, 0 = esquerda, 1 = direita', Number)
+  .option('--shorts', '9x16 do trecho de edl.shorts pelo render de Short (foco da EDL, gráficos re-diagramados)')
   .option('-v, --edl <n>', 'versão da EDL (padrão: a mais recente)', Number)
-  .option('-n, --limit <n>', 'quantas sugestões', Number, 5)
-  .action((project: string, options: { edl?: number; limit: number }) => {
+  .action(async (project: string, options: { format: string; fit?: string; focus?: number; shorts?: boolean; edl?: number }) => {
+    if (!EXPORT_FORMATS.includes(options.format as ExportFormat)) throw new Error(`--format aceita ${EXPORT_FORMATS.join(', ')}`);
+    if (options.fit && !EXPORT_FITS.includes(options.fit as ExportFit)) throw new Error(`--fit aceita ${EXPORT_FITS.join(', ')}`);
+    const paths = requireProject(project);
+    const current = loadEdl(paths, options.edl);
+    const plan = planExport(
+      current,
+      { format: options.format as ExportFormat, fit: options.fit as ExportFit | undefined, focusX: options.focus, scope: options.shorts ? 'shorts' : 'full' },
+      paths.rendersDir,
+      project,
+    );
+    const result = await tracked(project, 'final', (onProgress) => render(paths, current, { mode: 'final', export: plan, onProgress, log }));
+    log(`${result.file}\n${plan.srt}\n${plan.size.width}x${plan.size.height} · teto ${plan.maxrateK} kb/s · ${formatClock(result.durationSec)} em ${formatClock(result.elapsedSec, 0)}`);
+  });
+
+program
+  .command('cut [project]')
+  .description('MChiodi Cut: editor visual local sobre a EDL (servidor em 127.0.0.1 + UI de cut/dist); sem projeto, lista os projetos')
+  .option('--port <n>', 'porta (padrão: a primeira livre a partir de 4870)', Number)
+  .option('--no-open', 'não abre o navegador')
+  .action(async (project: string | undefined, options: { port?: number; open: boolean }) => {
+    const [{ startCutServer }, { findFreePort }, { openInBrowser }] = await Promise.all([
+      import('../cut/server.ts'),
+      import('../preview/studio.ts'),
+      import('../preview/session.ts'),
+    ]);
+    if (project) requireProject(project);
+    else log(`projetos: ${listProjects().join(', ') || '(nenhum)'}`);
+    const server = await startCutServer({ port: options.port ?? (await findFreePort(4870)), log });
+    const hasUi = existsSync(join(ROOT, 'cut', 'dist', 'index.html'));
+    const url = `${server.url}/${project ? `?p=${project}` : ''}`;
+    log(hasUi ? `MChiodi Cut: ${url}` : `API do MChiodi Cut: ${server.url}/api (a UI ainda não foi construída em cut/dist)`);
+    log('encerrar: Ctrl+C');
+    if (hasUi && options.open && !(await openInBrowser(url))) log('não consegui abrir o navegador; abra a URL acima');
+    await new Promise<void>((done) => process.once('SIGINT', () => void server.close().then(done)));
+  });
+
+const shorts = program.command('shorts').description('Short vertical: escolha do trecho');
+
+shorts
+  .command('suggest <project>', { isDefault: true })
+  .description('Ranqueia trechos da edição atual para o Short (nota explicada por componentes); o diretor escolhe')
+  .option('-v, --edl <n>', 'versão da EDL (padrão: a mais recente)', Number)
+  .option('-n, --count <n>', 'quantos candidatos', Number, 3)
+  .option('--min <s>', 'duração mínima no Short (s)', Number, 20)
+  .option('--max <s>', 'duração máxima no Short (s)', Number, SHORTS_MAX_SEC)
+  .option('--apply <n>', 'grava o candidato n como `shorts` numa nova versão da EDL', Number)
+  .action((project: string, options: { edl?: number; count: number; min: number; max: number; apply?: number }) => {
     const paths = requireProject(project);
     const current = loadEdl(paths, options.edl);
     const analysis = readJson<Analysis>(paths.analysis);
-    const candidates = rankShortCandidates(analysis.phrases, buildTimeline(current.clips, current.output.fps), options.limit);
-    if (candidates.length === 0) log('nenhum trecho de 20–60s encontrado');
-    for (const candidate of candidates) {
-      log(
-        `fonte ${candidate.start.toFixed(2)}–${candidate.end.toFixed(2)}s (${candidate.outputSec.toFixed(0)}s no final, nota ${candidate.score.toFixed(2)}) ` +
-          `[${candidate.reasons.join('; ') || 'sem destaque'}]\n   "${candidate.opening}"`,
-      );
+    const { words } = readJson<Transcript>(paths.words);
+    const config = loadConfig();
+    const { hookTerms, imperatives, weakOpeners, channelTerms, hookWindowSec } = config.shorts;
+    const settings = { count: Math.max(options.count, options.apply ?? 0), minSec: options.min, maxSec: Math.min(options.max, SHORTS_MAX_SEC) };
+    const candidates = suggestShorts(
+      { words, clips: current.clips, silences: analysis.silences, flags: analysis.flags, tech: findTechMentions(words), focusX: current.shorts?.focusX },
+      { ...settings, minSilenceSec: config.cuts.minSilenceSec, hookWindowSec, rules: { terms: hookTerms, imperatives, weakOpeners, channelTerms } },
+    );
+    const file = join(paths.analysisDir, 'shorts-candidates.json');
+    writeJson(file, { project: paths.slug, edlVersion: current.version, createdAt: new Date().toISOString(), options: settings, candidates });
+    log(formatSuggestions(candidates));
+    log(`\n${file}`);
+    if (options.apply === undefined) return;
+    const chosen = candidates.find((candidate) => candidate.rank === options.apply);
+    if (!chosen) throw new Error(`candidato #${options.apply} não existe (${candidates.length} sugeridos)`);
+    const saved = saveNewVersion(paths, applySuggestion(current, chosen));
+    log(`aplicado: ${edlPath(paths, saved.version)}`);
+  });
+
+shorts
+  .command('focus <project>')
+  .description('Foco dinâmico do Short: detecta o apresentador (ou lê analysis/focus-track.json) e planeja fixo ou pan suave')
+  .option('-v, --edl <n>', 'versão da EDL (padrão: a mais recente)', Number)
+  .option('--track <file>', 'importa um track à mão ({ samples: [{ t, x }] }, x = centro do apresentador) para analysis/focus-track.json')
+  .option('--redetect', 'refaz a detecção, ignorando o cache')
+  .option('--apply', 'grava o plano em `shorts.focusX` numa nova versão da EDL')
+  .action(async (project: string, options: { edl?: number; track?: string; redetect?: boolean; apply?: boolean }) => {
+    const paths = requireProject(project);
+    const current = loadEdl(paths, options.edl);
+    if (!current.shorts) throw new Error('A EDL não define `shorts`; escolha o trecho antes (pnpm mce shorts suggest)');
+    if (options.track) {
+      const samples = parseFocusTrackFile(readJson(fromUser(options.track)));
+      writeJson(manualTrackPath(paths.analysisDir), { samples });
+      log(`track importado: ${samples.length} amostras → ${manualTrackPath(paths.analysisDir)}`);
     }
+    const result = await planShortFocus(paths, current, { force: options.redetect, onProgress: consoleProgress() });
+    const file = join(paths.analysisDir, 'shorts-focus.json');
+    writeJson(file, { project: paths.slug, edlVersion: current.version, createdAt: new Date().toISOString(), origin: result.origin, plan: result.plan });
+    log(formatFocusPlan(result));
+    log(`\n${file}`);
+    if (!options.apply) return;
+    const { version: _version, createdAt: _createdAt, ...data } = current;
+    const { plan } = result;
+    const before = current.shorts.focusX;
+    const saved = saveNewVersion(paths, {
+      ...data,
+      shorts: { ...current.shorts, focusX: plan.focus },
+      notes:
+        `Short: foco ${plan.mode === 'fixed' ? `fixo em ${plan.focus as number}` : `em pan (${(plan.focus as unknown[]).length} keyframes)`} pelo mce shorts focus ` +
+        `sobre a v${current.version} (variação do apresentador ${plan.spreadPx.toFixed(0)} px, ${result.origin}; antes: ${Array.isArray(before) ? 'keyframes' : before}).`,
+    });
+    log(`aplicado: ${edlPath(paths, saved.version)}`);
   });
 
 program
@@ -236,23 +341,9 @@ program
   .description('Gera output/<projeto>/relatorio.md e capitulos.txt a partir da EDL e das avaliações')
   .option('-v, --edl <n>', 'versão da EDL (padrão: a mais recente)', Number)
   .action((project: string, options: { edl?: number }) => {
-    const paths = requireProject(project);
-    const current = loadEdl(paths, options.edl);
-    const timeline = buildTimeline(current.clips, current.output.fps);
-    const finalFile = join(paths.outputDir, 'final.mp4');
-    const report = buildReport({
-      edl: current,
-      timeline,
-      history: listVersions(paths).map((version) => loadEdl(paths, version)),
-      evaluations: collectEvaluations(paths.rendersDir),
-      renderedFile: existsSync(finalFile) ? finalFile : null,
-      scenes: loadScenes(),
-    });
-    mkdirSync(paths.outputDir, { recursive: true });
-    writeFileSync(join(paths.outputDir, 'relatorio.md'), report, 'utf8');
-    const { chapters, problems } = buildChapters(current, timeline, bumperDurations(current).introSec);
-    writeFileSync(join(paths.outputDir, 'capitulos.txt'), renderChapters(chapters), 'utf8');
-    log(`${join(paths.outputDir, 'relatorio.md')}\n${join(paths.outputDir, 'capitulos.txt')} (${chapters.length} capítulos)`);
+    const { report, chapters, count, problems } = writeReport(requireProject(project), options.edl);
+    log(`${report}
+${chapters} (${count} capítulos)`);
     for (const problem of problems) log(`atenção: ${problem}`);
   });
 
@@ -281,6 +372,30 @@ program
         hasMemory: existsSync(paths.memory),
       }),
     );
+  });
+
+program
+  .command('doctor')
+  .description('Confere as ferramentas externas: ffmpeg, ffprobe, deep-filter (denoise neural, opcional), vidstab (estabilização, opcional) e GPU')
+  .action(async () => {
+    const version = async (name: string): Promise<ToolCheck> => {
+      try {
+        const { stdout } = await run(name, ['-version']);
+        return { name, ok: true, detail: stdout.split(/\r?\n/)[0] ?? '', required: true };
+      } catch {
+        return { name, ok: false, detail: 'não encontrado no PATH', required: true };
+      }
+    };
+    const vram = await queryVram();
+    const checks = [
+      await version('ffmpeg'),
+      await version('ffprobe'),
+      deepFilterCheck(resolveDeepFilterBinary({ env: process.env, configPath: loadConfig().denoise.deepFilterPath, platform: process.platform, exists: existsSync })),
+      vidstabCheck(await hasVidstab()),
+      { name: 'nvidia-smi', ok: vram !== null, detail: vram ? `VRAM ${vram.usedMb}/${vram.totalMb} MB` : 'sem GPU NVIDIA visível; transcrição em CPU é bem mais lenta', required: false },
+    ];
+    log(doctorLines(checks).join('\n'));
+    if (checks.some((check) => check.required && !check.ok)) process.exitCode = 2;
   });
 
 program
@@ -329,7 +444,7 @@ program
 
 program
   .command('arsenal [kind]')
-  .description('Catálogo do que já existe pronto: components | models (modelos de animação reutilizáveis) | themes (temas de universo das analogias) | tech (tecnologias com ícone) | entrances | transitions | effects')
+  .description('Catálogo do que já existe pronto: components | models (modelos de animação reutilizáveis) | themes (temas de universo das analogias) | tech (tecnologias com ícone) | entrances | transitions | effects | captions (estilos de legenda)')
   .option('-s, --search <texto>', 'filtra por id, grupo ou descrição (sem categoria: busca em todas)')
   .option('-v, --verbose', 'mostra como usar cada item na EDL (nos modelos, também os slots)')
   .action((kind: string | undefined, options: { search?: string; verbose?: boolean }) => {
@@ -340,7 +455,7 @@ program
     }
     if (!kind) {
       const totals = counts();
-      for (const name of ARSENAL_KINDS) log(`${name.padEnd(12)} ${totals[name]} ${name === 'models' ? 'modelos de animação (crescem a cada vídeo)' : name === 'tech' ? 'tecnologias com ícone (tech:<id>)' : 'modelos'}   → pnpm mce arsenal ${name}`);
+      for (const name of ARSENAL_KINDS) log(`${name.padEnd(12)} ${totals[name]} ${name === 'models' ? 'modelos de animação (crescem a cada vídeo)' : name === 'tech' ? 'tecnologias com ícone (tech:<id>)' : name === 'captions' ? 'estilos de legenda (captions.preset)' : 'modelos'}   → pnpm mce arsenal ${name}`);
       return;
     }
     if (!ARSENAL_KINDS.includes(kind as ArsenalKind)) throw new Error(`categoria desconhecida: ${kind} (use ${ARSENAL_KINDS.join(', ')})`);
@@ -533,8 +648,11 @@ edl
   .action((project: string, file: string) => {
     const paths = requireProject(project);
     const { version: _version, createdAt: _createdAt, ...data } = JSON.parse(readFileSync(fromUser(file), 'utf8'));
+    const history = listVersions(paths).map((version) => loadEdl(paths, version));
     const saved = saveNewVersion(paths, data);
     log(edlPath(paths, saved.version));
+    // aviso, não bloqueio: o Matheus pode ter pedido a reversão; quem decide é ele, e as notes devem dizer isso
+    for (const revert of findReverts(history, saved)) console.warn(`aviso: ${formatRevert(revert)}`);
   });
 
 edl
@@ -545,8 +663,10 @@ edl
   });
 
 registerPack(program, log, fromUser);
+registerRetention(program, log, fromUser);
 registerAnalogies(program, log);
 registerTech(program, log);
+registerBroll(program, log);
 
 // `mce`, `mce scenes`, `mce edl`... sem subcomando: ajuda no stdout e código 0 (não é erro)
 bareGroup(program, process.argv.slice(2))?.help();

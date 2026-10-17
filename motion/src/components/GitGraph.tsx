@@ -263,5 +263,6 @@ export const entry: ComponentEntry = {
   component: GitGraph,
   sample: { ...sample },
   defaultDuration: 9,
+  vertical: { zone: 'full' },
   description: 'Grafo de commits com até 3 branches que se abrem e se juntam; use para explicar branch, merge e fluxo de trabalho com Git.',
 };

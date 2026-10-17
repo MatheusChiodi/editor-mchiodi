@@ -319,5 +319,6 @@ export const entry: ComponentEntry = {
   component: ApiRequest,
   sample: { ...sample },
   defaultDuration: 8,
+  vertical: { zone: 'full' },
   description: 'Requisição HTTP indo e a resposta voltando, com método, status colorido e JSON; use quando a fala explica uma chamada de API ou um código de status.',
 };

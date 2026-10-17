@@ -144,5 +144,6 @@ export const entry: ComponentEntry = {
     revealAt: [0.5, 1.8, 3.2],
   },
   defaultDuration: 7,
+  vertical: { zone: 'full' },
   description: 'Enumeração de 3 ou mais itens, cada um entrando no momento em que é falado.',
 };

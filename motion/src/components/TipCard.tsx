@@ -47,5 +47,6 @@ export const entry: ComponentEntry = {
     text: 'Use git stash antes de trocar de branch — o trabalho pela metade fica guardado.',
   },
   defaultDuration: 6,
+  vertical: { zone: 'top' },
   description: 'Dica prática ou atalho que complementa a fala, sem interromper a explicação principal.',
 };

@@ -324,6 +324,7 @@ export const entry: ComponentEntry = {
   component: Fx,
   sample: { variant: 'letterbox', intensity: 0.6 },
   defaultDuration: 5,
+  vertical: { zone: 'frame' },
   description:
     'Efeito de tela cheia sobre o footage (letterbox, moldura paper, holofote, vinheta, grão, scanlines, light leak, glows). Escolha a variante pelo preset do arsenal de efeitos.',
 };

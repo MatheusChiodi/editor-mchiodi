@@ -28,6 +28,7 @@ the editing process. Claude is the director; the tools only execute.
 - [Following an edit](#following-an-edit)
 - [The arsenal](#the-arsenal)
 - [Packaging for YouTube](#packaging-for-youtube)
+- [MChiodi Cut (visual editor)](#mchiodi-cut-visual-editor)
 - [Command reference](#command-reference)
 - [Configuration](#configuration)
 - [Project layout](#project-layout)
@@ -94,6 +95,7 @@ goes through a browser. The engineering decisions and the measurements behind th
 | [Claude Code](https://claude.com/claude-code) | Logged in. It is the director |
 | Node.js 22 or newer | Developed on Node 24. pnpm via Corepack |
 | ffmpeg, "full" build | Needs `libass`, `xfade`, `afftdn` and, for GPU encoding, `h264_nvenc` |
+| [`deep-filter`](https://github.com/Rikorose/DeepFilterNet/releases) (optional) | Neural voice denoise for `audio.denoise: "deepfilter"`. Rename the release `.exe` to `deep-filter.exe` and put it on `PATH`, or point `denoise.deepFilterPath` / `MCE_DEEPFILTER` to it. Without it, the render falls back to `afftdn` |
 | [uv](https://docs.astral.sh/uv/) | Manages the Python 3.12 used for transcription. Your system Python is not used |
 | NVIDIA GPU (recommended) | Transcription defaults to CUDA. CPU works with a config change, much slower |
 | Disk space | The transcription environment (WhisperX + PyTorch with CUDA) takes several GB; each project stores a proxy and its renders |
@@ -175,6 +177,7 @@ pnpm test               # unit tests + ffmpeg integration tests on synthetic med
 pnpm mce assets list    # sfx: click.wav, ding.wav, glitch.wav, pop.wav, whoosh.wav
 pnpm mce arsenal        # counts per category of the arsenal
 pnpm mce levels         # the four editing levels
+pnpm mce doctor         # ffmpeg, ffprobe, deep-filter (optional) and GPU
 ```
 
 The first transcription downloads the Whisper `large-v3` model and the Portuguese alignment model, so it takes longer
@@ -465,6 +468,31 @@ a frame of the video, two to four words with one of them in coral and at most on
 badge). Whatever the agent cannot know for certain, such as links and social handles, is written as
 `[PREENCHER: ...]` ("fill in") in the description for you to complete. It never invents a link, a number or a sponsor.
 
+## MChiodi Cut (visual editor)
+
+A local "CapCut" over the EDL, to open, adjust and export what `mce` produced, with Claude Code inside the editor:
+timeline (clips, captions, overlays, zooms, transitions, waveform and words), preview (light proxy + the real Remotion
+graphics layer), word-by-word caption editing with `.srt` export/import, arsenal inserts with a schema-generated form,
+level, versions/diff, render/eval and a Claude panel. 100% local and offline: no account, no upload, no telemetry.
+
+```powershell
+pnpm cut:build                    # build the UI once (cut/dist); fonts are bundled, so it works offline
+pnpm mce cut <slug>               # server on 127.0.0.1 (first free port from 4870) + opens the browser
+pnpm mce cut <slug> --no-open     # same, without opening the browser; `pnpm mce cut` alone lists the projects
+pnpm cut:dev                      # UI development (Vite, proxies /api to a running mce cut)
+```
+
+Principles:
+
+- **The EDL is the truth.** The editor has no editing state of its own and never processes video on the side. Every
+  change becomes `edl.v(N+1).json` (same logic as `mce edl save`); the final render is always `mce render`.
+- **Snap to measured silence.** Trimming or moving a clip edge always lands in a pause with measured silence, never
+  inside a word: dragging into a word shows a warning and snaps to the nearest pause.
+- **`Matheus:` notes are decisions.** Versions saved from the editor get notes like
+  `Matheus: moveu início de c012 +0.18s; corrigiu legenda 'reakt'→'React'`. The `edit-video` skill treats them as your
+  decisions: Claude does not undo them unless you ask, `mce edl save` warns when a new version reverts one, and the
+  Claude panel shows the same warning in the proposal's diff.
+
 ## Command reference
 
 `mce` alone lists the commands; `mce scenes`, `mce edl`, `mce assets` and `mce pack` list their subcommands;
@@ -476,6 +504,7 @@ badge). Whatever the agent cannot know for certain, such as links and social han
 |---|---|
 | `mce analyze <video> [-p <slug>] [-f]` | 720p proxy, word-level transcript, silences, retakes, loudness; writes `analysis/takes.md`. `-f` redoes the proxy and the transcript |
 | `mce status <slug>` | Where the project stands and what the next step is |
+| `mce doctor` | Checks the external tools: ffmpeg, ffprobe, `deep-filter` (optional) and the GPU. Exit code 2 when a required one is missing |
 | `mce view <slug> --from <s> --to <s> [-v <n>]` | PNG of a stretch of the source: frames, waveform, words and what the EDL keeps or cuts |
 | `mce frame <slug> --at <s>` | One frame of the source |
 | `mce words <slug> --from <s> --to <s>` | Words with exact timestamps |
@@ -500,8 +529,13 @@ badge). Whatever the agent cannot know for certain, such as links and social han
 |---|---|
 | `mce render <slug> [--final] [--shorts] [--no-overlay] [-v <n>]` | Run the EDL: fast preview by default, `--final` for full quality from the original file, `--shorts` for the vertical cut, `--no-overlay` for cuts and audio only |
 | `mce eval <slug> [--final] [--no-transcribe] [--views <n>] [-v <n>]` | Evaluate the *rendered* video: cuts, clicks, loudness, caption sync, level budget, plus images to check. Exit code 2 when it fails |
-| `mce shorts <slug> [-n <n>]` | Suggest stretches for the Short |
+| `mce shorts suggest <slug> [--count 3] [--min 20] [--max 60] [--apply <n>] [-v <n>]` | Rank stretches of the current edit for the Short (deterministic score split into hook, closure, density, clean speech, tech terms, self-containment, length; edges only at EDL cuts or measured silence) → `analysis/shorts-candidates.json`; `--apply <n>` saves candidate n as `shorts` in a new EDL version. `mce shorts <slug>` is the same |
+| `mce broll index` | Scan `assets/broll/` (ffprobe) and write `assets/broll/index.json`: file, tags (from folder and file name, accent-free PT-BR stems), duration, resolution, source and license. Manual tags and license survive a re-scan |
+| `mce broll suggest <slug> [--apply] [-v <n>]` | Spoken stretches that ask for b-roll (concrete object/place/action or tech mentioned, long stretch without graphics), never over a graphic or screen recording, within the EDL level's budget, matched to the library by tags and simple synonyms → `analysis/broll-candidates.json` (source seconds, trigger word, `reason`, file or "missing: search <term>"); `--apply` saves the ones with a file as `broll` in a new EDL version |
+| `mce broll fetch <slug> [-n 5]` | Only with `PEXELS_API_KEY`: download short HD videos (Pexels License) for the missing terms into `assets/broll/pexels/` and record author/license in the index. Without the key it says so and exits 0 |
+| `mce export <slug> [-f 16x9\|9x16\|1x1] [--fit blur-pad\|center-crop] [--focus <0-1>] [--shorts] [-v <n>]` | Export for phones through the EDL render (mobile bitrate cap) → `renders/<slug>-<format>.mp4` + `.srt` beside it; `--shorts` exports the `edl.shorts` stretch through the Short render |
 | `mce report <slug>` | Write `relatorio.md` and `capitulos.txt` |
+| `mce retention import <slug> <file.csv> [-v <n>] [--duration <s>]` / `mce retention lessons` | Import the YouTube Studio retention CSV (EN/PT): drops and rewatch spikes mapped to source time, clip, chapter, graphics and speech → `analysis/retention.json`, `project.md`, `relatorio.md`; `lessons` aggregates patterns across all projects |
 
 **Arsenal and scenes**
 
@@ -526,6 +560,7 @@ badge). Whatever the agent cannot know for certain, such as links and social han
 | `mce watch [--once]` | Watch `inbox/` and edit each new video, one at a time |
 | `mce queue [--retry]` | Show the queue; `--retry` requeues failed jobs |
 | `mce progress [slug] [-w [seconds]] [--no-bell]` | The dashboard |
+| `mce cut [slug] [--port <n>] [--no-open]` | Open the [MChiodi Cut](#mchiodi-cut-visual-editor) visual editor; without a slug, list the projects |
 
 **pnpm scripts**
 
@@ -533,6 +568,7 @@ badge). Whatever the agent cannot know for certain, such as links and social han
 |---|---|
 | `pnpm mce ...` | The CLI, from the project folder |
 | `pnpm studio` | Remotion Studio |
+| `pnpm cut:build` / `pnpm cut:dev` | Build the MChiodi Cut UI (`cut/dist`) / run it in development |
 | `pnpm watch` | Same as `pnpm mce watch` |
 | `pnpm test` / `pnpm typecheck` | Vitest / `tsc --noEmit` |
 | `pnpm run install-cli` / `pnpm run uninstall-cli` | Install or remove the global `mce` command |
@@ -571,6 +607,9 @@ Create `mce.config.json` at the project root. Every key is optional; the default
 | `output.height` | `1080` | Output height |
 | `render.remotionConcurrency` | `4` | Parallel Chrome tabs rendering graphics. Lower it if RAM runs out |
 | `render.previewScale` | `0.5` | Preview resolution relative to the output (0.5 of 1080p is 540p) |
+| `denoise.deepFilterPath` | `""` | `deep-filter` binary for `audio.denoise: "deepfilter"`; empty searches `PATH`. The `MCE_DEEPFILTER` environment variable wins over both |
+| `denoise.attenLimDb` | `100` | DeepFilterNet attenuation cap in dB; 100 means no cap. Lower keeps a bit of room tone and a more natural voice |
+| `denoise.postFilter` | `false` | DeepFilterNet post-filter: cleaner, at the risk of swallowing word endings |
 | `headless.model` | `""` | Model for unattended sessions; empty uses your account's default |
 | `headless.maxBudgetUsd` | `0` | Spending cap per video when the session uses an API key; 0 means no cap |
 | `headless.timeoutMin` | `240` | An unattended edit running longer than this is aborted |
@@ -580,6 +619,10 @@ Create `mce.config.json` at the project root. Every key is optional; the default
 | `preview.port` | `4173` | Studio port; the scene index uses the next one |
 | `notify.ntfyTopic` | `""` | ntfy topic for phone notifications; empty turns them off |
 | `notify.ntfyServer` | `"https://ntfy.sh"` | ntfy server |
+
+**Environment variables.** `PEXELS_API_KEY` (optional) turns on `mce broll fetch`: create a free key at
+<https://www.pexels.com/api/> and set it in your user environment (`setx PEXELS_API_KEY <key>` in PowerShell, then open a new terminal).
+Without it everything else in b-roll works with your local `assets/broll/` folder.
 
 Taste is not configuration. Rhythm, zoom, graphics density, caption style, tone, audio targets and color are described
 in [`STYLE.md`](STYLE.md), the guide the director follows. Edit it freely: when a correction applies to every video,
@@ -595,6 +638,9 @@ src/
                audio mix, bumpers, screen-recording layout, Short, composition
   arsenal/     transition and effect catalogs, lookup (mce arsenal), gallery
   eval/        self-evaluation of the rendered video, level budget
+  broll/       assisted b-roll: library index, speech-driven suggestions, Pexels fetch
+  retention/   YouTube Studio retention mapped to source time, lessons across projects
+  cut/         MChiodi Cut: typed ops over the EDL (silence snap), "Matheus:" notes, local server
   pack/        thumbnail frames, thumbnail rendering, title/description checks
   preview/     scene viewer (Remotion Studio + index)
   report/      relatorio.md and capitulos.txt
@@ -602,13 +648,14 @@ src/
   watcher/     queue, unattended session (claude -p), deliverables check, notification
   project/     paths, per-project memory (project.md), status, dashboard
   cli/         the mce commands
+cut/           MChiodi Cut UI (React + Vite + Tailwind 4); pure logic in cut/src/lib/
 motion/src/    Remotion: theme, captions, components/ (+ registry), arsenal/ (entrances, stingers, fx, stage),
                scene-kit/ (paper and voxel), scenes/<slug>/, scenes/modelos/, thumbnail/
 transcriber/   Python sidecar (WhisperX): transcribe.py
 scripts/       install-cli.ts (the global mce command)
 tests/         Vitest: unit tests and integration tests on synthetic media
 docs/          referencia-max.md (analysis behind the max level), assets/ (the illustrations in this README)
-assets/        sfx/ (generated), music/, memes/, luts/, brand/ (your own library, not versioned)
+assets/        sfx/ (generated), music/, memes/, luts/, brand/, broll/ + index.json (your own library, not versioned)
 .claude/       skills (edit-video, edl-reference), agents (motion-designer, packager), settings.json
 
 inbox/                     drop videos here for mce watch            (not versioned)
@@ -762,7 +809,11 @@ Conventions, from [`CLAUDE.md`](CLAUDE.md):
   They are not cut automatically, because the automatic cut only shortens pauses with measured silence.
 - **No clap marker.** Use the spoken marker "corta" (cut) to flag a retake while recording.
 - **The graphics layer is the render bottleneck.** Output is 30 fps by default because 60 fps doubles render time.
-- **The Short** crops the frame to 9:16 around `focusX`. The 16:9 graphics do not go into it, only the captions.
+- **The Short** crops the footage to 9:16 around `focusX` (fixed, `"auto"` or keyframes). Graphics anchored inside
+  the stretch are re-laid out, not cropped: each component is drawn in its own vertical box (above the face, or as a
+  full insert down to the captions) and never covers the caption band. The face band is an assumption (30–60 % of
+  the height, `shorts.faceBand` to change it), not a detection. Stage layouts (`presenter`), the persistent layer and
+  wide components (lower third, subscribe CTA) stay out of the Short.
 - **One edit at a time.** The queue is sequential by design; the machine it was built on has 16 GB of RAM.
 - **Unattended mode trusts the director.** There is no human review step between the evaluation and the final render.
   Read `relatorio.md` before publishing.

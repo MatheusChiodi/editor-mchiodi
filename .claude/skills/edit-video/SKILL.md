@@ -12,8 +12,12 @@ EDL na skill `edl-reference`.
 ## 0. Antes de começar
 
 - `pnpm mce status <slug>`: se o projeto já existe, continue do "próximo passo" e leia `projects/<slug>/project.md`.
+- Projeto com EDL: `pnpm mce edl list <slug>` e leia as `notes` de **todas** as versões. As que começam com `Matheus:`
+  são decisão dele (gravadas pelo MChiodi Cut ou ditadas por ele): ver "Decisões do Matheus" abaixo.
 - Vídeo novo: `pnpm mce analyze "<arquivo>"` (o slug sai do nome do arquivo; `-p <slug>` para escolher).
 - Biblioteca de SFX vazia? `pnpm mce assets init`.
+- Opcional, se já há vídeos com retenção importada: `pnpm mce retention lessons` antes de dirigir. Diz onde o público
+  do canal sai (abertura, explicação longa sem gráfico, troca de capítulo) e o que o faz rever; dirija contra esses padrões.
 - **Nível de edição** (`limpa`, `normal`, `pro`, `max`): é o Matheus quem escolhe. "Edição profissional", "lotada",
   "simples" no pedido → use o nível correspondente; sem menção, vale o padrão (`edit.level`). `pnpm mce levels <nível>`
   mostra os alvos e como dirigir nele. Não troque o nível por conta própria.
@@ -51,7 +55,7 @@ Escreva em poucas linhas, para você mesmo, antes de tocar na EDL:
   `SplitExplainer` com `presenter: right|left`; demonstração em `WindowStage` com `presenter: pip-br`; fonte em `DocQuote`;
   conceito abstrato em cena com `wipe: "tear"`. Depois ancore cada pílula, cartão e palavra no início da palavra falada
   (`pnpm mce words`), menos 2 frames. Meta: algo novo a cada 2–4s, nunca 8s parado, os 7 padrões no mínimo
-  (`pnpm mce level <slug>` mostra quantos faltam). Confira `focus` do rosto com `pnpm mce frame <slug> --at <s>`.
+  (`pnpm mce level <slug>` mostra quantos faltam). No `presenter`, omita `focus` (`"auto"`: o render enquadra o rosto pelo detector); nunca copie `0.47/0.4`. `rosto-fora-do-palco` no eval = troque o foco fixo por `"auto"`.
 - **Ênfase**: zooms (STYLE.md §4), efeitos (`pnpm mce arsenal effects`), transições só em troca de assunto (§6).
 - **Quanto de cada coisa**: o nível decide (STYLE.md §0). `pnpm mce level <slug>` mostra, para a duração deste vídeo,
   quantos zooms, gráficos, cenas, transições, efeitos e SFX o nível pede e quantos a EDL já tem. Em `pro`/`max`, liste
@@ -81,6 +85,12 @@ quando houver várias. No pedido, entregue: a fala (texto + tempos da fonte), o 
 o tom, o slug do projeto e a duração disponível. **Peça o MODELO, não a cena**: toda animação nova vira um modelo reutilizável em
 `motion/src/scenes/modelos/` (nome pela forma, tudo em props, testado com dois conjuntos de props) e ele devolve o trecho da EDL
 com `scene:modelos/<Nome>` e as props deste vídeo. Cena sob medida (`scene:<slug>/<Nome>`) só para ideia irrepetível, e declarando o `MODEL`.
+**B-roll (opcional, nível `normal` para cima):** `pnpm mce broll suggest <slug>` lista os trechos sem gráfico em que a fala cita algo
+concreto (objeto, lugar, ação, tecnologia) e o arquivo da biblioteca que casa, ou `faltando: buscar "<termo>"`. Decida um a um pelo STYLE.md §5:
+o que só repete a fala sem acrescentar nada fica de fora. Se faltar arquivo e houver `PEXELS_API_KEY`, `pnpm mce broll fetch <slug>` baixa e
+você roda o suggest de novo. Para gravar: `--apply` (nova versão com todos os que têm arquivo) ou copie os escolhidos para `broll` na EDL de
+trabalho. Em `limpa` o suggest não propõe nada: não force.
+
 Antes de delegar a primeira cena, suba o visor em segundo plano: `pnpm mce scenes watch <slug>` (Remotion Studio no Chrome;
 cada cena gravada aparece sozinha e `Roteiro-<slug>` toca todas em sequência). No modo headless o watcher já o subiu: pule.
 
@@ -91,6 +101,9 @@ cada cena gravada aparece sozinha e `Roteiro-<slug>` toca todas em sequência). 
 2. Copie `projects/<slug>/edl/edl.vN.json` para um arquivo de trabalho, edite (skill `edl-reference`) e grave:
    `pnpm mce edl save <slug> <arquivo>`. Preencha `notes` com o que mudou e por quê.
 3. Nunca edite um `edl.vN.json` já gravado.
+4. Parta da versão mais recente (ela carrega as decisões do Matheus), não de uma antiga nem de um `draft` novo.
+   Se o `edl save` imprimir `aviso: desfaz decisão do Matheus (vN): ...`, a versão nova voltou atrás numa decisão dele:
+   corrija e grave de novo, salvo se ele pediu exatamente isso (aí diga nas `notes`: "a pedido do Matheus, ...").
 
 ## 5. Renderizar, avaliar, corrigir (no máximo 3 voltas)
 
@@ -118,7 +131,20 @@ pnpm mce eval <slug>          # mede o vídeo renderizado e gera imagens
 - `cena-sem-modelo`: o overlay usa uma cena sob medida que não deixou modelo reutilizável; crie o modelo e use `scene:modelos/<Nome>` (§3, §6).
 - **aviso**: abra a imagem citada e decida. `corte-em-som` e `palavra-perdida-no-corte` pedem afastar a borda do clipe
   (~0.1s) e conferir na `mce view`.
-- Abra as imagens listadas no fim e confira o que não se mede: salto visual, legenda cobrindo algo, texto ilegível,
+- `sem-respiro`: borda a menos de 30 ms de uma palavra (a que fica perde o ataque; a cortada vaza). Aplique o `start`/`end`
+  sugerido; "palavras coladas" = não há pausa ali, mova a borda para outra pausa. `salto-de-nivel`: o fundo de sala ou o volume da
+  fala muda no corte; `clique`: degrau de amostra na junção (confira `audio.cutFadeMs`).
+- `jump-cut`: mesmo plano com salto visível. É sugestão: no `limpa` é aceito; nos outros níveis só disfarce (zoom punch no clipe
+  seguinte ou transição calm, como a mensagem dá) os que incomodam **na prancha**, respeitando o espaçamento de zoom do nível.
+- `legenda-sobre-grafico`: lower third, CTA, citação ou texto na base dividindo a faixa com a legenda; `hidesCaptions: true` ou mova
+  o gráfico para uma pausa.
+- `rosto-fora-do-palco`: o cartão do `presenter` deixa parte do rosto de fora. Erro com `focus` fixo: troque por `"auto"` (ou
+  omita). Aviso com `"auto"`: o apresentador anda mais que o cartão; use um `pip-*` ou divida o palco.
+- **Prancha de contato** (`renders/<versão>/eval/contact-sheet.png`, caminho no fim do `eval`): os cortes mais suspeitos, um por
+  linha, último quadro antes | primeiro depois, com os achados de cada um. Abra **só ela** primeiro: salto de enquadramento,
+  rosto/gesto pulando, quadro preto ou gráfico entrando torto aparecem ali. Só abra a `mce view` do corte que a prancha deixar em
+  dúvida. `--views <n>` controla quantos cortes entram.
+- Abra as imagens listadas no fim e confira o que não se mede: legenda cobrindo algo, texto ilegível,
   gráfico fora de hora. Problema visual também gera nova versão da EDL.
 - Parou de melhorar ou chegou à 3ª volta: siga com a melhor versão e registre o que ficou pendente (`pnpm mce note ... -k pendencia`).
 
@@ -133,15 +159,35 @@ os que o vídeo usou e os que nasceram dele.
 pnpm mce scenes audit <slug>              # toda animação nova deixou um modelo?
 pnpm mce render <slug> --final            # output/<slug>/final.mp4
 pnpm mce eval <slug> --final
-pnpm mce shorts <slug>                    # candidatos; escolha lendo o conteúdo, grave em edl.shorts
+pnpm mce shorts suggest <slug>            # candidatos ao Short com nota explicada (ver abaixo)
 pnpm mce render <slug> --final --shorts   # output/<slug>/final-shorts.mp4 (opcional)
 pnpm mce report <slug>                    # relatorio.md + capitulos.txt
 pnpm mce note <slug> "<decisão ou pendência>"
 ```
 
+**Short**: rode `pnpm mce shorts suggest <slug> [--count 3] [--min 20] [--max 60]`. Ele lê só o que a EDL atual mantém e
+ranqueia trechos com bordas em corte da EDL ou pausa com silêncio medido; a nota vem por componente (gancho nos 3 s, fecho,
+densidade, limpo, tecnologia, autossuficiência, duração) e a lista vai para `analysis/shorts-candidates.json`. **Você decide**:
+leia o texto de cada candidato (abre sem depender do vídeo longo? fecha a ideia?) e só então grave com `--apply <n>` (nova
+versão da EDL, notes explicando) ou ajuste o trecho à mão e `mce edl save`, reescrevendo o `reason`. Nota alta não é ordem: um
+candidato que começa no meio da frase ou fecha com despedida do canal não vira Short, por maior que seja a nota.
+
 Depois do `report`, delegue ao sub-agente **`packager`** (passe o slug) a capa, o título e a descrição: ele entrega `capa-<n>.png`, `titulo.txt`, `descricao.txt` e `tags.txt` em `output/<slug>/`; também no modo headless.
 
 Resposta final: caminho dos arquivos, duração antes → depois, o que a avaliação apontou e o que ficou pendente. Sem recapitular o processo.
+
+## Decisões do Matheus (notes "Matheus:")
+
+Versão cuja `notes` começa com `Matheus:` é decisão dele: corte movido, trecho removido ou restaurado, legenda corrigida,
+destaque, item inserido/editado/removido, nível. O MChiodi Cut (`pnpm mce cut <slug>`) grava assim tudo o que ele faz na UI.
+
+- **Não desfaça sem ele pedir.** Isso vale também para a avaliação: se o `eval` reclama de algo que é decisão dele
+  (um corte que ele afrouxou, um trecho que ele restaurou), registre em `notes` e no relatório; não "conserte".
+- Antes de propor versão nova, leia as `notes` das anteriores e preserve essas mudanças na sua. `pnpm mce edl diff <slug> <a> <b>`
+  mostra o que cada versão mudou.
+- O `pnpm mce edl save` avisa (`aviso: desfaz decisão do Matheus ...`) quando a versão nova reverte uma delas; o painel
+  Claude do editor mostra o mesmo aviso no diff da proposta. Aviso = corrigir, a menos que o pedido dele seja a reversão.
+- Suas `notes` não começam com `Matheus:` (só as dele); escreva o que mudou e por quê.
 
 ## Correções do Matheus
 

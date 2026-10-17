@@ -119,5 +119,6 @@ export const entry: ComponentEntry = {
     checkAt: [1, 2.2, 3.4, 4.6],
   },
   defaultDuration: 7,
+  vertical: { zone: 'full' },
   description: 'Lista de requisitos ou tarefas que vão sendo marcadas como feitas à medida que a fala confirma cada uma.',
 };

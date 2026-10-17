@@ -224,5 +224,6 @@ export const entry: ComponentEntry = {
   component: StackLayers,
   sample: { ...sample },
   defaultDuration: 7,
+  vertical: { zone: 'full' },
   description: 'Camadas empilhadas em perspectiva com uma em destaque; use para explicar a stack de um projeto ou em que camada um problema acontece.',
 };

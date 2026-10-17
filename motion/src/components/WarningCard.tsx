@@ -55,5 +55,6 @@ export const entry: ComponentEntry = {
     text: 'Nunca suba o arquivo .env para o repositório: a chave vaza no primeiro push.',
   },
   defaultDuration: 6,
+  vertical: { zone: 'top' },
   description: 'Alerta sobre um erro comum ou um risco (segurança, perda de dados, custo); `danger` para o que causa prejuízo real.',
 };

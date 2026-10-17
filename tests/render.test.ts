@@ -151,7 +151,7 @@ describe('buildComposeGraph', () => {
     const sfx = [{ file: 'pop.wav', at: 2, gainDb: -18 }, { file: 'whoosh.wav', at: 9.5, gainDb: -14 }];
     const none = { hasIntro: false, hasOutro: false };
     expect(composeInputs({ hasOverlay: true, music: bed, sfx, hasIntro: true, hasOutro: true })).toEqual({
-      overlay: 1, music: 2, sfx: [3, 4], intro: 5, outro: 6, screen: null,
+      overlay: 1, music: 2, sfx: [3, 4], intro: 5, outro: 6, screen: null, broll: [],
     });
     expect(composeInputs({ hasOverlay: false, music: null, sfx, ...none })).toMatchObject({ overlay: null, music: null, sfx: [1, 2], intro: null });
     expect(composeArgs({ cut: 'cut.mkv', overlay: null, music: bed, sfx, intro: null, outro: 'outro.mp4' })).toEqual([

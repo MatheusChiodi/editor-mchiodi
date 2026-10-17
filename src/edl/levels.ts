@@ -89,12 +89,21 @@ export interface LevelProfile {
   perMinute: Record<BudgetKey, Rate>;
   /** o nível espera trilha do começo ao fim */
   music: boolean;
+  /** b-roll assistido (`mce broll suggest`): quantos insertos por minuto, distância entre eles e duração de cada um */
+  broll: BrollBudget;
   /** vinhetas de abertura e encerramento ligadas já no rascunho */
   bumpers: boolean;
   /** como dirigir neste nível */
   guidance: string[];
   /** padrões obrigatórios: a avaliação avisa `padrao-obrigatorio` para cada um que faltar */
   required: RequiredPattern[];
+}
+
+/** `perMinute: 0` = o nível não leva b-roll */
+export interface BrollBudget {
+  perMinute: number;
+  minGapSec: number;
+  durationSec: number;
 }
 
 const rate = (min: number, max: number): Rate => ({ min, max });
@@ -126,7 +135,7 @@ export const MAX_PATTERNS: RequiredPattern[] = [
     feature: 'presenter',
     minPerMinute: 1,
     when: 'sempre que a tela inteira for de conteúdo: o footage encolhe para o cartão em vez de sumir',
-    how: 'no overlay: "presenter": { "slot": "right" | "left" | "pip-br" | "pip-bl" | "pip-tr" | "pip-tl", "focus": { "x": 0.5, "y": 0.4 } }',
+    how: 'no overlay: "presenter": { "slot": "right" | "left" | "pip-br" | "pip-bl" | "pip-tr" | "pip-tl" } (focus "auto" por padrão: o render enquadra o rosto)',
   },
   {
     id: 'explicacao-dividida',
@@ -193,6 +202,7 @@ export const LEVELS: Record<LevelId, LevelProfile> = {
       sfx: rate(0, 0.5),
     },
     music: false,
+    broll: { perMinute: 0, minGapSec: 120, durationSec: 3 },
     bumpers: false,
     guidance: [
       'Gráfico só para informação que falta na fala: LowerThird na apresentação, SectionTitle nos capítulos, CodeCard se código for ditado.',
@@ -231,6 +241,7 @@ export const LEVELS: Record<LevelId, LevelProfile> = {
       sfx: rate(0, 4),
     },
     music: false,
+    broll: { perMinute: 0.75, minGapSec: 25, durationSec: 3 },
     bumpers: false,
     guidance: [
       'Gráfico onde a fala pede imagem; trecho de conversa fica só com a fala.',
@@ -269,6 +280,7 @@ export const LEVELS: Record<LevelId, LevelProfile> = {
       sfx: rate(2, 8),
     },
     music: true,
+    broll: { perMinute: 1.5, minGapSec: 15, durationSec: 3.5 },
     bumpers: true,
     guidance: [
       'Toda troca de capítulo: stinger + SectionTitle + whoosh.',
@@ -312,6 +324,7 @@ export const LEVELS: Record<LevelId, LevelProfile> = {
       sfx: rate(4, 12),
     },
     music: true,
+    broll: { perMinute: 2.5, minGapSec: 10, durationSec: 4 },
     bumpers: true,
     guidance: [
       'Pelo menos 80% do vídeo é editado ao máximo, do começo ao fim (a referência só edita os primeiros 27%: aqui não). Os até 20% restantes são respiros escolhidos: você falando sozinho numa parte pessoal ou mostrando algo na tela, cada um com no máximo 40s e nunca dois seguidos.',

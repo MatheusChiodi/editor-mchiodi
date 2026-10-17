@@ -4,6 +4,7 @@ import { EntranceGallery, galleryPages } from './arsenal/EntranceGallery';
 import { Fx, fxVariants } from './arsenal/fx/Fx';
 import { Stinger, stingerVariants } from './arsenal/stingers/Stinger';
 import { Captions } from './captions/Captions';
+import { CAPTION_PRESETS, type CaptionPreset } from './captions/presets';
 import { cineDemos } from './cine/demos';
 import { registry } from './components/registry';
 import { Overlay } from './Overlay';
@@ -14,6 +15,7 @@ import { sceneCompositions, sceneReels, sceneRegistry } from './scenes';
 import { THUMB } from './thumbnail/layout';
 import { Thumbnail, thumbnailSample } from './thumbnail/Thumbnail';
 import type { CaptionStyle, OverlayProps } from './types';
+import { verticalFrame } from './vertical';
 
 const FPS = 30;
 
@@ -29,9 +31,9 @@ const overlayMetadata: CalculateMetadataFunction<OverlayProps> = ({ props }) => 
   defaultProResProfile: '4444',
 });
 
-const CaptionsPreview: React.FC<{ style: CaptionStyle }> = ({ style }) => (
+const CaptionsPreview: React.FC<{ style: CaptionStyle; preset?: CaptionPreset }> = ({ style, preset }) => (
   <Backdrop>
-    <Captions captions={sampleCaptions} style={style} />
+    <Captions captions={sampleCaptions} style={style} preset={preset} />
   </Backdrop>
 );
 
@@ -52,6 +54,29 @@ export const RemotionRoot: React.FC = () => (
         captions: sampleCaptions,
         captionStyle: 'long',
         overlays: [],
+      }}
+      calculateMetadata={overlayMetadata}
+    />
+    {/* camada de gráficos do Short: mesma composição, cada componente numa caixa vertical (motion/src/vertical.ts) */}
+    <Composition
+      id="OverlayShorts"
+      component={Overlay}
+      fps={FPS}
+      width={1080}
+      height={1920}
+      durationInFrames={FPS * 8}
+      defaultProps={{
+        fps: FPS,
+        width: 1080,
+        height: 1920,
+        durationInFrames: FPS * 8,
+        captions: sampleCaptions,
+        captionStyle: 'shorts',
+        overlays: [
+          { id: 'tip', component: 'TipCard', from: 0, durationInFrames: FPS * 4, props: registry.TipCard!.sample, hidesCaptions: false },
+          { id: 'code', component: 'CodeCard', from: FPS * 4, durationInFrames: FPS * 4, props: registry.CodeCard!.sample, hidesCaptions: false },
+        ],
+        vertical: verticalFrame({ width: 1080, height: 1920, captions: 'padrao' }),
       }}
       calculateMetadata={overlayMetadata}
     />
@@ -82,6 +107,21 @@ export const RemotionRoot: React.FC = () => (
         durationInFrames={FPS * 8}
         defaultProps={{ style: 'shorts' as const }}
       />
+      {/* um por estilo (`captions.preset`), nos dois formatos: `pnpm mce still Legendas-<preset>-long` */}
+      {CAPTION_PRESETS.flatMap((preset) =>
+        (['long', 'shorts'] as const).map((style) => (
+          <Composition
+            key={`${preset}-${style}`}
+            id={`Legendas-${preset}-${style}`}
+            component={CaptionsPreview}
+            fps={FPS}
+            width={style === 'long' ? 1920 : 1080}
+            height={style === 'long' ? 1080 : 1920}
+            durationInFrames={FPS * 8}
+            defaultProps={{ style, preset }}
+          />
+        )),
+      )}
     </Folder>
     <Folder name="Entradas">
       {galleryPages.map((ids, index) => (

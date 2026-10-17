@@ -146,5 +146,6 @@ export const entry: ComponentEntry = {
     tone: 'coral',
   },
   defaultDuration: 2.5,
+  vertical: { zone: 'top' },
   description: 'Veredito de uma palavra batido como carimbo ("MITO", "VERDADE", "PLOT TWIST") logo depois de uma afirmação; tom de humor.',
 };

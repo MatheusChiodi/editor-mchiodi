@@ -50,6 +50,31 @@ export function appendNote(file: string, slug: string, kind: NoteKind, text: str
   writeFileSync(file, addNote(current, kind, text, now.toISOString().slice(0, 10)), 'utf8');
 }
 
+/**
+ * Troca o corpo de uma seção `## ...` inteira (cria no fim se não existe). Para dado que é regenerado,
+ * como a retenção importada: reimportar substitui, não acumula.
+ */
+export function replaceSection(content: string, heading: string, body: string[]): string {
+  const lines = content.split(/\r?\n/);
+  const start = lines.indexOf(heading);
+  if (start < 0) {
+    while (lines.length && lines.at(-1) === '') lines.pop();
+    lines.push('', heading, '', ...body);
+    return `${lines.join('\n')}\n`;
+  }
+  let end = lines.findIndex((line, index) => index > start && line.startsWith('## '));
+  if (end < 0) end = lines.length;
+  lines.splice(start + 1, end - start - 1, '', ...body, ...(end < lines.length ? [''] : []));
+  return `${lines.join('\n').replace(/\n+$/, '')}\n`;
+}
+
+export const RETENTION_SECTION = '## Retenção (YouTube)';
+
+export function writeSection(file: string, slug: string, heading: string, body: string[]): void {
+  const current = existsSync(file) ? readFileSync(file, 'utf8') : memoryTemplate(slug);
+  writeFileSync(file, replaceSection(current, heading, body), 'utf8');
+}
+
 export interface ProjectStatus {
   slug: string;
   analyzed: boolean;
@@ -84,6 +109,7 @@ export function describeStatus(status: ProjectStatus): string {
   else if (!status.delivered.includes('final.mp4')) next = `pnpm mce render ${status.slug} --final`;
   else if (!status.delivered.includes('relatorio.md')) next = `pnpm mce report ${status.slug}`;
   else next = 'concluído; novas correções viram uma nova versão da EDL';
+  if (latest !== undefined) lines.push(`opcional: revisar no editor: pnpm mce cut ${status.slug}`);
   lines.push(`próximo passo: ${next}`);
   return lines.join('\n');
 }

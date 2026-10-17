@@ -8,6 +8,7 @@ import { type LevelProfile, levelProfile } from '../edl/levels.ts';
 import type { Edl } from '../edl/schema.ts';
 import { cutPoints, sourceToOutput, type Timeline } from '../edl/timeline.ts';
 import { formatClock } from '../lib/time.ts';
+import { placeBroll } from '../render/layout.ts';
 import { MODELS_PROJECT, type SceneLinks } from '../scenes/models.ts';
 import { SCENE_PREFIX } from '../scenes/sync.ts';
 import { buildBudget, buildRequired, judgeBudget, judgeRequired, SCENE_COMPONENT } from './budget.ts';
@@ -66,7 +67,7 @@ export function overlayCues(props: Record<string, unknown>): number[] {
 }
 
 /** Tudo que muda a tela, em segundos do vídeo final: entradas e saídas de overlay, itens internos, zooms, efeitos curtos e transições. */
-export function visualEvents(edl: Pick<Edl, 'overlays' | 'zooms' | 'effects' | 'transitions'>, timeline: Timeline): number[] {
+export function visualEvents(edl: Pick<Edl, 'overlays' | 'zooms' | 'effects' | 'transitions'> & Partial<Pick<Edl, 'broll'>>, timeline: Timeline): number[] {
   const out = (time: number) => sourceToOutput(timeline, time);
   const events: number[] = [];
   for (const overlay of edl.overlays) {
@@ -74,6 +75,8 @@ export function visualEvents(edl: Pick<Edl, 'overlays' | 'zooms' | 'effects' | '
     if (start === null) continue;
     events.push(start, start + overlay.duration, ...overlayCues(overlay.props).filter((cue) => cue < overlay.duration).map((cue) => start + cue));
   }
+  // b-roll troca o quadro inteiro: entrada e saída contam como algo novo
+  for (const item of placeBroll(edl.broll ?? [], timeline)) events.push(item.start, item.end);
   for (const zoom of edl.zooms) {
     const start = out(zoom.at);
     if (start !== null) events.push(start);

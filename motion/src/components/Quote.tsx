@@ -119,5 +119,6 @@ export const entry: ComponentEntry = {
     role: 'criador do Linux e do Git',
   },
   defaultDuration: 6,
+  vertical: { zone: 'top' },
   description: 'Citação literal de alguém (frase famosa, trecho de documentação, fala de entrevista) no momento em que é lida em voz alta.',
 };

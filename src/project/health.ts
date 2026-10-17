@@ -2,6 +2,7 @@ import { statfsSync } from 'node:fs';
 import { freemem, totalmem } from 'node:os';
 
 import { run } from '../lib/exec.ts';
+import type { DeepFilterLookup } from '../render/denoise.ts';
 
 const GB = 1024 ** 3;
 /** Abaixo disso a máquina já matou render (16 GB de RAM no total). */
@@ -92,6 +93,35 @@ export async function queryVram(runner: Runner = run, timeoutMs = 2500): Promise
   } finally {
     clearTimeout(timer);
   }
+}
+
+export interface ToolCheck {
+  name: string;
+  ok: boolean;
+  detail: string;
+  /** falta que impede o pipeline de rodar (o deep-filter é opcional) */
+  required: boolean;
+}
+
+/** O deep-filter é opcional: sem ele, `audio.denoise: "deepfilter"` cai para o afftdn. */
+export function deepFilterCheck(lookup: DeepFilterLookup): ToolCheck {
+  const base = { name: 'deep-filter', required: false };
+  if (lookup.path) return { ...base, ok: true, detail: `${lookup.path} (via ${lookup.via}); audio.denoise "deepfilter" disponível` };
+  if (lookup.missing) return { ...base, ok: false, detail: `${lookup.via} aponta para "${lookup.missing}", que não existe; "deepfilter" cai para afftdn` };
+  return { ...base, ok: false, detail: 'não encontrado no PATH (nem MCE_DEEPFILTER / denoise.deepFilterPath); "deepfilter" cai para afftdn' };
+}
+
+/** O vidstab é opcional: sem ele, `stabilize.enabled` avisa e o render segue sem estabilizar. */
+export function vidstabCheck(available: boolean): ToolCheck {
+  return available
+    ? { name: 'vidstab', ok: true, detail: 'ffmpeg com vidstabdetect/vidstabtransform; stabilize disponível', required: false }
+    : { name: 'vidstab', ok: false, detail: 'ffmpeg sem libvidstab; stabilize é ignorado (com aviso)', required: false };
+}
+
+/** Linhas do `mce doctor`: uma por ferramenta, `ok`/`falta`/`opcional`. */
+export function doctorLines(checks: ToolCheck[]): string[] {
+  const width = Math.max(...checks.map((check) => check.name.length));
+  return checks.map((check) => `${check.ok ? 'ok      ' : check.required ? 'FALTA   ' : 'opcional'}  ${check.name.padEnd(width)}  ${check.detail}`);
 }
 
 export interface VramSampler {

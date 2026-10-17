@@ -86,5 +86,6 @@ export const entry: ComponentEntry = {
     year: '2024',
   },
   defaultDuration: 5,
+  vertical: { zone: 'top' },
   description: 'Crédito discreto da fonte de um dado, gráfico ou imagem enquanto ele está na tela.',
 };

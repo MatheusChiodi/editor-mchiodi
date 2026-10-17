@@ -1,6 +1,8 @@
 import type { Caption } from '@remotion/captions';
 
 import type { OverlayWipe, StagePlan } from './arsenal/stage';
+import type { CaptionPreset } from './captions/presets';
+import type { VerticalFrame, VerticalSpec } from './vertical';
 
 export type CaptionStyle = 'long' | 'shorts';
 
@@ -20,6 +22,8 @@ export interface OverlayItem {
   wipe?: OverlayWipe;
   /** `persistent`: camada fixa (indicador de progresso) desenhada por cima do gráfico da vez */
   layer?: 'base' | 'persistent';
+  /** Short: zona pedida na EDL (`overlays[].shorts`); sem valor, o metadado do componente */
+  vertical?: VerticalSpec;
 }
 
 /** Props da composição `Overlay`: tudo que vai por cima do footage, com fundo transparente. */
@@ -31,5 +35,9 @@ export type OverlayProps = {
   durationInFrames: number;
   captions: StyledCaption[];
   captionStyle: CaptionStyle;
+  /** estilo visual das legendas (`captions.preset`); ausente = `padrao` */
+  captionPreset?: CaptionPreset;
   overlays: OverlayItem[];
+  /** Short 9:16: cada componente é diagramado numa caixa própria (motion/src/vertical.ts) */
+  vertical?: VerticalFrame;
 };

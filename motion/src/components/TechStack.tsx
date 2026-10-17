@@ -17,6 +17,7 @@ export const entry: ComponentEntry = {
     position: 'middle',
   },
   defaultDuration: 6,
+  vertical: { zone: 'top' },
   description:
     'Pilha vertical de tecnologias (ícone + nome em pílula) num lado da tela, uma por vez conforme a fala; a versão do `TechRow` para lista longa sobre o talking head.',
 };

@@ -410,5 +410,6 @@ export const entry: ComponentEntry = {
   component: Diagram,
   sample: { ...sample },
   defaultDuration: 8,
+  vertical: { zone: 'full' },
   description: 'Caixas ligadas por setas que aparecem na ordem da explicação; use para mostrar a relação entre partes (cliente → servidor → banco).',
 };

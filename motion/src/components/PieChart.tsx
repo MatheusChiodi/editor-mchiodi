@@ -269,5 +269,6 @@ export const entry: ComponentEntry = {
     ],
   },
   defaultDuration: 6,
+  vertical: { zone: 'full' },
   description: 'Mostra como um todo se divide (2 a 5 fatias) quando a fala cita proporções, com a fatia que importa em coral.',
 };

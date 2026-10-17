@@ -77,6 +77,7 @@ export const entry: ComponentEntry = {
   component: TechBadge,
   sample: { tech: 'react', corner: 'top-right' },
   defaultDuration: TECH_BADGE_SEC,
+  vertical: { zone: 'top' },
   description:
     'Selo de canto com o ícone e o nome de UMA tecnologia, para a primeira vez em que ela é citada sobre o talking head; some sozinho em ~3 s. É o jeito mais leve de cumprir "toda tecnologia citada ganha ícone".',
 };

@@ -460,6 +460,11 @@ export const transitions: Record<string, TransitionPreset> = Object.fromEntries(
   Object.entries(presets).map(([id, preset]) => [id, { id, ...preset }]),
 );
 
+/** Duração efetiva da transição: a pedida na EDL ou a padrão do preset. */
+export function transitionDuration(transition: { type: string; duration?: number }): number {
+  return transition.duration ?? transitions[transition.type]?.defaultDuration ?? 0.4;
+}
+
 /** Opções do filtro `xfade` (sem duration/offset) que realizam o preset. */
 export function xfadeArgs(preset: TransitionPreset): string {
   if (preset.kind !== 'xfade' || !preset.xfade) throw new Error(`Transição "${preset.id}" não é xfade`);

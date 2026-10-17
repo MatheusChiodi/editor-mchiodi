@@ -220,5 +220,6 @@ export const entry: ComponentEntry = {
   component: DataTable,
   sample: { ...sample },
   defaultDuration: 8,
+  vertical: { zone: 'full' },
   description: 'Tabela limpa com linhas entrando em sequência e uma linha ou coluna em destaque; use para comparar valores em mais de duas dimensões.',
 };

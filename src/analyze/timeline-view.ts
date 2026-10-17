@@ -1,9 +1,10 @@
-import { mkdirSync } from 'node:fs';
+import { existsSync, mkdirSync, rmSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import sharp from 'sharp';
 
 import { ffmpeg } from '../lib/ffmpeg.ts';
-import { formatClock } from '../lib/time.ts';
+import { formatClock, frameAt, frameSeekTime } from '../lib/time.ts';
+import { probe } from './media.ts';
 import type { Span } from './types.ts';
 
 export interface ViewWord extends Span {
@@ -160,9 +161,14 @@ export function sourceBands(silences: Span[], edl: { clips: Span[]; source: { du
   return bands;
 }
 
-export async function extractFrame(video: string, at: number, output: string): Promise<string> {
+/** PNG do frame que está na tela no instante `at`; sem `fps`, lê a taxa do próprio arquivo. */
+export async function extractFrame(video: string, at: number, output: string, fps?: number): Promise<string> {
+  const rate = fps ?? (await probe(video)).fps;
   mkdirSync(dirname(output), { recursive: true });
-  await ffmpeg(['-ss', Math.max(0, at).toFixed(3), '-i', video, '-an', '-frames:v', '1', '-update', '1', output]);
+  rmSync(output, { force: true });
+  const seek = frameSeekTime(frameAt(at, rate), rate);
+  await ffmpeg(['-ss', seek.toFixed(4), '-i', video, '-an', '-frames:v', '1', '-update', '1', output]);
+  if (!existsSync(output)) throw new Error(`Nenhum frame em ${at.toFixed(3)}s de ${video} (instante além do fim?)`);
   return output;
 }
 

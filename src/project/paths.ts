@@ -40,8 +40,8 @@ export function slugFromFile(file: string): string {
   return slugify(basename(file, extname(file)));
 }
 
-export function projectPaths(slug: string): ProjectPaths {
-  const dir = join(PROJECTS_DIR, slug);
+export function projectPaths(slug: string, projectsDir = PROJECTS_DIR): ProjectPaths {
+  const dir = join(projectsDir, slug);
   const analysisDir = join(dir, 'analysis');
   return {
     slug,

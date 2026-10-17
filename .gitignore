@@ -50,6 +50,8 @@ assets/music/*
 assets/memes/*
 assets/luts/*
 assets/brand/*
+# b-roll: os vídeos e o índice (com origem/licença) ficam só na máquina
+assets/broll/*
 !assets/*/.gitkeep
 !assets/memes/placeholder.png
 
@@ -70,3 +72,6 @@ __pycache__/
 *.log
 .DS_Store
 Thumbs.db
+
+# build da UI do MChiodi Cut (pnpm cut:build)
+cut/dist/

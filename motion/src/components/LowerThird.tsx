@@ -137,5 +137,6 @@ export const entry: ComponentEntry = {
     link: 'https://www.mchiodi.dev/',
   },
   defaultDuration: 5,
+  vertical: { zone: 'skip' },
   description: 'Identifica quem fala (nome e cargo) na primeira aparição, ou mostra o link/fonte no momento em que é citado.',
 };

@@ -3,13 +3,12 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 
-import { buildPhrases } from '../src/analyze/speech.ts';
 import { configSchema } from '../src/config.ts';
 import { edlSchema } from '../src/edl/schema.ts';
 import { buildTimeline } from '../src/edl/timeline.ts';
 import { shiftTimes } from '../src/eval/index.ts';
 import { outputNames, renderDir } from '../src/render/index.ts';
-import { clipsWithin, rankShortCandidates, SHORTS_SIZE, shortsEdl, verticalCrop } from '../src/render/shorts.ts';
+import { clipsWithin, SHORTS_SIZE, shortsEdl, verticalCrop } from '../src/render/shorts.ts';
 import type { ProjectPaths } from '../src/project/paths.ts';
 import { buildNtfyRequest, formatLogLine, notify } from '../src/watcher/notify.ts';
 import {
@@ -24,7 +23,6 @@ import {
   summarize,
   updateJob,
 } from '../src/watcher/queue.ts';
-import { script } from './helpers.ts';
 
 const dir = mkdtempSync(join(tmpdir(), 'mce-watch-'));
 afterAll(() => rmSync(dir, { recursive: true, force: true }));
@@ -62,7 +60,7 @@ describe('shorts', () => {
     expect(verticalCrop(0.2, { width: 540, height: 960 })).toContain('scale=540:960');
   });
 
-  it('shortsEdl deriva uma EDL vertical só com o trecho, sem gráficos 16:9', () => {
+  it('shortsEdl deriva uma EDL vertical só com o trecho e os overlays ancorados nele', () => {
     const edl = edlWith({
       shorts: { start: 40, end: 80, focusX: 0.45, reason: 'melhor explicação' },
       overlays: [{ id: 'o1', component: 'LowerThird', at: 45, duration: 3, reason: 'nome' }],
@@ -80,7 +78,9 @@ describe('shorts', () => {
     expect(short.output).toEqual({ fps: 30, ...SHORTS_SIZE });
     expect(short.clips.map((clip) => [clip.id, clip.start, clip.end])).toEqual([['c1', 40, 50], ['c2', 60, 80]]);
     expect(short.captions).toMatchObject({ enabled: true, style: 'shorts', maxWordsPerPage: 3 });
-    expect(short.overlays).toEqual([]);
+    // a zona vertical (LowerThird = skip) é decidida na camada de gráficos; aqui só a seleção por trecho
+    expect(short.overlays.map((item) => item.id)).toEqual(['o1']);
+    expect(shortsEdl({ ...edl, shorts: { ...edl.shorts!, graphics: 'none' } }).overlays).toEqual([]);
     expect(short.zooms.map((zoom) => zoom.id)).toEqual(['z1']);
     expect(short.transitions.map((transition) => transition.id)).toEqual(['t1']);
     expect(short.chapters).toEqual([]);
@@ -92,24 +92,6 @@ describe('shorts', () => {
   it('shortsEdl exige o trecho definido e com conteúdo', () => {
     expect(() => shortsEdl(edlWith({}))).toThrow(/shorts/);
     expect(() => shortsEdl(edlWith({ shorts: { start: 50.5, end: 59 } }))).toThrow(/nenhum clipe/);
-  });
-
-  it('rankShortCandidates sugere trechos de 20–60s que começam em frase e prefere gancho', () => {
-    const filler = Array.from({ length: 30 }, () => 'isso aqui é só contexto do assunto.').join(' ');
-    const text = `${filler} |1 Por que ninguém te conta esse erro? ${Array.from({ length: 12 }, () => 'A resposta tem várias partes importantes.').join(' ')} |1 ${filler}`;
-    const words = script(text);
-    const phrases = buildPhrases(words);
-    const timeline = buildTimeline([{ id: 'c1', start: 0, end: words.at(-1)!.end + 1 }], 30);
-    const candidates = rankShortCandidates(phrases, timeline, 3);
-    expect(candidates.length).toBeGreaterThan(0);
-    expect(candidates[0]!.opening).toContain('Por que ninguém');
-    expect(candidates[0]!.reasons).toContain('abre com gancho');
-    for (const candidate of candidates) {
-      expect(candidate.outputSec).toBeGreaterThanOrEqual(20);
-      expect(candidate.outputSec).toBeLessThan(60);
-      expect(phrases.some((phrase) => phrase.start === candidate.start)).toBe(true);
-    }
-    expect(rankShortCandidates(phrases.slice(0, 2), timeline)).toEqual([]);
   });
 
   it('nomes de pasta e de arquivo distinguem o Short do vídeo principal', () => {

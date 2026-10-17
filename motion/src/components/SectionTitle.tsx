@@ -149,5 +149,6 @@ export const entry: ComponentEntry = {
     title: 'Como o React decide o que renderizar',
   },
   defaultDuration: 4,
+  vertical: { zone: 'top' },
   description: 'Abre um novo capítulo do vídeo com o número e o título da seção; usar na troca de assunto.',
 };

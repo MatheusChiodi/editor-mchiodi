@@ -99,14 +99,14 @@ export function diffEdl(a: Edl, b: Edl): string[] {
   const delta = total(b) - total(a);
   lines.push(`clipes: ${a.clips.length} → ${b.clips.length} (duração ${delta >= 0 ? '+' : ''}${delta.toFixed(2)}s)`);
   if (a.level !== b.level) lines.push(`nível: ${a.level} → ${b.level}`);
-  for (const key of ['overlays', 'zooms', 'transitions', 'sfx', 'chapters'] as const) {
+  for (const key of ['overlays', 'broll', 'zooms', 'transitions', 'sfx', 'chapters'] as const) {
     const before = new Set(a[key].map((item) => JSON.stringify(item)));
     const after = new Set(b[key].map((item) => JSON.stringify(item)));
     const added = [...after].filter((item) => !before.has(item)).length;
     const dropped = [...before].filter((item) => !after.has(item)).length;
     if (added || dropped) lines.push(`${key}: +${added} / -${dropped}`);
   }
-  for (const key of ['captions', 'grade', 'audio', 'music'] as const) {
+  for (const key of ['captions', 'grade', 'audio', 'music', 'shorts'] as const) {
     if (JSON.stringify(a[key]) !== JSON.stringify(b[key])) lines.push(`${key}: alterado`);
   }
   return lines;

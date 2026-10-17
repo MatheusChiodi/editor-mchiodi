@@ -103,7 +103,7 @@ export function techCatalogItems(techs: readonly Tech[] = TECHS): { id: string; 
     return {
       id: `${TECH_PREFIX}${tech.id}`,
       group: `${tech.category} · ${source === 'monograma' ? 'sem ícone no conjunto (monograma)' : source}`,
-      description: `${tech.name} — ${[...tech.aliases, ...(tech.weak ?? []).map((alias) => `${alias}*`)].slice(0, 6).join(', ') || 'sem apelidos'}`,
+      description: `${tech.name} (${tech.category}) — ${[...tech.aliases, ...(tech.weak ?? []).map((alias) => `${alias}*`)].slice(0, 6).join(', ') || 'sem apelidos'}`,
       usage: `overlays[]: { "component": "TechBadge", "duration": 3, "props": { "tech": "${tech.id}" } }  ·  em qualquer prop de ícone: "${TECH_PREFIX}${tech.id}"`,
       details: [`· cor ${tech.color} · apelidos de fala: ${[...tech.aliases, ...(tech.weak ?? []).map((alias) => `${alias}* (só com contexto)`)].join(', ') || '—'}`],
     };

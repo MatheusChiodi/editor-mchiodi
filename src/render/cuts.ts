@@ -1,16 +1,14 @@
 import { writeFileSync } from 'node:fs';
 
-import { transitions, xfadeArgs } from '../arsenal/transitions.ts';
+import { transitionDuration, transitions, xfadeArgs } from '../arsenal/transitions.ts';
 import type { Transition } from '../edl/schema.ts';
 import type { Timeline } from '../edl/timeline.ts';
 import { ffmpeg, type ProgressFn, type Quality, videoEncodeArgs } from '../lib/ffmpeg.ts';
 
 export const AUDIO_RATE = 48000;
 
-/** Duração efetiva da transição: a pedida na EDL ou a padrão do preset. */
-export function transitionDuration(transition: Pick<Transition, 'type' | 'duration'>): number {
-  return transition.duration ?? transitions[transition.type]?.defaultDuration ?? 0.4;
-}
+// mora no catálogo (módulo puro) para a camada de gráficos do editor no navegador usar a mesma conta
+export { transitionDuration };
 
 export interface CutGraphOptions {
   fps: number;
@@ -23,11 +21,15 @@ export interface CutGraphOptions {
   sourceFrames?: number;
   /** cadeia que leva o quadro da fonte ao tamanho de saída; padrão: só redimensionar (o Short recorta em 9:16) */
   prep?: string;
+  /** `vidstabtransform` (ver stabilize.ts): entra logo após o `fps`, antes do `prep`, 1 frame por frame */
+  stabilize?: string;
   /**
    * Gravação de tela (entrada 1 do ffmpeg) cortada nos mesmos pontos da câmera, saindo em [scut].
    * `align` é a cadeia que a coloca na linha do tempo da câmera (ver `screenAlign`).
    */
   screen?: { align: string };
+  /** entrada do ffmpeg de onde vem o áudio (padrão 0, a própria fonte); a voz limpa do deep-filter entra à parte */
+  audioInput?: number;
 }
 
 export interface PlannedTransition {
@@ -67,6 +69,15 @@ export function planTransitions(timeline: Timeline, options: CutGraphOptions): P
 }
 
 /**
+ * Duração do fade de áudio em cada borda de um clipe de `lengthSec`. Clipe curto não perde o fade
+ * (seria estalo garantido): ele encolhe até 1/3 do clipe, e os dois fades nunca se sobrepõem.
+ */
+export function edgeFadeSec(lengthSec: number, fadeSec: number): number {
+  if (fadeSec <= 0 || lengthSec <= 0) return 0;
+  return Number(Math.min(fadeSec, lengthSec / 3).toFixed(6));
+}
+
+/**
  * Filtergraph de corte em passe único: decodifica a fonte uma vez, recorta por índice de
  * frame/amostra e concatena. Recortar por tempo (ou concatenar segmentos já encodados com
  * -c copy) acumula drift entre vídeo e áudio a cada corte.
@@ -81,9 +92,10 @@ export function buildCutGraph(timeline: Timeline, options: CutGraphOptions): str
   const into = new Map(planned.map((transition) => [transition.index, transition]));
 
   const lines: string[] = [
-    `[0:v]fps=${fps}:start_time=0,${options.prep ?? `scale=${options.width}:${options.height}:flags=lanczos,setsar=1`},format=yuv420p,split=${count}${labels('vs')}`,
+    // a estabilização vê os mesmos frames que o pré-passo analisou: depois do fps, antes de qualquer escala/recorte
+    `[0:v]fps=${fps}:start_time=0,${options.stabilize ? `${options.stabilize},` : ''}${options.prep ?? `scale=${options.width}:${options.height}:flags=lanczos,setsar=1`},format=yuv420p,split=${count}${labels('vs')}`,
     // first_pts=0 alinha o áudio ao zero do vídeo: os recortes abaixo contam amostras
-    `[0:a]aresample=${AUDIO_RATE}:async=1:first_pts=0,aformat=channel_layouts=stereo,asplit=${count}${labels('as')}`,
+    `[${options.audioInput ?? 0}:a]aresample=${AUDIO_RATE}:async=1:first_pts=0,aformat=channel_layouts=stereo,asplit=${count}${labels('as')}`,
   ];
 
   const videoLength: number[] = [];
@@ -96,8 +108,9 @@ export function buildCutGraph(timeline: Timeline, options: CutGraphOptions): str
     const endSample = Math.round((clip.endFrame / fps) * AUDIO_RATE);
     const length = (endSample - startSample) / AUDIO_RATE;
     const audio = [`atrim=start_sample=${startSample}:end_sample=${endSample}`, 'asetpts=PTS-STARTPTS'];
-    if (fade > 0 && length > fade * 4) {
-      audio.push(`afade=t=in:st=0:d=${fade}`, `afade=t=out:st=${(length - fade).toFixed(6)}:d=${fade}`);
+    const edge = edgeFadeSec(length, fade);
+    if (edge > 0) {
+      audio.push(`afade=t=in:st=0:d=${edge}`, `afade=t=out:st=${(length - edge).toFixed(6)}:d=${edge}`);
     }
     lines.push(
       `[vs${index}]trim=start_frame=${startFrame}:end_frame=${endFrame},setpts=PTS-STARTPTS[v${index}]`,
@@ -155,6 +168,8 @@ export interface RenderCutOptions extends CutGraphOptions {
   /** arquivo da gravação de tela e onde gravar a versão cortada (exige `screen` nas opções do grafo) */
   screenSource?: string;
   screenOutput?: string;
+  /** áudio alinhado amostra a amostra com a fonte (WAV do deep-filter) que substitui o dela */
+  audioSource?: string;
   graphFile: string;
   quality: Quality;
   onProgress?: ProgressFn;
@@ -162,13 +177,15 @@ export interface RenderCutOptions extends CutGraphOptions {
 
 /** Gera o intermediário cortado (vídeo de alta qualidade + áudio PCM, sem perdas no áudio). */
 export async function renderCut(timeline: Timeline, options: RenderCutOptions): Promise<void> {
-  writeFileSync(options.graphFile, buildCutGraph(timeline, options), 'utf8');
-  const encode = await videoEncodeArgs(options.quality);
   const withScreen = Boolean(options.screen && options.screenSource && options.screenOutput);
+  const audioInput = options.audioSource ? (withScreen ? 2 : 1) : 0;
+  writeFileSync(options.graphFile, buildCutGraph(timeline, { ...options, audioInput }), 'utf8');
+  const encode = await videoEncodeArgs(options.quality);
   await ffmpeg(
     [
       '-i', options.source,
       ...(withScreen ? ['-i', options.screenSource!] : []),
+      ...(options.audioSource ? ['-i', options.audioSource] : []),
       // 300 cortes passam do limite de linha de comando do Windows: o grafo vai por arquivo
       '-/filter_complex', options.graphFile,
       '-map', '[vcut]', '-map', '[acut]',

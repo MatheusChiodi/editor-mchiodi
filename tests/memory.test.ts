@@ -71,6 +71,13 @@ describe('describeStatus', () => {
     expect(next({ edlVersions: [1, 2], renders: ['v1-preview', 'v2-preview'], lastEval: old })).toBe('próximo passo: pnpm mce eval aula');
   });
 
+  it('sugere revisar no editor só quando há EDL', () => {
+    const optional = 'opcional: revisar no editor: pnpm mce cut aula';
+    expect(describeStatus(base)).not.toContain('mce cut');
+    expect(describeStatus({ ...base, analyzed: false, edlVersions: [1] })).not.toContain('mce cut');
+    expect(describeStatus({ ...base, edlVersions: [1] }).split('\n')).toContain(optional);
+  });
+
   it('resume avaliação e memória', () => {
     const text = describeStatus({ ...base, edlVersions: [1], lastEval: { edlVersion: 1, passed: false, errors: 2, warnings: 5 }, hasMemory: true });
     expect(text).toContain('EDL v1 reprovada (2 erros, 5 avisos)');

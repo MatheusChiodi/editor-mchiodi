@@ -6,7 +6,7 @@ import { ffmpeg, type ProgressFn, type Quality, videoEncodeArgs } from '../lib/f
 import { buildMixGraph, type MusicBed, type SfxCue } from './audio.ts';
 import { buildBumperGraph, type Bumpers } from './bumpers.ts';
 import { AUDIO_RATE } from './cuts.ts';
-import { buildLayoutGraph, type PlacedLayout } from './layout.ts';
+import { buildBrollGraph, buildLayoutGraph, type PlacedBroll, type PlacedLayout } from './layout.ts';
 
 export interface ComposeGraphOptions {
   width: number;
@@ -28,11 +28,15 @@ export interface ComposeGraphOptions {
   bumpers: Bumpers;
   /** segmentos em que a gravação de tela entra (vazio = só câmera) */
   layout?: PlacedLayout[];
+  /** b-roll por cima do footage, abaixo dos gráficos (`file` já resolvido) */
+  broll?: PlacedBroll[];
+  /** exportação em outro formato: linhas que levam o quadro pronto `[vout]` a `[vfmt]` (ver render/formats.ts) */
+  reformat?: string[] | null;
 }
 
-type InputFlags = Pick<ComposeGraphOptions, 'hasOverlay' | 'music' | 'sfx' | 'hasIntro' | 'hasOutro' | 'layout'>;
+type InputFlags = Pick<ComposeGraphOptions, 'hasOverlay' | 'music' | 'sfx' | 'hasIntro' | 'hasOutro' | 'layout' | 'broll'>;
 
-/** Ordem das entradas do ffmpeg: 0 = corte, depois overlay, música, um por SFX, abertura, encerramento e tela gravada. */
+/** Ordem das entradas do ffmpeg: 0 = corte, depois overlay, música, um por SFX, abertura, encerramento, tela gravada e um por b-roll. */
 export function composeInputs(options: InputFlags) {
   let next = 1;
   const overlay = options.hasOverlay ? next++ : null;
@@ -41,7 +45,8 @@ export function composeInputs(options: InputFlags) {
   const intro = options.hasIntro ? next++ : null;
   const outro = options.hasOutro ? next++ : null;
   const screen = options.layout?.length ? next++ : null;
-  return { overlay, music, sfx, intro, outro, screen };
+  const broll = (options.broll ?? []).map(() => next++);
+  return { overlay, music, sfx, intro, outro, screen, broll };
 }
 
 /** Duração do arquivo final: vídeo principal + vinhetas. */
@@ -71,6 +76,15 @@ export function buildComposeGraph(options: ComposeGraphOptions): string {
       }),
     );
     footage = '[laid]';
+    prepared = 'null';
+  }
+  // b-roll cobre o footage (câmera ou tela) e fica abaixo da camada de gráficos: a legenda continua por cima
+  if (inputs.broll.length) {
+    lines.push(
+      `${footage}${prepared}[brbase]`,
+      ...buildBrollGraph({ base: '[brbase]', inputs: inputs.broll, items: options.broll!, width: options.width, height: options.height, fps: options.fps, output: '[brolled]' }),
+    );
+    footage = '[brolled]';
     prepared = 'null';
   }
   if (inputs.overlay !== null) {
@@ -107,6 +121,7 @@ export function buildComposeGraph(options: ComposeGraphOptions): string {
       fps: options.fps,
       rate: AUDIO_RATE,
     }),
+    ...(options.reformat ?? []),
   );
   return lines.join(';\n');
 }
@@ -127,10 +142,12 @@ export interface ComposeOptions extends Omit<ComposeGraphOptions, 'hasOverlay' |
   output: string;
   graphFile: string;
   quality: Quality;
+  /** teto de bitrate (kb/s) da exportação para celular; bufsize = 2× */
+  maxrateK?: number;
   onProgress?: ProgressFn;
 }
 
-export function composeArgs(options: Pick<ComposeOptions, 'cut' | 'overlay' | 'music' | 'sfx' | 'intro' | 'outro' | 'screen'>): string[] {
+export function composeArgs(options: Pick<ComposeOptions, 'cut' | 'overlay' | 'music' | 'sfx' | 'intro' | 'outro' | 'screen' | 'broll'>): string[] {
   return [
     '-i', options.cut,
     ...(options.overlay ? ['-i', options.overlay] : []),
@@ -140,6 +157,8 @@ export function composeArgs(options: Pick<ComposeOptions, 'cut' | 'overlay' | 'm
     ...(options.intro ? ['-i', options.intro] : []),
     ...(options.outro ? ['-i', options.outro] : []),
     ...(options.screen ? ['-i', options.screen] : []),
+    // cada b-roll entra já posicionado no segundo `from` do arquivo; o grafo apara e desloca
+    ...(options.broll ?? []).flatMap((item) => [...(item.from > 0 ? ['-ss', item.from.toFixed(3)] : []), '-i', item.file]),
   ];
 }
 
@@ -157,8 +176,9 @@ export async function compose(options: ComposeOptions): Promise<void> {
     [
       ...composeArgs(options),
       '-/filter_complex', options.graphFile,
-      '-map', '[vout]', '-map', '[aout]',
+      '-map', options.reformat?.length ? '[vfmt]' : '[vout]', '-map', '[aout]',
       ...(await videoEncodeArgs(options.quality)),
+      ...(options.maxrateK ? ['-maxrate', `${options.maxrateK}k`, '-bufsize', `${options.maxrateK * 2}k`] : []),
       '-c:a', 'aac', '-b:a', options.quality === 'final' ? '320k' : '160k', '-ar', String(AUDIO_RATE),
       '-t', duration.toFixed(3),
       '-movflags', '+faststart',

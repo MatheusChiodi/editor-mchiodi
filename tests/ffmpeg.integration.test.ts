@@ -85,6 +85,42 @@ describe('ffmpeg (integração)', () => {
     expect(Math.abs(audioSeconds - timeline.durationSec)).toBeLessThan(0.002);
   }, 120_000);
 
+  it('fade nas bordas elimina o degrau de amostra na junção do corte (estalo)', async () => {
+    // senoide de 347 Hz: a 30 fps a fase muda a cada frame, então os cortes caem fora do cruzamento por zero
+    // (frame 41 ≈ +pico, frame 56 ≈ -pico); o PCM na fonte evita o atraso de priming do AAC
+    const sine = join(dir, 'sine.mkv');
+    await ffmpeg([
+      '-f', 'lavfi', '-i', 'color=c=gray:s=160x90:r=30:d=4',
+      '-f', 'lavfi', '-i', "aevalsrc='0.5*sin(2*PI*347*t)':s=48000:d=4",
+      '-c:v', 'libx264', '-preset', 'ultrafast', '-pix_fmt', 'yuv420p', '-c:a', 'pcm_s16le', '-shortest', sine,
+    ]);
+    // o clipe do meio tem 0.1 s: com 50 ms pedidos, o fade encolhe para 1/3 dele
+    const sineTimeline = buildTimeline(
+      [{ id: 'a', start: 0.5, end: 41 / 30 }, { id: 'b', start: 56 / 30, end: 59 / 30 }, { id: 'c', start: 71 / 30, end: 3.5 }],
+      FPS,
+    );
+    const maxStep = async (fadeMs: number): Promise<number> => {
+      const out = join(dir, `sine-${fadeMs}.mkv`);
+      await renderCut(sineTimeline, {
+        source: sine, output: out, graphFile: join(dir, `sine-${fadeMs}.graph.txt`),
+        quality: 'preview', fps: FPS, width: 160, height: 90, fadeMs,
+      });
+      const pcm = join(dir, `sine-${fadeMs}.pcm`);
+      await ffmpeg(['-i', out, '-vn', '-ac', '1', '-ar', '48000', '-f', 's16le', pcm]);
+      const raw = readFileSync(pcm);
+      let step = 0;
+      for (let index = 1; index * 2 + 1 < raw.length; index += 1) {
+        step = Math.max(step, Math.abs(raw.readInt16LE(index * 2) - raw.readInt16LE(index * 2 - 2)));
+      }
+      return step;
+    };
+    // maior degrau natural da senoide entre duas amostras
+    const natural = 2 * Math.PI * (347 / 48000) * 0.5 * 32767;
+    expect(await maxStep(0)).toBeGreaterThan(natural * 10);
+    expect(await maxStep(50)).toBeLessThan(natural * 1.5);
+    expect(await maxStep(12)).toBeLessThan(natural * 1.5);
+  }, 120_000);
+
   it('a cadeia de áudio não desloca o som: um impulso sai no mesmo instante em que entrou', async () => {
     const audio = edlSchema.shape.audio.parse({});
     const pcm = join(dir, 'impulse.pcm');

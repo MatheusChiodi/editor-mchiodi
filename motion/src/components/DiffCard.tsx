@@ -305,5 +305,6 @@ export const entry: ComponentEntry = {
   component: DiffCard,
   sample: { ...sample },
   defaultDuration: 9,
+  vertical: { zone: 'full' },
   description: 'Antes e depois de um trecho de código, com linhas removidas em rose e adicionadas em emerald; use para mostrar a correção de um bug ou uma refatoração.',
 };

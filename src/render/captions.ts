@@ -1,3 +1,4 @@
+import { pageLimits } from '../../motion/src/captions/presets.ts';
 import type { StyledCaption } from '../../motion/src/types.ts';
 import { normalizeToken } from '../analyze/speech.ts';
 import type { Word } from '../analyze/types.ts';
@@ -5,13 +6,20 @@ import type { CaptionSettings } from '../edl/schema.ts';
 import { mapSpan, type Timeline } from '../edl/timeline.ts';
 
 const SENTENCE_END = /[.!?…]["')]?$/;
-const MAX_CHARS: Record<CaptionSettings['style'], number> = { long: 34, shorts: 16 };
 /** pausa que encerra a página mesmo no meio da frase */
 const PAGE_GAP_MS = 550;
 
 /** Texto exibido: sem vírgula/ponto final (poluem a tela), mantendo ? e !. */
-function displayText(word: string): string {
+export function displayText(word: string): string {
   return word.replace(/[.,;:…]+$/g, '').replace(/^["'(]+|["')]+$/g, '');
+}
+
+/** Onde a palavra aparece no vídeo final, ou `null` se foi cortada (ou sobrou só uma lasca dela depois do corte). */
+export function captionSpan(word: Pick<Word, 'start' | 'end'>, timeline: Timeline): { start: number; end: number } | null {
+  const span = mapSpan(timeline, word);
+  if (!span) return null;
+  const length = word.end - word.start;
+  return span.end - span.start < Math.min(0.08, length * 0.5) ? null : span;
 }
 
 /**
@@ -25,11 +33,8 @@ export function buildCaptions(words: Word[], timeline: Timeline, settings: Capti
 
   const captions: (StyledCaption & { sentenceEnd: boolean; comma: boolean })[] = [];
   for (const word of words) {
-    const span = mapSpan(timeline, word);
+    const span = captionSpan(word, timeline);
     if (!span) continue;
-    const length = word.end - word.start;
-    // sobrou só uma lasca da palavra depois do corte: não legenda
-    if (span.end - span.start < Math.min(0.08, length * 0.5)) continue;
     const token = normalizeToken(word.text);
     const text = replacements.get(token) ?? displayText(word.text);
     if (!text) continue;
@@ -48,7 +53,8 @@ export function buildCaptions(words: Word[], timeline: Timeline, settings: Capti
     });
   }
 
-  const maxChars = MAX_CHARS[settings.style];
+  // o estilo só aperta a página (bold-shorts: até 3 palavras), nunca afrouxa o que a EDL pediu
+  const { maxWords, maxChars } = pageLimits(settings.preset, settings.style, settings.maxWordsPerPage);
   let count = 0;
   let chars = 0;
   captions.forEach((caption, index) => {
@@ -59,7 +65,7 @@ export function buildCaptions(words: Word[], timeline: Timeline, settings: Capti
     const breakHere =
       !next ||
       caption.sentenceEnd ||
-      count >= settings.maxWordsPerPage ||
+      count >= maxWords ||
       nextTooWide ||
       next.startMs - caption.endMs > PAGE_GAP_MS ||
       (caption.comma && count >= 3);

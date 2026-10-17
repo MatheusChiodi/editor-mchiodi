@@ -187,3 +187,72 @@ export function resolveScreen(path: string, sourcePath: string): string | null {
   const candidate = isAbsolute(path) ? path : join(dirname(sourcePath), path);
   return existsSync(candidate) ? candidate : null;
 }
+
+export interface PlacedBroll {
+  /** segundos do vídeo final */
+  start: number;
+  end: number;
+  /** segundo do arquivo de b-roll que aparece em `start` */
+  from: number;
+  fit: 'cover' | 'contain';
+  file: string;
+}
+
+/**
+ * B-roll no tempo de saída. Um trecho da fonte que atravessa cortes continua num intervalo só: os pedaços mantidos
+ * são vizinhos no vídeo final, e o b-roll corre contínuo por cima do corte (esconde o salto).
+ */
+export function placeBroll(items: Pick<Edl['broll'][number], 'file' | 'start' | 'end' | 'from' | 'fit'>[], timeline: Timeline): PlacedBroll[] {
+  const placed: PlacedBroll[] = [];
+  for (const item of items) {
+    let start: number | null = null;
+    let end = 0;
+    for (const clip of timeline.clips) {
+      const from = Math.max(item.start, clip.sourceStart);
+      const to = Math.min(item.end, clip.sourceEnd);
+      if (to - from < 1 / timeline.fps) continue;
+      start ??= clip.outputStart + (from - clip.sourceStart);
+      end = clip.outputStart + (to - clip.sourceStart);
+    }
+    if (start === null || end - start < 1 / timeline.fps) continue;
+    placed.push({ start, end, from: item.from, fit: item.fit, file: item.file });
+  }
+  return placed.sort((a, b) => a.start - b.start);
+}
+
+export interface BrollGraphOptions {
+  /** rótulo do footage já tratado (e já com a tela gravada, se houver) */
+  base: string;
+  /** índice da entrada do ffmpeg de cada b-roll, na ordem de `items` */
+  inputs: number[];
+  items: PlacedBroll[];
+  width: number;
+  height: number;
+  fps: number;
+  output: string;
+}
+
+/**
+ * Mesmo caminho da tela gravada: cada b-roll é uma entrada do ffmpeg posta por cima com `overlay` ligado só no seu
+ * intervalo. O arquivo já vem posicionado em `from` (`-ss` na entrada, src/render/compose.ts); aqui ele é aparado na
+ * duração do inserto, levado ao fps de saída e deslocado para começar em `start`. Fora do intervalo (e depois do
+ * fim do arquivo) o footage passa intacto. O áudio do b-roll nunca é mapeado: a voz segue sozinha.
+ */
+export function buildBrollGraph(options: BrollGraphOptions): string[] {
+  const { width, height, fps } = options;
+  const lines: string[] = [];
+  let current = options.base;
+  options.items.forEach((item, index) => {
+    const fit =
+      item.fit === 'contain'
+        ? `scale=${width}:${height}:force_original_aspect_ratio=decrease:flags=lanczos,pad=${width}:${height}:(ow-iw)/2:(oh-ih)/2:color=0x0c0c0c`
+        : `scale=${width}:${height}:force_original_aspect_ratio=increase:flags=lanczos,crop=${width}:${height}`;
+    lines.push(
+      `[${options.inputs[index]}:v]trim=duration=${(item.end - item.start).toFixed(3)},setpts=PTS-STARTPTS,fps=${fps},${fit},setsar=1,format=yuv420p,setpts=PTS+${item.start.toFixed(3)}/TB[brsrc${index}]`,
+      `${current}[brsrc${index}]overlay=0:0:eof_action=pass:enable='${enableExpr([item])}'[brout${index}]`,
+    );
+    current = `[brout${index}]`;
+  });
+  lines.push(`${current}null${options.output}`);
+  return lines;
+}

@@ -419,6 +419,7 @@ export const entry: ComponentEntry = {
   component: Stinger,
   sample: { variant: 'diagonal-coral' },
   defaultDuration: 0.5,
+  vertical: { zone: 'frame' },
   description:
     'Transição de tela cheia nas cores da marca: cobre o quadro no meio da duração para esconder um corte seco; centralizar no corte.',
 };

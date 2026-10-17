@@ -1841,5 +1841,5 @@ Copiados para `docs/referencia-max/` (só os `.md`, sem as imagens):
 As imagens de apoio (folhas de contato, sequências quadro a quadro, recortes ampliados), os scripts de medição, o vídeo, a
 transcrição (`ref.transcript.txt`), os tempos por palavra (`ref.words.json`) e os metadados (`ref.info.json`) ficaram na pasta
 temporária da sessão de análise e **não** foram copiados para o repositório:
-`C:\Users\mathe\AppData\Local\Temp\claude\D--PROJETOS\3c39b11c-53a9-44b4-bf17-7c5a7db58f1b\scratchpad\ref\`. Essa pasta é
+uma pasta temporária local. Essa pasta é
 temporária: se as imagens forem necessárias depois, copie-as para fora dela.

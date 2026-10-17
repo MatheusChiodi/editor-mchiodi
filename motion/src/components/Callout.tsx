@@ -302,5 +302,6 @@ export const entry: ComponentEntry = {
   component: Callout,
   sample: { ...sample },
   defaultDuration: 4,
+  vertical: { zone: 'top' },
   description: 'Seta, círculo, caixa ou sublinhado desenhado sobre o vídeo; use para apontar algo que está na imagem (tela gravada, objeto).',
 };

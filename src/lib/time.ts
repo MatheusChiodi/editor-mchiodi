@@ -8,6 +8,19 @@ export function toFrames(seconds: number, fps: number): number {
   return Math.round(seconds * fps);
 }
 
+/** Frame que está na tela no instante dado (o instante exato da fronteira já é do frame seguinte). */
+export function frameAt(seconds: number, fps: number): number {
+  return Math.max(0, Math.floor(seconds * fps + 1e-6));
+}
+
+/**
+ * Instante para `-ss` (antes do `-i`) que devolve exatamente o frame `n`: o seek de entrada descarta
+ * todo quadro com pts < -ss, e mirar no meio do quadro (ou arredondar n/fps para cima) pula para o seguinte.
+ */
+export function frameSeekTime(frame: number, fps: number): number {
+  return Math.max(0, frame / fps - 0.0005);
+}
+
 export function round3(value: number): number {
   return Math.round(value * 1000) / 1000;
 }

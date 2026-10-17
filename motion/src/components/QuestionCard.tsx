@@ -108,5 +108,6 @@ export const entry: ComponentEntry = {
     hint: 'Responde nos comentários antes de continuar.',
   },
   defaultDuration: 6,
+  vertical: { zone: 'top', scale: 0.75 },
   description: 'Pergunta feita diretamente ao espectador (gancho, pausa para pensar, chamada para comentar).',
 };

@@ -177,5 +177,6 @@ export const entry: ComponentEntry = {
     revealAt: [0.5, 2.2, 4, 5.8],
   },
   defaultDuration: 9,
+  vertical: { zone: 'full' },
   description: 'Tutorial ou processo em passos numerados e ordenados; cada passo entra quando é falado e o atual fica em destaque.',
 };

@@ -53,7 +53,12 @@ gráficos, e efeito de câmera conta como zoom. No `max` ele lista também os pa
 
 ## Legendas (`captions`)
 
-- `style`: `long` (base da tela, até 5 palavras) ou `shorts`.
+- `style`: `long` (base da tela, até 5 palavras) ou `shorts`. É o formato (posição e tamanho base); o Short força `shorts`.
+- `preset`: estilo visual, `padrao` (default, o de sempre) · `karaoke` (a palavra falada se preenche de coral) · `pop`
+  (cada palavra surge com escala, até 4 por página) · `destaque-caixa` (pill coral atrás da palavra falada) · `minimal`
+  (uma linha, sem contorno, sombra suave) · `bold-shorts` (caixa alta, enorme, até 3 palavras). O estilo só aperta a
+  paginação (nunca passa do `maxWordsPerPage`) e o Short herda o preset da EDL. Catálogo: `pnpm mce arsenal captions`;
+  prévia: `pnpm mce still Legendas-<preset>-long` (ou `-shorts`).
 - `highlights`: palavras que ficam em coral (comparação sem acento/caixa). Poucas: termos técnicos e a palavra que carrega o sentido.
 - `replacements`: corrige a grafia da transcrição, `"palavra ouvida": "Palavra certa"` (ex.: `"frontient": "front-end"`).
   A chave é a palavra como aparece no `takes.md`, sem pontuação.
@@ -76,9 +81,15 @@ gráficos, e efeito de câmera conta como zoom. No `max` ele lista também os pa
 
 ### Palco e rasgo (linguagem do nível `max`, STYLE.md §0)
 
-- `"presenter": { "slot": "right" | "left" | "pip-br" | "pip-bl" | "pip-tr" | "pip-tl", "focus": { "x": 0.5, "y": 0.4 }, "zoom": 1.3, "backdrop": "paper" }`:
+- `"presenter": { "slot": "right" | "left" | "pip-br" | "pip-bl" | "pip-tr" | "pip-tl", "zoom": 1.3, "backdrop": "paper" }`:
   durante o overlay o footage encolhe para um cartão nesse slot e o resto do quadro vira papel; o componente desenha no papel.
-  Entrada (0,5s) e saída (0,4s) são animadas junto com o footage. `focus` = onde está o rosto na fonte; `zoom` opcional (≥ 1).
+  Entrada (0,5s) e saída (0,4s) são animadas junto com o footage. `zoom` opcional (≥ 1).
+  `focus`: **omita** (ou `"auto"`, o padrão). O render acha o rosto no intervalo do palco (detector do foco, cache em
+  `analysis/focus-detect.json`, track à mão em `analysis/focus-track.json` vence) e enquadra pela proporção do slot: o cartão
+  `right`/`left` mostra só ~27% da largura da fonte e centra o rosto exato; o canto (`pip-*`) tolera mais. O log do render
+  mostra o foco escolhido por palco. **Não copie `{ "x": 0.47, "y": 0.4 }` de outro vídeo nem o `focusX` do Short**: o rosto
+  muda de lugar e o cartão estreito corta metade dele. Número (`{ "x": 0.41, "y": 0.3 }`, onde está o rosto na fonte) só para
+  corrigir o detector; se ele cortar o rosto, o render avisa e o `mce eval` reprova com `rosto-fora-do-palco`.
   Vale para qualquer componente ou cena. Palcos colados (fim de um = início do outro) deslizam o cartão de um slot ao outro.
 - `"wipe": "tear"`: o overlay entra por um rasgo de papel (0,4s); para cena de tela cheia.
 - Componentes da linguagem: `PillStack` (`items[].text/tone/at/strikeAt/indent`, `title`, `corner`), `PhraseReveal` (`text` com `*itálico coral*`
@@ -128,7 +139,11 @@ os `xfade` misturam a imagem dos dois lados; os `stinger` são cortinas nas core
 
 ## Áudio (`audio`, `music`, `sfx`)
 
-- `audio`: `targetLufs` (-14), `truePeakDb` (-1.5), `denoise` (`off|light|medium`), `deesser`, `cutFadeMs` (12).
+- `audio`: `targetLufs` (-14), `truePeakDb` (-1.5), `denoise` (`off|light|medium|deepfilter`, padrão `light`), `deesser`, `cutFadeMs` (12).
+  `light`/`medium` são o afftdn do ffmpeg. `deepfilter` limpa a voz com o DeepFilterNet (binário `deep-filter`) num pré-passo
+  em cache (`analysis/denoise/`), alinhado amostra a amostra com a fonte, e aí o afftdn não entra. Use quando o ruído é
+  ventilador/rua/teclado que o `medium` não tira sem deixar a voz "embaixo d'água". Sem o binário (`pnpm mce doctor` diz)
+  o render avisa e cai para `light`; nada quebra.
 - `music`: `{ "file": "<arquivo em assets/music>", "gainDb": -24, "duck": true, "fadeIn": 1.5, "fadeOut": 3 }`. Com `duck`, a trilha abaixa sozinha quando há fala.
 - `sfx`: `{ "id": "s1", "file": "ding.wav", "at": 88.2, "gainDb": -12 }`. `whoosh` em transição e `pop` em entrada de gráfico já são automáticos.
   `pnpm mce assets list` mostra o que há na biblioteca.
@@ -137,6 +152,17 @@ os `xfade` misturam a imagem dos dois lados; os `stinger` são cortinas nas core
 
 `preset`: `none | neutral | warm | cool | punchy`; ajustes finos `exposure` (-1..1), `contrast`, `saturation`, `sharpen` (0..1), `lut` (arquivo `.cube` em `assets/luts`).
 Um grade só para o vídeo inteiro.
+
+## Estabilização (`stabilize`)
+
+`{ "enabled": false, "shakiness": 5, "smoothing": 15, "zoom": 0, "reason": "" }` (padrão desligado; EDL sem o campo = desligado).
+- `shakiness` 1–10: quanto a câmera treme (calibra a detecção). `smoothing` 1–60: frames de cada lado na suavização
+  (maior = câmera mais flutuante). `zoom` 0–20: % extra sobre o zoom fixo ótimo que esconde as bordas.
+- Vidstab do ffmpeg em dois passos: `vidstabdetect` em pré-passo sobre o arquivo que o corte lê (proxy no preview, original
+  no final), em cache em `analysis/stabilize/` (chave: caminho + tamanho + mtime + fps + `shakiness`); `vidstabtransform` entra
+  no grafo de corte logo após o `fps`, antes de escala, recorte do Short, zooms, efeitos e reframe. Não muda frames nem áudio.
+- Mudar `smoothing`/`zoom` não refaz a análise. Sem libvidstab no ffmpeg (`pnpm mce doctor`), avisa e renderiza sem estabilizar.
+- Quando usar: STYLE.md §4. Diga o porquê em `reason`.
 
 ## Capítulos (`chapters`)
 
@@ -155,7 +181,41 @@ mensagem traz o `start`/`end` prontos). Declarar não isenta do resto: o respiro
 
 - `"intro": true` / `"outro": true` emendam a abertura (2,5s) e a tela final (8s) do canal.
 - `"shorts": { "start": 201.0, "end": 262.0, "focusX": 0.5, "reason": "explicação completa em 55s" }`: trecho da fonte que vira o vertical
-  (≤ 60s no vídeo final; `pnpm mce shorts <slug>` sugere candidatos). Render: `pnpm mce render <slug> --shorts`.
+  (≤ 60s no vídeo final; `pnpm mce shorts suggest <slug>` ranqueia candidatos e imprime o objeto pronto; `--apply <n>` grava como nova versão). Render: `pnpm mce render <slug> --shorts`.
+- `focusX` = posição do recorte 9:16 (0 = encostado à esquerda, 1 = à direita). Três formas:
+  - número (`0.47`): fixo, como sempre;
+  - `"auto"`: o render detecta o apresentador no proxy (movimento + pele por coluna, 2 fps a 192 px, cache em
+    `analysis/focus-detect.json`) e planeja: variação pequena (p90−p10 ≤ 128 px de referência 1920) → fixo na mediana;
+    senão, por trecho contínuo, pan suave (zona morta 80 px, ≤ 240 px/s, aceleração ≤ 480 px/s²). Pan nunca atravessa um
+    corte; no corte o foco reposiciona seco;
+  - keyframes `[{ "t": 231.3, "x": 0.43 }, ...]`: `t` em segundos da FONTE, em ordem; interpolação linear, segura nas pontas.
+  `pnpm mce shorts focus <slug>` mostra o plano (fixo/pan, trechos, keyframes) e salva `analysis/shorts-focus.json`; `--apply` grava o
+  resultado (número ou keyframes) numa nova versão. `--track <arquivo>` importa um track à mão para `analysis/focus-track.json`
+  (`{ "samples": [{ "t": 240, "x": 0.45 }] }`, `x` = CENTRO do apresentador 0–1, não a posição do recorte), que vence o detector;
+  `--redetect` ignora o cache. Keyframes valem para um trecho: o `shorts suggest` troca keyframes herdados por `"auto"`.
+- Gráficos no Short: `shorts.graphics` = `"auto"` (padrão; os overlays ANCORADOS no trecho entram re-diagramados para 9:16) ou
+  `"none"` (só legenda, como antes). Overlay que começou antes do trecho não entra (perderia a entrada); palco (`presenter`,
+  `WindowStage` de footage) e camada `persistent` também não. Os tempos vão para o tempo do Short pela timeline: não converta à mão.
+  Cada componente declara `vertical` no `entry` (motion/src/vertical.ts), numa destas zonas do quadro 1080x1920:
+  - `top`: cartão entre a interface de cima (140 px) e o rosto; texto, título, contador, selo, ícone (escala 0,9);
+  - `bottom`: entre o rosto e a legenda; quando não cabe (rosto no meio), cai para `top`;
+  - `full`: inserto do topo até a legenda, cobre o rosto de propósito; código, diagrama, tabela, gráfico, cena (escala 0,7);
+  - `skip`: fica fora (`LowerThird`, `SubscribeCTA`, `LikeReminder`, `Intro`/`Outro`, palcos, `ChapterProgress`, `LogoBug`).
+  Nenhuma zona cobre a faixa da legenda (calculada pelo `captions.preset`), então no Short a legenda nunca se esconde.
+  Cena sob medida (`scene:`) sem `vertical` vira `full`. Override por overlay: `"shorts": false` (tira) ou
+  `"shorts": { "zone": "full", "scale": 0.8 }` (troca a zona/escala). `shorts.faceBand: { "top": 0.3, "bottom": 0.6 }` (fração da
+  altura) é onde o rosto fica no recorte; mude se o enquadramento for outro. Prévia: `pnpm mce still OverlayShorts`.
+
+## B-roll (`broll`)
+
+`"broll": [ { "id": "broll-1", "file": "cafe/caneca.mp4", "start": 40.15, "end": 43.15, "from": 0, "fit": "cover", "reason": "ilustra \"caderno\" (objeto citado)" } ]`.
+Vídeo da biblioteca `assets/broll/` (caminho relativo a ela, ou absoluto) que cobre o quadro inteiro por cima do apresentador, abaixo
+dos gráficos (a legenda continua por cima). `start`/`end` em segundos da FONTE; `start` precisa cair num clipe mantido. Se o trecho
+atravessa um corte, o b-roll corre contínuo por cima dele (esconde o salto). `from` = de que segundo do arquivo começa; `fit`: `cover`
+preenche e corta as sobras, `contain` encaixa inteiro sobre fundo escuro (vídeo vertical de celular). O áudio do b-roll nunca entra e a
+duração do vídeo não muda; arquivo mais curto que o trecho devolve o quadro à câmera quando acaba. `reason` é obrigatório.
+Não ponha b-roll sobre palco/gráfico nem sobre tela gravada: um quadro por vez. No Short, só o que começa dentro do trecho.
+`pnpm mce broll suggest <slug> [--apply]` propõe os trechos (STYLE.md §5).
 
 ## Tela gravada (`layout`)
 

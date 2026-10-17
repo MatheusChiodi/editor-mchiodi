@@ -141,5 +141,6 @@ export const entry: ComponentEntry = {
   component: PhoneFrame,
   sample: { ...sample },
   defaultDuration: 7,
+  vertical: { zone: 'full' },
   description: 'Celular com um wireframe da tela, encostado num dos lados; use quando a fala descreve um app mobile ou uma tela de React Native.',
 };

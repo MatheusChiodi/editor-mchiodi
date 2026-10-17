@@ -186,5 +186,6 @@ export const entry: ComponentEntry = {
     endLabel: 'Tempo!',
   },
   defaultDuration: 6.5,
+  vertical: { zone: 'top' },
   description: 'Contagem regressiva em segundos reais para desafios e pausas ("pause e tente"); a duração deve ser `from` + ~1,5 s.',
 };

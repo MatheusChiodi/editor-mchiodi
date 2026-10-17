@@ -8,6 +8,8 @@ const DENOISE: Record<AudioSettings['denoise'], string | null> = {
   // redução leve: tira o chiado de fundo sem deixar a voz "embaixo d'água"
   light: 'afftdn=nr=8:nf=-45:tn=1',
   medium: 'afftdn=nr=14:nf=-40:tn=1',
+  // a voz já chega limpa do pré-passo (render/denoise.ts): afftdn por cima só tiraria corpo dela
+  deepfilter: null,
 };
 
 /**

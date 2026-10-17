@@ -38,11 +38,14 @@ Siga a skill `edit-video`; o formato da EDL está na skill `edl-reference`. Em u
 
 ```
 src/analyze/    ingestão, transcrição (sidecar), fala (retakes, hesitações), takes.md, timeline-view
-src/edl/        schema Zod, versões, timeline fonte↔saída, corte automático
+src/edl/        schema Zod, versões, timeline fonte↔saída, corte automático, decisões "Matheus:" (decisions.ts)
 src/render/     cortes (ffmpeg, passe único), legendas, overlay (Remotion alfa), cor/zoom, efeitos,
                 áudio/mixagem, vinhetas, layout de tela gravada, Short, composição
 src/arsenal/    catálogos de transições e efeitos, consulta (`mce arsenal`), galeria
 src/eval/       autoavaliação do vídeo renderizado
+src/broll/      b-roll assistido: índice da biblioteca, sugestão por fala, busca no Pexels (`mce broll`)
+src/retention/  retenção do YouTube Studio mapeada à fonte, lições entre projetos (`mce retention`)
+src/cut/        MChiodi Cut: ops sobre a EDL com snap em silêncio, notes "Matheus:", servidor local (`mce cut`)
 src/report/     relatorio.md e capitulos.txt
 src/scenes/     índice das cenas sob medida
 src/watcher/    fila, sessão headless (claude -p), notificação
@@ -50,6 +53,7 @@ src/project/    caminhos, memória por projeto (project.md), status
 src/cli/        comandos `mce`
 motion/src/     Remotion: theme, anim, captions, components/ (+ registry), arsenal/ (entradas, stingers, fx),
                 scene-kit/ (papel e voxel), scenes/<projeto>/
+cut/            UI do MChiodi Cut (React+Vite+Tailwind 4; `pnpm cut:dev`/`cut:build` → cut/dist); lógica pura em cut/src/lib/
 transcriber/    sidecar Python (WhisperX); só `transcribe.py`
 .claude/        skills (edit-video, edl-reference), agents (motion-designer), settings
 projects/<slug>/{analysis,edl,renders}/ + project.md     (fora do git)

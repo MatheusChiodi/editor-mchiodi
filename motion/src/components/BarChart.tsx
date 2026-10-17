@@ -149,5 +149,6 @@ export const entry: ComponentEntry = {
     ],
   },
   defaultDuration: 6,
+  vertical: { zone: 'full' },
   description: 'Compara poucos valores citados na fala (2 a 5 barras), destacando o que importa em coral.',
 };

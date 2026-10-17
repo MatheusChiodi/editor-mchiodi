@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { CAPTION_PRESETS } from '../../motion/src/captions/presets.ts';
+import { VERTICAL_ZONES } from '../../motion/src/vertical.ts';
 import { effects } from '../arsenal/effects.ts';
 import { transitions } from '../arsenal/transitions.ts';
 import { DEFAULT_LEVEL, LEVEL_IDS } from './levels.ts';
@@ -37,7 +39,10 @@ export const removalSchema = z.object({
 
 export const captionsSchema = z.object({
   enabled: z.boolean().default(true),
+  /** formato (posição e tamanho base): `long` 16:9, `shorts` 9:16 */
   style: z.enum(['long', 'shorts']).default('long'),
+  /** estilo visual (`pnpm mce arsenal captions`); `padrao` é o de sempre */
+  preset: z.enum(CAPTION_PRESETS).default('padrao'),
   maxWordsPerPage: z.number().int().min(1).max(12).default(5),
   /** palavras que recebem destaque (comparação sem acento/caixa) */
   highlights: z.array(z.string()).default([]),
@@ -64,8 +69,11 @@ export const overlaySchema = z.object({
     .object({
       /** `window`/`window-right`: o footage inteiro vai para dentro da janela do `WindowStage` (o vídeo já é a tela gravada) */
       slot: z.enum(['right', 'left', 'pip-br', 'pip-bl', 'pip-tr', 'pip-tl', 'window', 'window-right']),
-      /** onde está o rosto no footage (0–1) */
-      focus: z.object({ x: z.number().min(0).max(1), y: z.number().min(0).max(1) }).default({ x: 0.5, y: 0.4 }),
+      /**
+       * onde está o rosto no footage (0–1). `"auto"` (padrão): o render acha o apresentador no intervalo do palco
+       * (detector do foco, analysis/focus-detect.json) e enquadra pela proporção do slot (src/render/stage-focus.ts)
+       */
+      focus: z.union([z.literal('auto'), z.object({ x: z.number().min(0).max(1), y: z.number().min(0).max(1) })]).default('auto'),
       /** aproximação do rosto dentro do cartão; sem valor, a padrão do slot */
       zoom: z.number().min(1).max(3).optional(),
       /** fundo atrás do componente; `none` para componente que já pinta o quadro inteiro */
@@ -79,7 +87,35 @@ export const overlaySchema = z.object({
   wipe: z.enum(['none', 'tear']).default('none'),
   /** `persistent`: camada fixa que atravessa vários layouts (indicador de progresso) e convive com o gráfico da vez */
   layer: z.enum(['base', 'persistent']).default('base'),
+  /**
+   * No Short: `false` tira o overlay do vertical; `{ zone, scale }` troca a zona do componente (motion/src/vertical.ts).
+   * Sem valor, vale o metadado `vertical` do componente.
+   */
+  shorts: z
+    .union([z.literal(false), z.object({ zone: z.enum(VERTICAL_ZONES), scale: z.number().min(0.3).max(1.5).optional() })])
+    .optional(),
 });
+
+/**
+ * B-roll: vídeo da biblioteca (assets/broll) que cobre o quadro inteiro por cima do apresentador, abaixo dos gráficos.
+ * `start`/`end` em segundos da FONTE; o inserto segue contínuo por cima de um corte no meio. A voz continua; o áudio do
+ * b-roll nunca entra. A duração do vídeo não muda.
+ */
+export const brollSchema = z
+  .object({
+    id,
+    /** caminho relativo a assets/broll (ou absoluto) */
+    file: z.string().min(1),
+    start: seconds,
+    end: seconds,
+    /** de que segundo do arquivo de b-roll o inserto começa */
+    from: seconds.default(0),
+    /** `cover` preenche o quadro (corta as sobras); `contain` encaixa inteiro sobre fundo escuro */
+    fit: z.enum(['cover', 'contain']).default('cover'),
+    /** o que o inserto reforça na fala (STYLE.md §1) */
+    reason: z.string().trim().min(1, 'diga o que o b-roll reforça'),
+  })
+  .refine((item) => item.end > item.start, { message: 'end precisa ser maior que start' });
 
 export const zoomSchema = z.object({
   id,
@@ -141,10 +177,26 @@ export const gradeSchema = z.object({
   sharpen: z.number().min(0).max(1).default(0),
 });
 
+/**
+ * Estabilização de câmera na mão (ffmpeg vidstab): análise em pré-passo, em cache, e transformação no
+ * grafo de corte antes de escala/zoom/reframe. Sem o vidstab no ffmpeg, avisa e segue sem estabilizar.
+ */
+export const stabilizeSchema = z.object({
+  enabled: z.boolean().default(false),
+  /** quanto a câmera treme (1 = pouco, 10 = muito); calibra a detecção */
+  shakiness: z.number().int().min(1).max(10).default(5),
+  /** frames de cada lado na suavização do movimento: maior = câmera mais "flutuante" */
+  smoothing: z.number().int().min(1).max(60).default(15),
+  /** zoom extra em %, somado ao zoom ótimo que esconde as bordas pretas */
+  zoom: z.number().min(0).max(20).default(0),
+  reason: z.string().default(''),
+});
+
 export const audioSchema = z.object({
   targetLufs: z.number().default(-14),
   truePeakDb: z.number().default(-1.5),
-  denoise: z.enum(['off', 'light', 'medium']).default('light'),
+  /** `light`/`medium` = afftdn; `deepfilter` = DeepFilterNet em pré-passo (sem o binário, cai para `light`) */
+  denoise: z.enum(['off', 'light', 'medium', 'deepfilter']).default('light'),
   deesser: z.boolean().default(true),
   /** fade em cada borda de corte, em ms */
   cutFadeMs: z.number().min(0).max(50).default(12),
@@ -189,13 +241,28 @@ export const layoutSchema = z.object({
     .default([]),
 });
 
+export const focusKeyframesSchema = z
+  .array(z.object({ t: seconds, x: z.number().min(0).max(1) }))
+  .min(1)
+  .refine((keys) => keys.every((key, index) => index === 0 || key.t >= keys[index - 1]!.t), { message: 'keyframes de foco em ordem de t' });
+
 export const shortsSchema = z
   .object({
     /** trecho da fonte que vira o Short (o melhor momento, escolhido pelo diretor) */
     start: seconds,
     end: seconds,
-    /** onde está o rosto na horizontal (0–1), para o recorte 9:16 */
-    focusX: z.number().min(0).max(1).default(0.5),
+    /**
+     * posição do recorte 9:16 (0 = encostado à esquerda, 1 = à direita): número fixo, `"auto"` (o render detecta o
+     * apresentador e planeja o pan, `pnpm mce shorts focus`) ou keyframes `[{ t, x }]` em segundos da fonte
+     */
+    focusX: z.union([z.number().min(0).max(1), z.literal('auto'), focusKeyframesSchema]).default(0.5),
+    /** `auto`: os overlays ancorados no trecho entram re-diagramados para 9:16; `none`: só legenda (o Short de antes) */
+    graphics: z.enum(['auto', 'none']).default('auto'),
+    /** faixa do rosto no quadro vertical, em fração da altura: nenhum cartão de `top`/`bottom` a cobre */
+    faceBand: z
+      .object({ top: z.number().min(0).max(1), bottom: z.number().min(0).max(1) })
+      .refine((band) => band.bottom > band.top, { message: 'faceBand.bottom precisa ser maior que top' })
+      .optional(),
     reason: z.string().default(''),
   })
   .refine((shorts) => shorts.end > shorts.start, { message: 'end precisa ser maior que start' });
@@ -225,12 +292,14 @@ export const edlSchema = z
     removed: z.array(removalSchema).default([]),
     captions: captionsSchema.default(captionsSchema.parse({})),
     overlays: z.array(overlaySchema).default([]),
+    broll: z.array(brollSchema).default([]),
     zooms: z.array(zoomSchema).default([]),
     transitions: z.array(transitionSchema).default([]),
     effects: z.array(effectSchema).default([]),
     sfx: z.array(sfxSchema).default([]),
     music: musicSchema.nullable().default(null),
     grade: gradeSchema.default(gradeSchema.parse({})),
+    stabilize: stabilizeSchema.default(stabilizeSchema.parse({})),
     audio: audioSchema.default(audioSchema.parse({})),
     layout: layoutSchema.default(layoutSchema.parse({})),
     chapters: z.array(chapterSchema).default([]),
@@ -255,7 +324,7 @@ export const edlSchema = z
     });
 
     const ids = new Set<string>();
-    const all = [...edl.clips, ...edl.overlays, ...edl.zooms, ...edl.transitions, ...edl.effects, ...edl.sfx];
+    const all = [...edl.clips, ...edl.overlays, ...edl.broll, ...edl.zooms, ...edl.transitions, ...edl.effects, ...edl.sfx];
     for (const item of all) {
       if (ids.has(item.id)) issue([], `id duplicado: "${item.id}"`);
       ids.add(item.id);
@@ -276,6 +345,10 @@ export const edlSchema = z
         }
       });
     }
+
+    edl.broll.forEach((item, index) => {
+      if (!inKeptClip(item.start)) issue(['broll', index, 'start'], `${item.start}s cai num trecho cortado; comece o b-roll num instante que ficou no vídeo`);
+    });
 
     const clipIds = new Set(edl.clips.map((clip) => clip.id));
     edl.transitions.forEach((transition, index) => {
@@ -302,12 +375,14 @@ export type EdlInput = z.input<typeof edlSchema>;
 export type Clip = z.infer<typeof clipSchema>;
 export type Removal = z.infer<typeof removalSchema>;
 export type Overlay = z.infer<typeof overlaySchema>;
+export type Broll = z.infer<typeof brollSchema>;
 export type Breather = z.infer<typeof breatherSchema>;
 export type Zoom = z.infer<typeof zoomSchema>;
 export type Transition = z.infer<typeof transitionSchema>;
 export type Effect = z.infer<typeof effectSchema>;
 export type Grade = z.infer<typeof gradeSchema>;
 export type AudioSettings = z.infer<typeof audioSchema>;
+export type StabilizeSettings = z.infer<typeof stabilizeSchema>;
 export type CaptionSettings = z.infer<typeof captionsSchema>;
 
 export function parseEdl(data: unknown): Edl {
@@ -317,3 +392,5 @@ export function parseEdl(data: unknown): Edl {
 export function formatEdlIssues(error: z.ZodError): string {
   return error.issues.map((issue) => `- ${issue.path.join('.') || '(raiz)'}: ${issue.message}`).join('\n');
 }
+/** foco do Short como está na EDL: número, `"auto"` ou keyframes */
+export type ShortsFocus = z.infer<typeof shortsSchema>['focusX'];

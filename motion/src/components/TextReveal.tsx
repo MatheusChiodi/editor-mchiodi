@@ -120,5 +120,6 @@ export const entry: ComponentEntry = {
   component: TextReveal,
   sample: { text: 'Full stack não é saber tudo', entrance: 'fade-up', position: 'center', size: 'large' },
   defaultDuration: 3.5,
+  vertical: { zone: 'top', scale: 0.6 },
   description: 'Frase ou palavra solta na tela com qualquer um dos 50 efeitos de entrada do arsenal; para reforçar o que acabou de ser dito.',
 };
