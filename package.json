@@ -1,0 +1,50 @@
+{
+  "name": "mchiodi-editor",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Pipeline de edição de vídeo dirigido pelo Claude Code (canal MChiodi)",
+  "scripts": {
+    "mce": "tsx src/cli/index.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "studio": "remotion studio motion/src/index.ts",
+    "watch": "tsx src/cli/index.ts watch",
+    "install-cli": "tsx scripts/install-cli.ts",
+    "uninstall-cli": "tsx scripts/install-cli.ts --uninstall",
+    "sync-tech-icons": "tsx scripts/sync-tech-icons.ts"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@react-three/fiber": "^9.8.1",
+    "@remotion/bundler": "4.0.534",
+    "@remotion/captions": "4.0.534",
+    "@remotion/cli": "4.0.534",
+    "@remotion/google-fonts": "4.0.534",
+    "@remotion/media": "4.0.534",
+    "@remotion/renderer": "4.0.534",
+    "@remotion/three": "4.0.534",
+    "@remotion/transitions": "4.0.534",
+    "chokidar": "^5.0.0",
+    "commander": "^15.0.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "remotion": "4.0.534",
+    "sharp": "^0.35.5",
+    "simple-icons": "^16.35.0",
+    "three": "^0.186.1",
+    "zod": "^4.6.6"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@types/three": "^0.186.0",
+    "devicon": "^2.17.0",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.3"
+  }
+}

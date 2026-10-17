@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 560" width="100%" role="img" aria-labelledby="e-title e-desc" font-family="'Segoe UI', Helvetica, Arial, sans-serif">
+  <title id="e-title">Source file, EDL and output video: times always refer to the source</title>
+  <desc id="e-desc">Three stacked parts. Top: the 60 second source file split into three kept clips (0.3 to 12.9, 16.4 to 34.0, 38.5 to 58.0) with two removed stretches, a retake and a silence, and a graphic anchored at second 28.4. Middle: the EDL as JSON listing those clips and the overlay with at 28.4, next to a note saying every time is in source seconds and the renderer converts. Bottom: the 49.7 second output with the three clips joined, where the same graphic plays at 24.6 seconds.</desc>
+  <defs>
+    <pattern id="e-hatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="8" height="8" fill="#f8f8f2"/>
+      <rect width="3" height="8" fill="#cbd5e1"/>
+    </pattern>
+    <marker id="e-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0 0 L10 5 L0 10 Z" fill="#64748b"/>
+    </marker>
+  </defs>
+
+  <rect x="8" y="8" width="984" height="544" rx="24" fill="#f8f8f2" stroke="#e2e8f0" stroke-width="2"/>
+  <text x="32" y="58" font-family="Georgia, 'Times New Roman', serif" font-size="27" font-weight="700" fill="#111827">Source, EDL, output</text>
+
+  <!-- ===== source ===== -->
+  <text x="50" y="108" font-size="13" font-weight="700" letter-spacing="2" fill="#64748b">SOURCE FILE · 60.0 s</text>
+  <rect x="476" y="96" width="75" height="12" rx="4" fill="#ff5555"/>
+  <text x="560" y="107" font-size="14" font-weight="700" fill="#ff5555">graphic anchored at 28.4 s</text>
+
+  <rect x="50" y="118" width="900" height="40" rx="8" fill="#e2e8f0"/>
+  <rect x="54.5" y="118" width="189" height="40" rx="8" fill="#111827"/>
+  <rect x="243.5" y="118" width="52.5" height="40" fill="url(#e-hatch)" stroke="#94a3b8" stroke-dasharray="4 4"/>
+  <rect x="296" y="118" width="264" height="40" rx="8" fill="#111827"/>
+  <rect x="560" y="118" width="67.5" height="40" fill="url(#e-hatch)" stroke="#94a3b8" stroke-dasharray="4 4"/>
+  <rect x="627.5" y="118" width="292.5" height="40" rx="8" fill="#111827"/>
+  <line x1="476" y1="108" x2="476" y2="158" stroke="#ff5555" stroke-width="2"/>
+  <g font-family="Consolas, 'Cascadia Mono', Menlo, monospace" font-size="14" font-weight="700" fill="#f8f8f2" text-anchor="middle">
+    <text x="149" y="143">c001</text>
+    <text x="400" y="143">c002</text>
+    <text x="774" y="143">c003</text>
+  </g>
+  <g font-size="13" fill="#475569" text-anchor="middle">
+    <text x="149" y="178">0.3 – 12.9</text>
+    <text x="270" y="178">retake</text>
+    <text x="428" y="178">16.4 – 34.0</text>
+    <text x="594" y="178">silence</text>
+    <text x="774" y="178">38.5 – 58.0</text>
+  </g>
+
+  <path d="M285 188 V208" stroke="#64748b" stroke-width="2" fill="none" marker-end="url(#e-arrow)"/>
+
+  <!-- ===== EDL ===== -->
+  <rect x="50" y="214" width="470" height="204" rx="16" fill="#111827"/>
+  <g font-family="Consolas, 'Cascadia Mono', Menlo, monospace" font-size="13.5" fill="#e2e8f0" xml:space="preserve">
+    <text x="70" y="244"><tspan fill="#94a3b8">"clips"</tspan>: [</text>
+    <text x="70" y="264">  { "id": "c001", "start": <tspan fill="#34d399">0.3</tspan>,  "end": <tspan fill="#34d399">12.9</tspan> },</text>
+    <text x="70" y="284">  { "id": "c002", "start": <tspan fill="#34d399">16.4</tspan>, "end": <tspan fill="#34d399">34.0</tspan> },</text>
+    <text x="70" y="304">  { "id": "c003", "start": <tspan fill="#34d399">38.5</tspan>, "end": <tspan fill="#34d399">58.0</tspan> }</text>
+    <text x="70" y="324">],</text>
+    <text x="70" y="344"><tspan fill="#94a3b8">"overlays"</tspan>: [</text>
+    <text x="70" y="364">  { "component": "CodeCard", "at": <tspan fill="#ff5555" font-weight="700">28.4</tspan>, "duration": 5,</text>
+    <text x="70" y="384">    "reason": "code read aloud" }</text>
+    <text x="70" y="404">]</text>
+  </g>
+  <text x="504" y="238" font-family="Consolas, 'Cascadia Mono', Menlo, monospace" font-size="12.5" text-anchor="end" fill="#64748b">edl.v2.json</text>
+
+  <text x="552" y="242" font-family="Georgia, 'Times New Roman', serif" font-size="20" font-weight="700" fill="#111827">Times always point at the source</text>
+  <g font-size="14.5" fill="#334155">
+    <text x="552" y="274">Every <tspan font-family="Consolas, 'Cascadia Mono', Menlo, monospace" font-size="13.5">start</tspan>, <tspan font-family="Consolas, 'Cascadia Mono', Menlo, monospace" font-size="13.5">end</tspan> and <tspan font-family="Consolas, 'Cascadia Mono', Menlo, monospace" font-size="13.5">at</tspan> is in seconds of the</text>
+    <text x="552" y="295">original file: the same numbers that appear</text>
+    <text x="552" y="316">in <tspan font-family="Consolas, 'Cascadia Mono', Menlo, monospace" font-size="13.5">takes.md</tspan> and in <tspan font-family="Consolas, 'Cascadia Mono', Menlo, monospace" font-size="13.5">mce words</tspan>.</text>
+    <text x="552" y="348">The renderer converts to output time, so</text>
+    <text x="552" y="369">moving a cut never desyncs a graphic.</text>
+    <text x="552" y="401">An <tspan font-family="Consolas, 'Cascadia Mono', Menlo, monospace" font-size="13.5">at</tspan> inside a removed stretch fails validation.</text>
+  </g>
+
+  <path d="M285 424 V444" stroke="#64748b" stroke-width="2" fill="none" marker-end="url(#e-arrow)"/>
+
+  <!-- ===== output ===== -->
+  <text x="50" y="464" font-size="13" font-weight="700" letter-spacing="2" fill="#64748b">OUTPUT VIDEO · 49.7 s</text>
+  <rect x="419" y="452" width="75" height="12" rx="4" fill="#ff5555"/>
+  <text x="503" y="463" font-size="14" font-weight="700" fill="#ff5555">plays at 24.6 s</text>
+
+  <rect x="50" y="474" width="189" height="40" rx="8" fill="#111827"/>
+  <rect x="241" y="474" width="262" height="40" rx="8" fill="#111827"/>
+  <rect x="505" y="474" width="290.5" height="40" rx="8" fill="#111827"/>
+  <line x1="419" y1="464" x2="419" y2="514" stroke="#ff5555" stroke-width="2"/>
+  <g font-family="Consolas, 'Cascadia Mono', Menlo, monospace" font-size="14" font-weight="700" fill="#f8f8f2" text-anchor="middle">
+    <text x="144" y="499">c001</text>
+    <text x="340" y="499">c002</text>
+    <text x="650" y="499">c003</text>
+  </g>
+  <g font-size="13" fill="#475569">
+    <text x="50" y="534">0:00</text>
+    <text x="241" y="534">0:12.6</text>
+    <text x="505" y="534">0:30.2</text>
+    <text x="795" y="534" text-anchor="end">0:49.7</text>
+    <text x="950" y="499" text-anchor="end" fill="#64748b">10.3 s shorter</text>
+  </g>
+</svg>

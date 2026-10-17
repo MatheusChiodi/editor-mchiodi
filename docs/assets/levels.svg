@@ -1,0 +1,153 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 560" width="100%" role="img" aria-labelledby="l-title l-desc" font-family="'Segoe UI', Helvetica, Arial, sans-serif">
+  <title id="l-title">The four editing levels side by side</title>
+  <desc id="l-desc">Four cards: limpa (clean), normal, pro and max. Each shows one minute of video as a strip with marks for graphics, illustrative scenes and zooms, getting denser from left to right, followed by the per-minute targets. limpa: up to 1 zoom, up to 0.5 graphics, no scenes. normal: up to 3 zooms, up to 4 graphics, up to 1 scene. pro: 2 to 6 zooms, 3 to 6 graphics, 0.75 to 2 scenes, music and bumpers always. max: 2 to 9 zooms, 6 to 12 graphics, 1.5 to 3 scenes, music and bumpers always, at least 80 percent of the video edited and 7 required patterns.</desc>
+
+  <rect x="8" y="8" width="984" height="544" rx="24" fill="#f8f8f2" stroke="#e2e8f0" stroke-width="2"/>
+  <text x="32" y="58" font-family="Georgia, 'Times New Roman', serif" font-size="27" font-weight="700" fill="#111827">Editing levels</text>
+  <text x="968" y="58" font-size="14" text-anchor="end" fill="#64748b">Targets per minute of finished video, from src/edl/levels.ts</text>
+
+  <!-- ============ limpa ============ -->
+  <g>
+    <rect x="32" y="84" width="216" height="398" rx="16" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+    <text x="48" y="118" font-family="Consolas, 'Cascadia Mono', Menlo, monospace" font-size="20" font-weight="700" fill="#111827">limpa</text>
+    <text x="232" y="117" font-size="14" text-anchor="end" fill="#64748b">clean</text>
+    <text x="48" y="144" font-size="14" fill="#334155">Cuts, captions, audio, color.</text>
+    <!-- one minute -->
+    <rect x="48" y="162" width="184" height="52" rx="8" fill="#e2e8f0"/>
+    <circle cx="150" cy="202" r="4" fill="#64748b"/>
+    <g font-size="14">
+      <text x="48" y="246" fill="#475569">zooms</text><text x="232" y="246" text-anchor="end" font-weight="700" fill="#111827">0–1</text>
+      <line x1="48" y1="256" x2="232" y2="256" stroke="#e2e8f0"/>
+      <text x="48" y="278" fill="#475569">graphics</text><text x="232" y="278" text-anchor="end" font-weight="700" fill="#111827">0–0.5</text>
+      <line x1="48" y1="288" x2="232" y2="288" stroke="#e2e8f0"/>
+      <text x="48" y="310" fill="#475569">scenes</text><text x="232" y="310" text-anchor="end" font-weight="700" fill="#111827">none</text>
+      <line x1="48" y1="320" x2="232" y2="320" stroke="#e2e8f0"/>
+      <text x="48" y="342" fill="#475569">transitions</text><text x="232" y="342" text-anchor="end" font-weight="700" fill="#111827">0–0.25</text>
+      <line x1="48" y1="352" x2="232" y2="352" stroke="#e2e8f0"/>
+      <text x="48" y="374" fill="#475569">effects</text><text x="232" y="374" text-anchor="end" font-weight="700" fill="#111827">0–0.2</text>
+      <line x1="48" y1="384" x2="232" y2="384" stroke="#e2e8f0"/>
+      <text x="48" y="406" fill="#475569">SFX</text><text x="232" y="406" text-anchor="end" font-weight="700" fill="#111827">0–0.5</text>
+      <line x1="48" y1="416" x2="232" y2="416" stroke="#e2e8f0"/>
+      <text x="48" y="438" fill="#475569">music, bumpers</text><text x="232" y="438" text-anchor="end" font-weight="700" fill="#111827">optional</text>
+    </g>
+    <text x="48" y="466" font-size="13" fill="#64748b">no minimum enforced</text>
+  </g>
+
+  <!-- ============ normal ============ -->
+  <g>
+    <rect x="272" y="84" width="216" height="398" rx="16" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+    <text x="288" y="118" font-family="Consolas, 'Cascadia Mono', Menlo, monospace" font-size="20" font-weight="700" fill="#111827">normal</text>
+    <text x="472" y="117" font-size="14" text-anchor="end" fill="#64748b">default</text>
+    <text x="288" y="144" font-size="14" fill="#334155">The edit stays invisible.</text>
+    <rect x="288" y="162" width="184" height="52" rx="8" fill="#e2e8f0"/>
+    <rect x="312" y="170" width="10" height="22" rx="3" fill="#111827"/>
+    <rect x="372" y="170" width="10" height="22" rx="3" fill="#111827"/>
+    <rect x="438" y="170" width="10" height="22" rx="3" fill="#111827"/>
+    <rect x="398" y="170" width="24" height="22" rx="3" fill="#ff5555"/>
+    <circle cx="340" cy="202" r="4" fill="#64748b"/>
+    <circle cx="430" cy="202" r="4" fill="#64748b"/>
+    <g font-size="14">
+      <text x="288" y="246" fill="#475569">zooms</text><text x="472" y="246" text-anchor="end" font-weight="700" fill="#111827">0–3</text>
+      <line x1="288" y1="256" x2="472" y2="256" stroke="#e2e8f0"/>
+      <text x="288" y="278" fill="#475569">graphics</text><text x="472" y="278" text-anchor="end" font-weight="700" fill="#111827">0–4</text>
+      <line x1="288" y1="288" x2="472" y2="288" stroke="#e2e8f0"/>
+      <text x="288" y="310" fill="#475569">scenes</text><text x="472" y="310" text-anchor="end" font-weight="700" fill="#111827">0–1</text>
+      <line x1="288" y1="320" x2="472" y2="320" stroke="#e2e8f0"/>
+      <text x="288" y="342" fill="#475569">transitions</text><text x="472" y="342" text-anchor="end" font-weight="700" fill="#111827">0–1.5</text>
+      <line x1="288" y1="352" x2="472" y2="352" stroke="#e2e8f0"/>
+      <text x="288" y="374" fill="#475569">effects</text><text x="472" y="374" text-anchor="end" font-weight="700" fill="#111827">0–1.5</text>
+      <line x1="288" y1="384" x2="472" y2="384" stroke="#e2e8f0"/>
+      <text x="288" y="406" fill="#475569">SFX</text><text x="472" y="406" text-anchor="end" font-weight="700" fill="#111827">0–4</text>
+      <line x1="288" y1="416" x2="472" y2="416" stroke="#e2e8f0"/>
+      <text x="288" y="438" fill="#475569">music, bumpers</text><text x="472" y="438" text-anchor="end" font-weight="700" fill="#111827">optional</text>
+    </g>
+    <text x="288" y="466" font-size="13" fill="#64748b">no minimum enforced</text>
+  </g>
+
+  <!-- ============ pro ============ -->
+  <g>
+    <rect x="512" y="84" width="216" height="398" rx="16" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+    <text x="528" y="118" font-family="Consolas, 'Cascadia Mono', Menlo, monospace" font-size="20" font-weight="700" fill="#111827">pro</text>
+    <text x="712" y="117" font-size="14" text-anchor="end" fill="#64748b">professional</text>
+    <text x="528" y="144" font-size="14" fill="#334155">Constant visual support.</text>
+    <rect x="528" y="162" width="184" height="52" rx="8" fill="#e2e8f0"/>
+    <rect x="540" y="170" width="10" height="22" rx="3" fill="#111827"/>
+    <rect x="570" y="170" width="10" height="22" rx="3" fill="#111827"/>
+    <rect x="628" y="170" width="10" height="22" rx="3" fill="#111827"/>
+    <rect x="658" y="170" width="10" height="22" rx="3" fill="#111827"/>
+    <rect x="690" y="170" width="10" height="22" rx="3" fill="#111827"/>
+    <rect x="592" y="170" width="24" height="22" rx="3" fill="#ff5555"/>
+    <circle cx="552" cy="202" r="4" fill="#64748b"/>
+    <circle cx="596" cy="202" r="4" fill="#64748b"/>
+    <circle cx="646" cy="202" r="4" fill="#64748b"/>
+    <circle cx="692" cy="202" r="4" fill="#64748b"/>
+    <g font-size="14">
+      <text x="528" y="246" fill="#475569">zooms</text><text x="712" y="246" text-anchor="end" font-weight="700" fill="#111827">2–6</text>
+      <line x1="528" y1="256" x2="712" y2="256" stroke="#e2e8f0"/>
+      <text x="528" y="278" fill="#475569">graphics</text><text x="712" y="278" text-anchor="end" font-weight="700" fill="#111827">3–6</text>
+      <line x1="528" y1="288" x2="712" y2="288" stroke="#e2e8f0"/>
+      <text x="528" y="310" fill="#475569">scenes</text><text x="712" y="310" text-anchor="end" font-weight="700" fill="#111827">0.75–2</text>
+      <line x1="528" y1="320" x2="712" y2="320" stroke="#e2e8f0"/>
+      <text x="528" y="342" fill="#475569">transitions</text><text x="712" y="342" text-anchor="end" font-weight="700" fill="#111827">0.5–2</text>
+      <line x1="528" y1="352" x2="712" y2="352" stroke="#e2e8f0"/>
+      <text x="528" y="374" fill="#475569">effects</text><text x="712" y="374" text-anchor="end" font-weight="700" fill="#111827">0.5–2</text>
+      <line x1="528" y1="384" x2="712" y2="384" stroke="#e2e8f0"/>
+      <text x="528" y="406" fill="#475569">SFX</text><text x="712" y="406" text-anchor="end" font-weight="700" fill="#111827">2–8</text>
+      <line x1="528" y1="416" x2="712" y2="416" stroke="#e2e8f0"/>
+      <text x="528" y="438" fill="#475569">music, bumpers</text><text x="712" y="438" text-anchor="end" font-weight="700" fill="#111827">always</text>
+    </g>
+    <text x="528" y="466" font-size="13" fill="#64748b">minimums are enforced too</text>
+  </g>
+
+  <!-- ============ max ============ -->
+  <g>
+    <rect x="752" y="84" width="216" height="398" rx="16" fill="#111827"/>
+    <text x="768" y="118" font-family="Consolas, 'Cascadia Mono', Menlo, monospace" font-size="20" font-weight="700" fill="#f8f8f2">max</text>
+    <text x="952" y="117" font-size="14" text-anchor="end" fill="#94a3b8">packed</text>
+    <text x="768" y="144" font-size="14" fill="#e2e8f0">Something new every 2–4 s.</text>
+    <rect x="768" y="162" width="184" height="52" rx="8" fill="#334155"/>
+    <rect x="776" y="170" width="10" height="22" rx="3" fill="#f8f8f2"/>
+    <rect x="792" y="170" width="10" height="22" rx="3" fill="#f8f8f2"/>
+    <rect x="808" y="170" width="10" height="22" rx="3" fill="#f8f8f2"/>
+    <rect x="852" y="170" width="10" height="22" rx="3" fill="#f8f8f2"/>
+    <rect x="868" y="170" width="10" height="22" rx="3" fill="#f8f8f2"/>
+    <rect x="884" y="170" width="10" height="22" rx="3" fill="#f8f8f2"/>
+    <rect x="900" y="170" width="10" height="22" rx="3" fill="#f8f8f2"/>
+    <rect x="934" y="170" width="10" height="22" rx="3" fill="#f8f8f2"/>
+    <rect x="823" y="170" width="24" height="22" rx="3" fill="#ff5555"/>
+    <rect x="914" y="170" width="16" height="22" rx="3" fill="#ff5555"/>
+    <circle cx="784" cy="202" r="4" fill="#94a3b8"/>
+    <circle cx="812" cy="202" r="4" fill="#94a3b8"/>
+    <circle cx="842" cy="202" r="4" fill="#94a3b8"/>
+    <circle cx="872" cy="202" r="4" fill="#94a3b8"/>
+    <circle cx="904" cy="202" r="4" fill="#94a3b8"/>
+    <circle cx="936" cy="202" r="4" fill="#94a3b8"/>
+    <g font-size="14">
+      <text x="768" y="246" fill="#cbd5e1">zooms</text><text x="952" y="246" text-anchor="end" font-weight="700" fill="#f8f8f2">2–9</text>
+      <line x1="768" y1="256" x2="952" y2="256" stroke="#334155"/>
+      <text x="768" y="278" fill="#cbd5e1">graphics</text><text x="952" y="278" text-anchor="end" font-weight="700" fill="#f8f8f2">6–12</text>
+      <line x1="768" y1="288" x2="952" y2="288" stroke="#334155"/>
+      <text x="768" y="310" fill="#cbd5e1">scenes</text><text x="952" y="310" text-anchor="end" font-weight="700" fill="#f8f8f2">1.5–3</text>
+      <line x1="768" y1="320" x2="952" y2="320" stroke="#334155"/>
+      <text x="768" y="342" fill="#cbd5e1">transitions</text><text x="952" y="342" text-anchor="end" font-weight="700" fill="#f8f8f2">0.5–3.5</text>
+      <line x1="768" y1="352" x2="952" y2="352" stroke="#334155"/>
+      <text x="768" y="374" fill="#cbd5e1">effects</text><text x="952" y="374" text-anchor="end" font-weight="700" fill="#f8f8f2">0.5–3</text>
+      <line x1="768" y1="384" x2="952" y2="384" stroke="#334155"/>
+      <text x="768" y="406" fill="#cbd5e1">SFX</text><text x="952" y="406" text-anchor="end" font-weight="700" fill="#f8f8f2">4–12</text>
+      <line x1="768" y1="416" x2="952" y2="416" stroke="#334155"/>
+      <text x="768" y="438" fill="#cbd5e1">music, bumpers</text><text x="952" y="438" text-anchor="end" font-weight="700" fill="#f8f8f2">always</text>
+    </g>
+    <text x="768" y="466" font-size="13" font-weight="700" fill="#ff5555">min. 80% edited · 7 patterns</text>
+  </g>
+
+  <!-- legend -->
+  <g font-size="13.5" fill="#475569">
+    <text x="32" y="522">The strip is one minute of video (illustrative):</text>
+    <rect x="330" y="508" width="10" height="18" rx="3" fill="#111827"/>
+    <text x="348" y="522">graphic</text>
+    <rect x="416" y="508" width="22" height="18" rx="3" fill="#ff5555"/>
+    <text x="446" y="522">illustrative scene</text>
+    <circle cx="576" cy="517" r="4" fill="#64748b"/>
+    <text x="588" y="522">zoom</text>
+  </g>
+</svg>
