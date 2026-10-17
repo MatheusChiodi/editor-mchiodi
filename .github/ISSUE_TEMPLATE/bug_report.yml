@@ -1,0 +1,61 @@
+name: Bug
+description: Algo quebrou ou saiu errado (render, corte, legenda, áudio, Cut, CLI).
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Problema de segurança? Não abra issue pública: veja o [SECURITY.md](https://github.com/MatheusChiodi/editor-mchiodi/blob/main/SECURITY.md).
+  - type: textarea
+    id: what
+    attributes:
+      label: O que aconteceu
+      description: E o que você esperava que acontecesse.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Como reproduzir
+      description: Comandos na ordem (`pnpm mce ...`), versão da EDL envolvida (`edl.vN.json`) e o trecho de tempo da fonte, se for sobre o vídeo.
+      placeholder: |
+        1. pnpm mce analyze <slug>
+        2. pnpm mce render <slug>
+        3. ...
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Área
+      options:
+        - análise / transcrição
+        - EDL / corte automático
+        - render (cortes, cor, zoom, efeitos)
+        - legendas
+        - áudio / mixagem
+        - gráficos / Remotion / cenas
+        - Short 9:16
+        - eval / relatório
+        - MChiodi Cut
+        - watcher / modo sem supervisão
+        - CLI / instalação
+        - outra
+    validations:
+      required: true
+  - type: textarea
+    id: doctor
+    attributes:
+      label: Saída do `pnpm mce doctor`
+      render: text
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs, stills ou prints
+      description: Erro do terminal, `pnpm mce still ...`, frame do `mce view`. Não cole segredos (`mce.config.json`, `.env`).
+      render: text
+  - type: input
+    id: env
+    attributes:
+      label: Ambiente
+      placeholder: Windows 11, Node 24, pnpm 9, ffmpeg 7.1, GPU ...

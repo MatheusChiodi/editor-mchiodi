@@ -226,7 +226,7 @@ export const FileTree: React.FC<FileTreeProps & BaseProps> = ({ root, items, rev
 };
 
 const sample: FileTreeProps = {
-  root: 'mchiodi-editor',
+  root: 'editor-mchiodi',
   items: [
     { path: 'src/analyze/transcribe.ts' },
     { path: 'src/edl/schema.ts', highlight: true, note: 'fonte da verdade' },

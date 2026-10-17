@@ -141,7 +141,7 @@ describe('ações', () => {
   });
 
   it('alvo com caractere que o cmd reinterpreta não é aberto', () => {
-    expect(isSafeTarget('D:\\PROJETOS\\Sistemas\\mchiodi-editor\\output\\aula 2 (final)')).toBe(true);
+    expect(isSafeTarget('D:\\PROJETOS\\Sistemas\\editor-mchiodi\\output\\aula 2 (final)')).toBe(true);
     for (const bad of ['a&calc', 'a|b', '%TEMP%', 'a^b', 'a"b', 'a\nb', '', 'a>b']) expect(isSafeTarget(bad)).toBe(false);
     const plan = planAction({ type: 'open-output', slug: 'aula' }, facts({ outputDir: 'D:\\saida\\a&calc' }));
     expect(plan.open).toBeUndefined();

@@ -154,7 +154,7 @@ const sample: JsonViewerProps = {
   highlightPath: 'usuario.plano',
   json: JSON.stringify({
     usuario: { id: 87, nome: 'Matheus Chiodi', plano: 'pro', ativo: true },
-    projetos: ['creatorhub', 'mchiodi-editor'],
+    projetos: ['creatorhub', 'editor-mchiodi'],
     ultimoAcesso: '2026-10-12T14:03:00Z',
   }),
 };

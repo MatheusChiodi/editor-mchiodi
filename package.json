@@ -1,9 +1,18 @@
 {
-  "name": "mchiodi-editor",
+  "name": "editor-mchiodi",
   "version": "0.1.0",
   "private": true,
   "type": "module",
   "description": "Pipeline de edição de vídeo dirigido pelo Claude Code (canal MChiodi)",
+  "license": "MIT",
+  "author": "Matheus Chiodi",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MatheusChiodi/editor-mchiodi.git"
+  },
+  "bugs": "https://github.com/MatheusChiodi/editor-mchiodi/issues",
+  "homepage": "https://github.com/MatheusChiodi/editor-mchiodi#readme",
+  "packageManager": "pnpm@9.12.3",
   "scripts": {
     "mce": "tsx src/cli/index.ts",
     "test": "vitest run",

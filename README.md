@@ -4,6 +4,9 @@
 
 # MChiodi Editor
 
+[![CI](https://github.com/MatheusChiodi/editor-mchiodi/actions/workflows/ci.yml/badge.svg)](https://github.com/MatheusChiodi/editor-mchiodi/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 **Claude Code edits the videos of the [MChiodi](https://www.youtube.com/@MChiodiDev) YouTube channel end to end.**
 You hand it a raw recording; it returns the edited video, a vertical Short, thumbnails, the title, the description,
 the chapters and a report explaining every decision.
@@ -128,7 +131,7 @@ winget install --id astral-sh.uv -e
 **4. Project dependencies**
 
 ```powershell
-cd D:\path\to\mchiodi-editor
+cd D:\path\to\editor-mchiodi
 pnpm install
 ```
 
@@ -820,8 +823,12 @@ Conventions, from [`CLAUDE.md`](CLAUDE.md):
 
 ## License and credits
 
-No license has been defined: the repository has no `LICENSE` file, and `package.json` marks the package as private.
-Until one is added, all rights are reserved by the author.
+Released under the [MIT License](LICENSE). Contributions are welcome: see [CONTRIBUTING.md](CONTRIBUTING.md), the
+[Code of Conduct](CODE_OF_CONDUCT.md) and, for vulnerabilities, [SECURITY.md](SECURITY.md). Changes are tracked in
+[CHANGELOG.md](CHANGELOG.md).
+
+The MIT license covers this repository's code. The tools it drives keep their own terms; in particular Remotion
+requires a [company license](https://www.remotion.dev/license) for some commercial uses.
 
 Built by Matheus Chiodi for the [MChiodi](https://www.youtube.com/@MChiodiDev) channel, on top of
 [Claude Code](https://claude.com/claude-code), [ffmpeg](https://ffmpeg.org), [Remotion](https://www.remotion.dev)
