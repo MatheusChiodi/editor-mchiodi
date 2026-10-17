@@ -7,7 +7,9 @@ import { fileURLToPath } from 'node:url';
 import { ROOT } from '../src/project/paths.ts';
 
 /** Marca os arquivos gerados aqui: só eles são sobrescritos ou apagados. */
-export const SHIM_MARKER = 'mchiodi-editor:mce-shim';
+export const SHIM_MARKER = 'editor-mchiodi:mce-shim';
+/** Marca de antes da troca de nome do projeto: shims já instalados com ela continuam sendo nossos. */
+export const LEGACY_SHIM_MARKERS = ['mchiodi-editor:mce-shim'] as const;
 export const SHIM_NAMES = { cmd: 'mce.cmd', ps1: 'mce.ps1' } as const;
 
 export interface ShimTargets {
@@ -51,7 +53,7 @@ export function ps1Shim(root: string): string {
 }
 
 export function isOurShim(content: string): boolean {
-  return content.includes(SHIM_MARKER);
+  return [SHIM_MARKER, ...LEGACY_SHIM_MARKERS].some((marker) => content.includes(marker));
 }
 
 const normalizeDir = (dir: string) => win32.normalize(dir.trim().replace(/^"|"$/g, '')).replace(/[\\/]+$/, '').toLowerCase();

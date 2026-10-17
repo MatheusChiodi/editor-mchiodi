@@ -1,0 +1,29 @@
+# Texto vai para o repositório e para a cópia de trabalho em LF, em qualquer máquina,
+# independente do core.autocrlf (acaba com os avisos "LF will be replaced by CRLF").
+* text=auto eol=lf
+
+# o cmd e o Windows PowerShell esperam CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# lockfiles: diff ilegível e merge sempre por regeneração
+pnpm-lock.yaml -diff linguist-generated
+transcriber/uv.lock -diff linguist-generated
+
+# binários
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.otf binary
+*.wav binary
+*.mp3 binary
+*.mp4 binary
+*.mov binary
+*.zip binary

@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { allowsLocalScripts, cmdShim, isOurShim, pickBinDir, ps1Shim, SHIM_MARKER, shimTargets } from '../scripts/install-cli.ts';
 import { bareGroup, type CommandNode, userPath } from '../src/cli/invocation.ts';
 
-const ROOT = 'D:\\PROJETOS\\Sistemas\\mchiodi-editor';
+const ROOT = 'D:\\PROJETOS\\Sistemas\\editor-mchiodi';
 const HOME = 'C:\\Users\\mathe';
 
 describe('conteúdo do shim', () => {
@@ -40,6 +40,11 @@ describe('conteúdo do shim', () => {
     expect(isOurShim(ps1Shim(ROOT))).toBe(true);
     expect(cmdShim(ROOT)).toContain(SHIM_MARKER);
     expect(isOurShim('@echo off\r\nnode outro.js %*')).toBe(false);
+  });
+
+  it('reconhece o shim instalado antes da troca de nome do projeto', () => {
+    expect(isOurShim('@echo off\r\nrem mchiodi-editor:mce-shim - gerado por "pnpm run install-cli"\r\n')).toBe(true);
+    expect(cmdShim(ROOT)).not.toContain('mchiodi-editor');
   });
 });
 

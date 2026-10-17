@@ -1,0 +1,28 @@
+name: Ideia / melhoria
+description: Proponha um recurso novo, um efeito, um modelo de animação ou uma melhoria de fluxo.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Que problema isso resolve
+      description: O que fica pior, mais lento ou impossível hoje na edição.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposta
+      description: Como deveria funcionar. Se mexe na EDL, mostre o campo novo.
+    validations:
+      required: true
+  - type: textarea
+    id: reason
+    attributes:
+      label: O que reforça no vídeo
+      description: Overlay, zoom, efeito e transição precisam de motivo (STYLE.md §1). Em que fala ou momento isso entra?
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternativas
+      description: O que já existe no arsenal (`pnpm mce arsenal`) e por que não basta.
