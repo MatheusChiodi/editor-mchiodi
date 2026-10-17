@@ -67,6 +67,15 @@ export function planTransitions(timeline: Timeline, options: CutGraphOptions): P
 }
 
 /**
+ * Duração do fade de áudio em cada borda de um clipe de `lengthSec`. Clipe curto não perde o fade
+ * (seria estalo garantido): ele encolhe até 1/3 do clipe, e os dois fades nunca se sobrepõem.
+ */
+export function edgeFadeSec(lengthSec: number, fadeSec: number): number {
+  if (fadeSec <= 0 || lengthSec <= 0) return 0;
+  return Number(Math.min(fadeSec, lengthSec / 3).toFixed(6));
+}
+
+/**
  * Filtergraph de corte em passe único: decodifica a fonte uma vez, recorta por índice de
  * frame/amostra e concatena. Recortar por tempo (ou concatenar segmentos já encodados com
  * -c copy) acumula drift entre vídeo e áudio a cada corte.
@@ -96,8 +105,9 @@ export function buildCutGraph(timeline: Timeline, options: CutGraphOptions): str
     const endSample = Math.round((clip.endFrame / fps) * AUDIO_RATE);
     const length = (endSample - startSample) / AUDIO_RATE;
     const audio = [`atrim=start_sample=${startSample}:end_sample=${endSample}`, 'asetpts=PTS-STARTPTS'];
-    if (fade > 0 && length > fade * 4) {
-      audio.push(`afade=t=in:st=0:d=${fade}`, `afade=t=out:st=${(length - fade).toFixed(6)}:d=${fade}`);
+    const edge = edgeFadeSec(length, fade);
+    if (edge > 0) {
+      audio.push(`afade=t=in:st=0:d=${edge}`, `afade=t=out:st=${(length - edge).toFixed(6)}:d=${edge}`);
     }
     lines.push(
       `[vs${index}]trim=start_frame=${startFrame}:end_frame=${endFrame},setpts=PTS-STARTPTS[v${index}]`,

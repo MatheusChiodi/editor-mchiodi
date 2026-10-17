@@ -7,7 +7,7 @@ import { edlSchema, type EdlInput } from '../src/edl/schema.ts';
 import { buildTimeline, cutPoints, mapSpan, outputToSource, sourceToOutput } from '../src/edl/timeline.ts';
 import { escapeFilterPath } from '../src/lib/ffpath.ts';
 import { formatChapter, quantize } from '../src/lib/time.ts';
-import { AUDIO_RATE, buildCutGraph, planTransitions } from '../src/render/cuts.ts';
+import { AUDIO_RATE, buildCutGraph, edgeFadeSec, planTransitions } from '../src/render/cuts.ts';
 import { script } from './helpers.ts';
 
 const base: EdlInput = {
@@ -127,6 +127,26 @@ describe('buildCutGraph', () => {
     expect(graph).toContain('[v0][v1]concat=n=2:v=1:a=0,fps=30[vcut]');
     expect(graph).toContain('[a0][a1]concat=n=2:v=0:a=1[acut]');
     expect(graph).not.toContain('xfade');
+  });
+
+  it('edgeFadeSec: fade pedido, limitado a 1/3 do clipe; zero desliga', () => {
+    expect(edgeFadeSec(9, 0.012)).toBe(0.012);
+    expect(edgeFadeSec(0.09, 0.05)).toBe(0.03);
+    expect(edgeFadeSec(0.1, 0.03)).toBe(0.03);
+    expect(edgeFadeSec(5, 0)).toBe(0);
+    expect(edgeFadeSec(0, 0.012)).toBe(0);
+    // os dois fades cabem no clipe sem se sobrepor
+    for (const length of [0.01, 0.05, 0.1, 1]) expect(edgeFadeSec(length, 0.05) * 2).toBeLessThanOrEqual(length);
+  });
+
+  it('clipe curto ainda ganha fade (encolhido) em vez de corte seco', () => {
+    // 3 frames a 30 fps = 0.1 s; fade de 50 ms vira 1/3 do clipe
+    const timeline = buildTimeline([{ id: 'a', start: 1, end: 3 }, { id: 'b', start: 4, end: 4.1 }], 30);
+    const graph = buildCutGraph(timeline, { fps: 30, width: 640, height: 360, fadeMs: 50 });
+    expect(graph).toContain('afade=t=in:st=0:d=0.033333');
+    expect(graph).toContain('afade=t=out:st=0.066667:d=0.033333');
+    expect(graph).toContain('afade=t=out:st=1.950000:d=0.05');
+    expect(buildCutGraph(timeline, { fps: 30, width: 640, height: 360, fadeMs: 0 })).not.toContain('afade');
   });
 
   it('transição empresta frames dos dois lados e mantém a duração total', () => {
