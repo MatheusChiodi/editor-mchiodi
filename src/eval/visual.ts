@@ -5,7 +5,7 @@ import sharp, { type OverlayOptions } from 'sharp';
 
 import type { PlacedClip } from '../edl/timeline.ts';
 import { ffmpeg } from '../lib/ffmpeg.ts';
-import { formatClock } from '../lib/time.ts';
+import { formatClock, frameSeekTime } from '../lib/time.ts';
 import { type DecisionPoint, frameDiff, type JumpCut } from './edges.ts';
 
 /** Largura dos quadros comparados no jump cut: pequeno o bastante para ignorar ruído, grande para ver o salto. */
@@ -151,8 +151,7 @@ export async function renderContactSheet(
   for (const [row, point] of points.entries()) {
     const frames = cutFrames(point.at, video.fps);
     for (const side of ['before', 'after'] as const) {
-      // o seek de entrada descarta todo quadro com pts < -ss: mirar no meio do quadro pularia para o seguinte
-      const at = Math.max(0, frames[side] / video.fps - 0.0005);
+      const at = frameSeekTime(frames[side], video.fps);
       const tile = join(tilesDir, `${row}-${side}.png`);
       await ffmpeg(['-ss', at.toFixed(4), '-i', file, '-an', '-frames:v', '1', '-vf', `scale=${layout.tile.width}:${layout.tile.height}`, '-update', '1', tile]);
       composite.push({ input: readFileSync(tile), left: tileLeft(layout, side), top: rowTop(layout, row) });

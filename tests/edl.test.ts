@@ -6,7 +6,7 @@ import { autocut, silentSeconds } from '../src/edl/autocut.ts';
 import { edlSchema, type EdlInput } from '../src/edl/schema.ts';
 import { buildTimeline, cutPoints, mapSpan, outputToSource, sourceToOutput } from '../src/edl/timeline.ts';
 import { escapeFilterPath } from '../src/lib/ffpath.ts';
-import { formatChapter, quantize } from '../src/lib/time.ts';
+import { formatChapter, frameAt, frameSeekTime, quantize } from '../src/lib/time.ts';
 import { AUDIO_RATE, buildCutGraph, edgeFadeSec, planTransitions } from '../src/render/cuts.ts';
 import { script } from './helpers.ts';
 
@@ -104,6 +104,15 @@ describe('lib', () => {
     expect(quantize(1.02, 30, 'floor')).toBeCloseTo(1, 6);
     expect(quantize(1.02, 30, 'ceil')).toBeCloseTo(1 + 1 / 30, 6);
     expect(quantize(2, 30, 'ceil')).toBe(2);
+  });
+
+  it('frameAt e frameSeekTime miram o frame na tela, nunca o seguinte', () => {
+    expect(frameAt(10.5 / 30, 30)).toBe(10);
+    expect(frameAt(0.967, 30)).toBe(29);
+    expect(frameAt(12 / 30, 30)).toBe(12);
+    expect(frameSeekTime(29, 30)).toBeLessThan(29 / 30);
+    expect(frameSeekTime(29, 30)).toBeGreaterThan(28.5 / 30);
+    expect(frameSeekTime(0, 30)).toBe(0);
   });
 
   it('formatChapter', () => {
