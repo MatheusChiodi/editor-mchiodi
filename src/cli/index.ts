@@ -16,7 +16,10 @@ import { formatClock } from '../lib/time.ts';
 import { appendNote, describeStatus, type NoteKind } from '../project/memory.ts';
 import { activityFile, appendActivity, withActivity } from '../project/activity.ts';
 import { loadAmbient, loadItems } from '../project/dashboard-data.ts';
-import { createVramSampler, queryVram } from '../project/health.ts';
+import { loadConfig } from '../config.ts';
+import { run } from '../lib/exec.ts';
+import { createVramSampler, deepFilterCheck, doctorLines, queryVram, type ToolCheck } from '../project/health.ts';
+import { resolveDeepFilterBinary } from '../render/denoise.ts';
 import { clearLive, liveFile, type LiveTask, trackProgress, writeLive } from '../project/live.ts';
 import { projectPaths, readJson, requireProject, ROOT, slugFromFile } from '../project/paths.ts';
 import { renderDashboard, shouldColor, watchInterval } from '../project/dashboard.ts';
@@ -281,6 +284,29 @@ program
         hasMemory: existsSync(paths.memory),
       }),
     );
+  });
+
+program
+  .command('doctor')
+  .description('Confere as ferramentas externas: ffmpeg, ffprobe, deep-filter (denoise neural, opcional) e GPU')
+  .action(async () => {
+    const version = async (name: string): Promise<ToolCheck> => {
+      try {
+        const { stdout } = await run(name, ['-version']);
+        return { name, ok: true, detail: stdout.split(/\r?\n/)[0] ?? '', required: true };
+      } catch {
+        return { name, ok: false, detail: 'não encontrado no PATH', required: true };
+      }
+    };
+    const vram = await queryVram();
+    const checks = [
+      await version('ffmpeg'),
+      await version('ffprobe'),
+      deepFilterCheck(resolveDeepFilterBinary({ env: process.env, configPath: loadConfig().denoise.deepFilterPath, platform: process.platform, exists: existsSync })),
+      { name: 'nvidia-smi', ok: vram !== null, detail: vram ? `VRAM ${vram.usedMb}/${vram.totalMb} MB` : 'sem GPU NVIDIA visível; transcrição em CPU é bem mais lenta', required: false },
+    ];
+    log(doctorLines(checks).join('\n'));
+    if (checks.some((check) => check.required && !check.ok)) process.exitCode = 2;
   });
 
 program

@@ -128,7 +128,11 @@ os `xfade` misturam a imagem dos dois lados; os `stinger` são cortinas nas core
 
 ## Áudio (`audio`, `music`, `sfx`)
 
-- `audio`: `targetLufs` (-14), `truePeakDb` (-1.5), `denoise` (`off|light|medium`), `deesser`, `cutFadeMs` (12).
+- `audio`: `targetLufs` (-14), `truePeakDb` (-1.5), `denoise` (`off|light|medium|deepfilter`, padrão `light`), `deesser`, `cutFadeMs` (12).
+  `light`/`medium` são o afftdn do ffmpeg. `deepfilter` limpa a voz com o DeepFilterNet (binário `deep-filter`) num pré-passo
+  em cache (`analysis/denoise/`), alinhado amostra a amostra com a fonte, e aí o afftdn não entra. Use quando o ruído é
+  ventilador/rua/teclado que o `medium` não tira sem deixar a voz "embaixo d'água". Sem o binário (`pnpm mce doctor` diz)
+  o render avisa e cai para `light`; nada quebra.
 - `music`: `{ "file": "<arquivo em assets/music>", "gainDb": -24, "duck": true, "fadeIn": 1.5, "fadeOut": 3 }`. Com `duck`, a trilha abaixa sozinha quando há fala.
 - `sfx`: `{ "id": "s1", "file": "ding.wav", "at": 88.2, "gainDb": -12 }`. `whoosh` em transição e `pop` em entrada de gráfico já são automáticos.
   `pnpm mce assets list` mostra o que há na biblioteca.

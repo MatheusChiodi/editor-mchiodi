@@ -144,7 +144,8 @@ export const gradeSchema = z.object({
 export const audioSchema = z.object({
   targetLufs: z.number().default(-14),
   truePeakDb: z.number().default(-1.5),
-  denoise: z.enum(['off', 'light', 'medium']).default('light'),
+  /** `light`/`medium` = afftdn; `deepfilter` = DeepFilterNet em pré-passo (sem o binário, cai para `light`) */
+  denoise: z.enum(['off', 'light', 'medium', 'deepfilter']).default('light'),
   deesser: z.boolean().default(true),
   /** fade em cada borda de corte, em ms */
   cutFadeMs: z.number().min(0).max(50).default(12),

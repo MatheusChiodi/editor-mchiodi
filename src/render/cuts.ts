@@ -28,6 +28,8 @@ export interface CutGraphOptions {
    * `align` é a cadeia que a coloca na linha do tempo da câmera (ver `screenAlign`).
    */
   screen?: { align: string };
+  /** entrada do ffmpeg de onde vem o áudio (padrão 0, a própria fonte); a voz limpa do deep-filter entra à parte */
+  audioInput?: number;
 }
 
 export interface PlannedTransition {
@@ -92,7 +94,7 @@ export function buildCutGraph(timeline: Timeline, options: CutGraphOptions): str
   const lines: string[] = [
     `[0:v]fps=${fps}:start_time=0,${options.prep ?? `scale=${options.width}:${options.height}:flags=lanczos,setsar=1`},format=yuv420p,split=${count}${labels('vs')}`,
     // first_pts=0 alinha o áudio ao zero do vídeo: os recortes abaixo contam amostras
-    `[0:a]aresample=${AUDIO_RATE}:async=1:first_pts=0,aformat=channel_layouts=stereo,asplit=${count}${labels('as')}`,
+    `[${options.audioInput ?? 0}:a]aresample=${AUDIO_RATE}:async=1:first_pts=0,aformat=channel_layouts=stereo,asplit=${count}${labels('as')}`,
   ];
 
   const videoLength: number[] = [];
@@ -165,6 +167,8 @@ export interface RenderCutOptions extends CutGraphOptions {
   /** arquivo da gravação de tela e onde gravar a versão cortada (exige `screen` nas opções do grafo) */
   screenSource?: string;
   screenOutput?: string;
+  /** áudio alinhado amostra a amostra com a fonte (WAV do deep-filter) que substitui o dela */
+  audioSource?: string;
   graphFile: string;
   quality: Quality;
   onProgress?: ProgressFn;
@@ -172,13 +176,15 @@ export interface RenderCutOptions extends CutGraphOptions {
 
 /** Gera o intermediário cortado (vídeo de alta qualidade + áudio PCM, sem perdas no áudio). */
 export async function renderCut(timeline: Timeline, options: RenderCutOptions): Promise<void> {
-  writeFileSync(options.graphFile, buildCutGraph(timeline, options), 'utf8');
-  const encode = await videoEncodeArgs(options.quality);
   const withScreen = Boolean(options.screen && options.screenSource && options.screenOutput);
+  const audioInput = options.audioSource ? (withScreen ? 2 : 1) : 0;
+  writeFileSync(options.graphFile, buildCutGraph(timeline, { ...options, audioInput }), 'utf8');
+  const encode = await videoEncodeArgs(options.quality);
   await ffmpeg(
     [
       '-i', options.source,
       ...(withScreen ? ['-i', options.screenSource!] : []),
+      ...(options.audioSource ? ['-i', options.audioSource] : []),
       // 300 cortes passam do limite de linha de comando do Windows: o grafo vai por arquivo
       '-/filter_complex', options.graphFile,
       '-map', '[vcut]', '-map', '[acut]',

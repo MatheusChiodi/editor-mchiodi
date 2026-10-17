@@ -64,6 +64,16 @@ export const configSchema = z.object({
       previewScale: z.number().positive().max(1).default(0.5),
     })
     .prefault({}),
+  denoise: z
+    .object({
+      /** binário deep-filter (DeepFilterNet) para `audio.denoise: "deepfilter"`; vazio = PATH. A env MCE_DEEPFILTER tem precedência */
+      deepFilterPath: z.string().default(''),
+      /** teto de atenuação em dB; 100 = sem teto. Menor deixa um resto de ambiente e a voz mais natural */
+      attenLimDb: z.number().positive().max(100).default(100),
+      /** pós-filtro do DeepFilterNet: limpa mais, com risco de engolir finais de palavra */
+      postFilter: z.boolean().default(false),
+    })
+    .prefault({}),
   headless: z
     .object({
       /** modelo da sessão sem supervisão; vazio = o padrão da sua conta */

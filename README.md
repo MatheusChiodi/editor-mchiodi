@@ -94,6 +94,7 @@ goes through a browser. The engineering decisions and the measurements behind th
 | [Claude Code](https://claude.com/claude-code) | Logged in. It is the director |
 | Node.js 22 or newer | Developed on Node 24. pnpm via Corepack |
 | ffmpeg, "full" build | Needs `libass`, `xfade`, `afftdn` and, for GPU encoding, `h264_nvenc` |
+| [`deep-filter`](https://github.com/Rikorose/DeepFilterNet/releases) (optional) | Neural voice denoise for `audio.denoise: "deepfilter"`. Rename the release `.exe` to `deep-filter.exe` and put it on `PATH`, or point `denoise.deepFilterPath` / `MCE_DEEPFILTER` to it. Without it, the render falls back to `afftdn` |
 | [uv](https://docs.astral.sh/uv/) | Manages the Python 3.12 used for transcription. Your system Python is not used |
 | NVIDIA GPU (recommended) | Transcription defaults to CUDA. CPU works with a config change, much slower |
 | Disk space | The transcription environment (WhisperX + PyTorch with CUDA) takes several GB; each project stores a proxy and its renders |
@@ -175,6 +176,7 @@ pnpm test               # unit tests + ffmpeg integration tests on synthetic med
 pnpm mce assets list    # sfx: click.wav, ding.wav, glitch.wav, pop.wav, whoosh.wav
 pnpm mce arsenal        # counts per category of the arsenal
 pnpm mce levels         # the four editing levels
+pnpm mce doctor         # ffmpeg, ffprobe, deep-filter (optional) and GPU
 ```
 
 The first transcription downloads the Whisper `large-v3` model and the Portuguese alignment model, so it takes longer
@@ -476,6 +478,7 @@ badge). Whatever the agent cannot know for certain, such as links and social han
 |---|---|
 | `mce analyze <video> [-p <slug>] [-f]` | 720p proxy, word-level transcript, silences, retakes, loudness; writes `analysis/takes.md`. `-f` redoes the proxy and the transcript |
 | `mce status <slug>` | Where the project stands and what the next step is |
+| `mce doctor` | Checks the external tools: ffmpeg, ffprobe, `deep-filter` (optional) and the GPU. Exit code 2 when a required one is missing |
 | `mce view <slug> --from <s> --to <s> [-v <n>]` | PNG of a stretch of the source: frames, waveform, words and what the EDL keeps or cuts |
 | `mce frame <slug> --at <s>` | One frame of the source |
 | `mce words <slug> --from <s> --to <s>` | Words with exact timestamps |
@@ -571,6 +574,9 @@ Create `mce.config.json` at the project root. Every key is optional; the default
 | `output.height` | `1080` | Output height |
 | `render.remotionConcurrency` | `4` | Parallel Chrome tabs rendering graphics. Lower it if RAM runs out |
 | `render.previewScale` | `0.5` | Preview resolution relative to the output (0.5 of 1080p is 540p) |
+| `denoise.deepFilterPath` | `""` | `deep-filter` binary for `audio.denoise: "deepfilter"`; empty searches `PATH`. The `MCE_DEEPFILTER` environment variable wins over both |
+| `denoise.attenLimDb` | `100` | DeepFilterNet attenuation cap in dB; 100 means no cap. Lower keeps a bit of room tone and a more natural voice |
+| `denoise.postFilter` | `false` | DeepFilterNet post-filter: cleaner, at the risk of swallowing word endings |
 | `headless.model` | `""` | Model for unattended sessions; empty uses your account's default |
 | `headless.maxBudgetUsd` | `0` | Spending cap per video when the session uses an API key; 0 means no cap |
 | `headless.timeoutMin` | `240` | An unattended edit running longer than this is aborted |

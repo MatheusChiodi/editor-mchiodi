@@ -11,6 +11,7 @@ import { type ProjectPaths, readJson, writeJson } from '../project/paths.ts';
 import { missingScenes, syncScenes } from '../scenes/sync.ts';
 import { collectSfx, gainFilter, limiterFilter, type MusicBed, voiceChain } from './audio.ts';
 import { bumperDurations } from './bumpers.ts';
+import { prepareDenoise } from './denoise.ts';
 import { compose, measureChain, totalDuration } from './compose.ts';
 import { renderCut } from './cuts.ts';
 import { effectFilters, placeEffects } from './effects.ts';
@@ -96,8 +97,12 @@ export async function render(paths: ProjectPaths, source: Edl, options: RenderOp
   if (layout.length && !screenSource) log('aviso: o layout pede gravação de tela, mas o arquivo não foi encontrado; seguindo só com a câmera');
   const screenCut = screenSource ? join(dir, 'screen.mkv') : null;
 
+  // a voz limpa vem do arquivo original mesmo no preview: o proxy tem as mesmas amostras no mesmo lugar
+  const denoise = await prepareDenoise(edl.audio.denoise, edl.source.path, paths.analysisDir, { ...config.denoise, configPath: config.denoise.deepFilterPath, log });
+
   const cut = join(dir, 'cut.mkv');
   await renderCut(timeline, {
+    audioSource: denoise.audioSource ?? undefined,
     screen: screenSource ? { align: screenAlign(edl.layout.screen!.offsetSec, fps) } : undefined,
     screenSource: screenSource ?? undefined,
     screenOutput: screenCut ?? undefined,
@@ -139,7 +144,7 @@ export async function render(paths: ProjectPaths, source: Edl, options: RenderOp
     await renderBumper('Outro', bumpers.outroSec, { ...edl.output, output: outro, scale });
   }
 
-  const voice = voiceChain(edl.audio);
+  const voice = voiceChain({ ...edl.audio, denoise: denoise.denoise });
   const measured = await measureChain(cut, voice);
   log(`voz tratada: ${measured.integratedLufs.toFixed(1)} LUFS → alvo ${edl.audio.targetLufs} LUFS`);
 
