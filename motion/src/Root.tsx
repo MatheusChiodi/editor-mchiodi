@@ -15,6 +15,7 @@ import { sceneCompositions, sceneReels, sceneRegistry } from './scenes';
 import { THUMB } from './thumbnail/layout';
 import { Thumbnail, thumbnailSample } from './thumbnail/Thumbnail';
 import type { CaptionStyle, OverlayProps } from './types';
+import { verticalFrame } from './vertical';
 
 const FPS = 30;
 
@@ -53,6 +54,29 @@ export const RemotionRoot: React.FC = () => (
         captions: sampleCaptions,
         captionStyle: 'long',
         overlays: [],
+      }}
+      calculateMetadata={overlayMetadata}
+    />
+    {/* camada de gráficos do Short: mesma composição, cada componente numa caixa vertical (motion/src/vertical.ts) */}
+    <Composition
+      id="OverlayShorts"
+      component={Overlay}
+      fps={FPS}
+      width={1080}
+      height={1920}
+      durationInFrames={FPS * 8}
+      defaultProps={{
+        fps: FPS,
+        width: 1080,
+        height: 1920,
+        durationInFrames: FPS * 8,
+        captions: sampleCaptions,
+        captionStyle: 'shorts',
+        overlays: [
+          { id: 'tip', component: 'TipCard', from: 0, durationInFrames: FPS * 4, props: registry.TipCard!.sample, hidesCaptions: false },
+          { id: 'code', component: 'CodeCard', from: FPS * 4, durationInFrames: FPS * 4, props: registry.CodeCard!.sample, hidesCaptions: false },
+        ],
+        vertical: verticalFrame({ width: 1080, height: 1920, captions: 'padrao' }),
       }}
       calculateMetadata={overlayMetadata}
     />

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { CAPTION_PRESETS } from '../../motion/src/captions/presets.ts';
+import { VERTICAL_ZONES } from '../../motion/src/vertical.ts';
 import { effects } from '../arsenal/effects.ts';
 import { transitions } from '../arsenal/transitions.ts';
 import { DEFAULT_LEVEL, LEVEL_IDS } from './levels.ts';
@@ -83,6 +84,13 @@ export const overlaySchema = z.object({
   wipe: z.enum(['none', 'tear']).default('none'),
   /** `persistent`: camada fixa que atravessa vários layouts (indicador de progresso) e convive com o gráfico da vez */
   layer: z.enum(['base', 'persistent']).default('base'),
+  /**
+   * No Short: `false` tira o overlay do vertical; `{ zone, scale }` troca a zona do componente (motion/src/vertical.ts).
+   * Sem valor, vale o metadado `vertical` do componente.
+   */
+  shorts: z
+    .union([z.literal(false), z.object({ zone: z.enum(VERTICAL_ZONES), scale: z.number().min(0.3).max(1.5).optional() })])
+    .optional(),
 });
 
 export const zoomSchema = z.object({
@@ -224,6 +232,13 @@ export const shortsSchema = z
      * apresentador e planeja o pan, `pnpm mce shorts focus`) ou keyframes `[{ t, x }]` em segundos da fonte
      */
     focusX: z.union([z.number().min(0).max(1), z.literal('auto'), focusKeyframesSchema]).default(0.5),
+    /** `auto`: os overlays ancorados no trecho entram re-diagramados para 9:16; `none`: só legenda (o Short de antes) */
+    graphics: z.enum(['auto', 'none']).default('auto'),
+    /** faixa do rosto no quadro vertical, em fração da altura: nenhum cartão de `top`/`bottom` a cobre */
+    faceBand: z
+      .object({ top: z.number().min(0).max(1), bottom: z.number().min(0).max(1) })
+      .refine((band) => band.bottom > band.top, { message: 'faceBand.bottom precisa ser maior que top' })
+      .optional(),
     reason: z.string().default(''),
   })
   .refine((shorts) => shorts.end > shorts.start, { message: 'end precisa ser maior que start' });

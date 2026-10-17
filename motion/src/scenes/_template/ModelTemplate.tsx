@@ -139,6 +139,8 @@ export const entry: ComponentEntry = {
     closingAt: 3.6,
   },
   defaultDuration: 6,
+  // Short 9:16 (motion/src/vertical.ts): cena de tela inteira é inserto `full`; cartão pequeno pode ir para `top`
+  vertical: { zone: 'full' },
   // QUANDO usar: o tipo de fala que o modelo ilustra, nunca o vídeo de origem
   description: 'TODO: diga QUANDO usar este modelo (o tipo de fala que ele ilustra) e o que aparece na tela, em uma ou duas frases.',
   // a FORMA: lista, comparação, antes-depois, ciclo, linha do tempo, pilha, hub, medidor…

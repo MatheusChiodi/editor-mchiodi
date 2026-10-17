@@ -4,6 +4,7 @@ import { renderMedia, renderStill as renderStillFrame, selectComposition } from 
 
 import { isWindowSlot, linkStages, normalizePushes, type PresenterSpec } from '../../motion/src/arsenal/stage.ts';
 import type { OverlayItem, OverlayProps } from '../../motion/src/types.ts';
+import type { VerticalFrame } from '../../motion/src/vertical.ts';
 import type { Transcript } from '../analyze/types.ts';
 import { transitions } from '../arsenal/transitions.ts';
 import type { Edl, Overlay } from '../edl/schema.ts';
@@ -30,7 +31,7 @@ export function stagePresenter(overlay: Pick<Overlay, 'component' | 'props' | 'p
 }
 
 /** Traduz a EDL (tempo da fonte) nas props da composição `Overlay` (frames do vídeo final). */
-export function buildOverlayProps(edl: Edl, timeline: Timeline, transcript: Transcript): OverlayProps {
+export function buildOverlayProps(edl: Edl, timeline: Timeline, transcript: Transcript, vertical?: VerticalFrame): OverlayProps {
   const { fps, width, height } = edl.output;
   const totalFrames = Math.round(timeline.durationSec * fps);
   const presenters = new Map<string, PresenterSpec>();
@@ -49,6 +50,7 @@ export function buildOverlayProps(edl: Edl, timeline: Timeline, transcript: Tran
       hidesCaptions: overlay.hidesCaptions,
       ...(overlay.wipe !== 'none' ? { wipe: overlay.wipe } : {}),
       ...(overlay.layer === 'persistent' ? { layer: 'persistent' as const } : {}),
+      ...(vertical && overlay.shorts ? { vertical: overlay.shorts } : {}),
     };
   });
   // palcos colados viram um movimento só: o cartão desliza de um slot para o outro
@@ -79,6 +81,7 @@ export function buildOverlayProps(edl: Edl, timeline: Timeline, transcript: Tran
     captionStyle: edl.captions.style,
     captionPreset: edl.captions.preset,
     overlays,
+    ...(vertical ? { vertical } : {}),
   };
 }
 
@@ -130,11 +133,12 @@ export interface RenderOverlayOptions {
   onProgress?: ProgressFn;
 }
 
-/** Renderiza a camada de gráficos com canal alfa (ProRes 4444) para o ffmpeg compor. */
+/** Renderiza a camada de gráficos com canal alfa (ProRes 4444) para o ffmpeg compor; com `vertical`, a do Short. */
 export async function renderOverlay(props: OverlayProps, options: RenderOverlayOptions): Promise<void> {
   const serveUrl = await bundleMotion();
   const inputProps = props as unknown as Record<string, unknown>;
-  const composition = await selectComposition({ serveUrl, id: 'Overlay', inputProps, chromiumOptions: CHROMIUM_OPTIONS });
+  const id = props.vertical ? 'OverlayShorts' : 'Overlay';
+  const composition = await selectComposition({ serveUrl, id, inputProps, chromiumOptions: CHROMIUM_OPTIONS });
   const startedAt = Date.now();
   await renderMedia({
     serveUrl,

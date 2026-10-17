@@ -153,5 +153,6 @@ export const entry: ComponentEntry = {
   component: ErrorTrace,
   sample: { ...sample },
   defaultDuration: 8,
+  vertical: { zone: 'full' },
   description: 'Stack trace de erro em janela escura, com a linha culpada em destaque; use quando a fala lê um erro ou mostra onde o bug está.',
 };

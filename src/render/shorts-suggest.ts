@@ -400,7 +400,8 @@ export function applySuggestion(edl: Edl, chosen: ShortSuggestion): Omit<Edl, 'v
   const before = edl.shorts ? `${edl.shorts.start}–${edl.shorts.end}s` : 'nenhum';
   return {
     ...data,
-    shorts: chosen.shorts,
+    // o trecho é novo; o jeito de diagramar (gráficos, faixa do rosto) continua o que o diretor escolheu
+    shorts: { ...chosen.shorts, graphics: edl.shorts?.graphics ?? 'auto', ...(edl.shorts?.faceBand ? { faceBand: edl.shorts.faceBand } : {}) },
     notes:
       `Short: candidato #${chosen.rank} do mce shorts suggest sobre a v${edl.version} (nota ${chosen.score}, fonte ` +
       `${chosen.start}–${chosen.end}s, ${chosen.outputSec.toFixed(0)}s no Short; antes: ${before}). Abre com "${chosen.opening}…".`,

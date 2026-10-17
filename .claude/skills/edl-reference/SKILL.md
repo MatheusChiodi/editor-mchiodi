@@ -187,6 +187,18 @@ mensagem traz o `start`/`end` prontos). Declarar não isenta do resto: o respiro
   resultado (número ou keyframes) numa nova versão. `--track <arquivo>` importa um track à mão para `analysis/focus-track.json`
   (`{ "samples": [{ "t": 240, "x": 0.45 }] }`, `x` = CENTRO do apresentador 0–1, não a posição do recorte), que vence o detector;
   `--redetect` ignora o cache. Keyframes valem para um trecho: o `shorts suggest` troca keyframes herdados por `"auto"`.
+- Gráficos no Short: `shorts.graphics` = `"auto"` (padrão; os overlays ANCORADOS no trecho entram re-diagramados para 9:16) ou
+  `"none"` (só legenda, como antes). Overlay que começou antes do trecho não entra (perderia a entrada); palco (`presenter`,
+  `WindowStage` de footage) e camada `persistent` também não. Os tempos vão para o tempo do Short pela timeline: não converta à mão.
+  Cada componente declara `vertical` no `entry` (motion/src/vertical.ts), numa destas zonas do quadro 1080x1920:
+  - `top`: cartão entre a interface de cima (140 px) e o rosto; texto, título, contador, selo, ícone (escala 0,9);
+  - `bottom`: entre o rosto e a legenda; quando não cabe (rosto no meio), cai para `top`;
+  - `full`: inserto do topo até a legenda, cobre o rosto de propósito; código, diagrama, tabela, gráfico, cena (escala 0,7);
+  - `skip`: fica fora (`LowerThird`, `SubscribeCTA`, `LikeReminder`, `Intro`/`Outro`, palcos, `ChapterProgress`, `LogoBug`).
+  Nenhuma zona cobre a faixa da legenda (calculada pelo `captions.preset`), então no Short a legenda nunca se esconde.
+  Cena sob medida (`scene:`) sem `vertical` vira `full`. Override por overlay: `"shorts": false` (tira) ou
+  `"shorts": { "zone": "full", "scale": 0.8 }` (troca a zona/escala). `shorts.faceBand: { "top": 0.3, "bottom": 0.6 }` (fração da
+  altura) é onde o rosto fica no recorte; mude se o enquadramento for outro. Prévia: `pnpm mce still OverlayShorts`.
 
 ## Tela gravada (`layout`)
 

@@ -326,5 +326,6 @@ export const entry: ComponentEntry = {
   component: ArchitectureMap,
   sample: { ...sample },
   defaultDuration: 8,
+  vertical: { zone: 'full' },
   description: 'Mapa cliente → servidor → banco com um pacote percorrendo o caminho da requisição; use para explicar o que acontece entre o clique e a resposta.',
 };

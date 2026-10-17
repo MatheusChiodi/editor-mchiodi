@@ -209,6 +209,7 @@ export const entry: ComponentEntry = {
     presenter: 'right',
   },
   defaultDuration: 10,
+  vertical: { zone: 'skip' },
   description:
     'Explicação em tela dividida sobre papel: rótulo, título serifado com palavra em itálico coral revelado palavra a palavra na fala (`wordAt`) e até 6 cartões com ícone entrando um a um; o apresentador fica num cartão ao lado (use `presenter: { "slot": "right" }` no overlay; `left` espelha o conteúdo). Padrão obrigatório do nível max.',
 };

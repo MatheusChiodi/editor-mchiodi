@@ -241,5 +241,6 @@ export const entry: ComponentEntry = {
   component: FileTree,
   sample: { ...sample },
   defaultDuration: 8,
+  vertical: { zone: 'full' },
   description: 'Árvore de pastas e arquivos que cresce item a item, com um arquivo em destaque; use para explicar a estrutura de um projeto ou onde fica um arquivo.',
 };

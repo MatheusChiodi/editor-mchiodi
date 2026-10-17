@@ -209,7 +209,7 @@ describe('shorts suggest: ranking', () => {
     const [top] = suggestShorts({ ...input, focusX: edl.shorts!.focusX }, { count: 1 });
     const next = applySuggestion(edl, top!);
     expect(next).not.toHaveProperty('version');
-    expect(next.shorts).toEqual(top!.shorts);
+    expect(next.shorts).toEqual({ ...top!.shorts, graphics: 'auto' });
     expect(next.shorts!.focusX).toBe(0.3);
     expect(next.notes).toMatch(/candidato #1 .* v3 .*antes: 1–30s/);
     expect(next.clips).toEqual(edl.clips);

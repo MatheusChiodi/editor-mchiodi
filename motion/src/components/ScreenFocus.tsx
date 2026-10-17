@@ -186,6 +186,7 @@ export const entry: ComponentEntry = {
     clicks: [{ at: 1.2, x: 0.7, y: 0.42 }, { at: 2.4, x: 0.62, y: 0.36 }],
   },
   defaultDuration: 4.5,
+  vertical: { zone: 'skip' },
   description:
     'Foco sobre a tela gravada em tela cheia: escurece o entorno de um retângulo (`boxes[]`, em frações da tela), desenha um contorno coral em volta e marca cada clique com um anel (`clicks[]`). Use quando a fala diz "aqui", "nesse botão", "aparece". Dentro do `WindowStage`, use as props `focus`/`clicks` dele.',
 };

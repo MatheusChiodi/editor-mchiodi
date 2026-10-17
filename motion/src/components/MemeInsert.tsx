@@ -155,5 +155,6 @@ export const entry: ComponentEntry = {
   component: MemeInsert,
   sample: { ...sample },
   defaultDuration: 3,
+  vertical: { zone: 'full' },
   description: 'Imagem de meme em polaroid no canto ou em tela cheia; use no máximo 1 a cada 90s e só quando a piada já está na fala.',
 };

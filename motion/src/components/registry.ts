@@ -1,5 +1,7 @@
 import type React from 'react';
 
+import type { VerticalSpec } from '../vertical';
+
 import { entry as Fx } from '../arsenal/fx/Fx';
 import { entry as Stinger } from '../arsenal/stingers/Stinger';
 import { entry as BarChart } from './BarChart';
@@ -58,6 +60,8 @@ export interface ComponentEntry {
   description: string;
   /** pinta o quadro inteiro: num palco (`presenter`), dispensa o fundo de papel */
   opaque?: boolean;
+  /** diagramação no Short 9:16 (motion/src/vertical.ts); sem valor, cartão no terço de cima */
+  vertical?: VerticalSpec;
   // Os três campos abaixo são dos MODELOS (motion/src/scenes/modelos/): o `mce arsenal models` os lê do fonte,
   // então escreva-os como literais (nada de valor calculado).
   /** forma da animação, para a busca: "lista", "comparação", "antes-depois", "ciclo", "linha do tempo"… */

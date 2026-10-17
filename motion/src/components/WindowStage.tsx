@@ -278,6 +278,7 @@ export const entry: ComponentEntry = {
     clicks: [{ at: 6.4, x: 0.05, y: 0.3 }],
   },
   defaultDuration: 9,
+  vertical: { zone: 'skip' },
   description:
     'Janela flutuante sobre papel com terminal digitado (`kind: "terminal"`), a gravação de tela separada (`"screen"`, de `layout.screen`) ou o próprio footage quando o vídeo já é a tela gravada (`"footage"`), com pílulas anotando ao lado, zoom ancorado no que é citado (`push`, um ou vários), destaque com contorno coral (`focus`) e anel de clique (`clicks`). O apresentador fica num cartão no canto (use `presenter: { "slot": "pip-br" }` no overlay; `pip-bl` espelha a janela). Padrão obrigatório do nível max.',
 };

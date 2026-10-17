@@ -171,5 +171,6 @@ export const entry: ComponentEntry = {
     cta: 'Link na descrição',
   },
   defaultDuration: 5,
+  vertical: { zone: 'top' },
   description: 'Cartão de link quando a fala manda o espectador para a descrição (repositório, documentação, artigo).',
 };

@@ -196,5 +196,6 @@ export const entry: ComponentEntry = {
   component: KeyboardShortcut,
   sample: { ...sample },
   defaultDuration: 4,
+  vertical: { zone: 'top' },
   description: 'Teclas pressionadas em sequência com a legenda do que o atalho faz; use sempre que um atalho de teclado for citado.',
 };

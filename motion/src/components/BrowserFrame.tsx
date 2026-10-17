@@ -197,5 +197,6 @@ export const entry: ComponentEntry = {
   component: BrowserFrame,
   sample: { ...sample },
   defaultDuration: 7,
+  vertical: { zone: 'full' },
   description: 'Janela de navegador com a URL digitada e um wireframe da página; use para falar de um site, rota ou tela web sem depender de gravação de tela.',
 };

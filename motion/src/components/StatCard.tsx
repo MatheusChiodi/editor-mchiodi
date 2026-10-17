@@ -174,5 +174,6 @@ export const entry: ComponentEntry = {
     caption: 'Em relação ao mesmo período do ano passado.',
   },
   defaultDuration: 5,
+  vertical: { zone: 'top' },
   description: 'Cartão de métrica: um número com contexto e a variação em relação a antes (verde melhorou, rose piorou).',
 };

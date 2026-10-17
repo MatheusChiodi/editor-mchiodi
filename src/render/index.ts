@@ -17,7 +17,7 @@ import { renderCut } from './cuts.ts';
 import { effectFilters, placeEffects } from './effects.ts';
 import { placeLayout, resolveScreen, screenAlign } from './layout.ts';
 import { buildOverlayProps, overlayFile, renderBumper, renderOverlay } from './overlay.ts';
-import { shortsEdl, SHORTS_MAX_SEC, verticalCrop } from './shorts.ts';
+import { formatShortsPick, pickShortsOverlays, shortsEdl, shortsFrame, SHORTS_MAX_SEC, verticalCrop } from './shorts.ts';
 import { resolveShortFocus } from './shorts-focus.ts';
 import { prepareStabilize } from './stabilize.ts';
 import { placeStages, reframeFilters, windowLayouts } from './reframe.ts';
@@ -92,7 +92,9 @@ export async function render(paths: ProjectPaths, source: Edl, options: RenderOp
   if (absent.length) throw new Error(`Cenas citadas na EDL não existem em motion/src/scenes: ${absent.join(', ')}`);
 
   // tela gravada: só entra se a EDL define o arquivo e algum segmento que a use (e nunca no Short)
-  const props = buildOverlayProps(edl, timeline, transcript);
+  // Short: cada overlay do trecho vai para uma caixa vertical que não cobre legenda nem rosto
+  const props = buildOverlayProps(edl, timeline, transcript, shorts ? shortsFrame(edl) : undefined);
+  if (shorts) log(formatShortsPick(pickShortsOverlays(source, timeline)));
   const staged = !options.skipOverlay;
   const layout = shorts ? [] : [...placeLayout(edl.layout.segments, timeline), ...(staged ? windowLayouts(props.overlays, fps) : [])];
   const screenSource = layout.length && edl.layout.screen ? resolveScreen(edl.layout.screen.path, edl.source.path) : null;

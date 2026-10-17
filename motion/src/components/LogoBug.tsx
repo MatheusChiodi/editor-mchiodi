@@ -63,5 +63,6 @@ export const entry: ComponentEntry = {
     opacity: 0.7,
   },
   defaultDuration: 10,
+  vertical: { zone: 'skip' },
   description: "Marca d'água discreta do canal num canto, para ficar o vídeo inteiro (use a duração do vídeo).",
 };

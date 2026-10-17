@@ -159,6 +159,19 @@ export const captionPresets: Record<CaptionPreset, CaptionLookSpec> = {
   },
 };
 
+/**
+ * Geometria da página de legenda: o `Captions` desenha com estes números e o Short (motion/src/vertical.ts)
+ * calcula a faixa que nenhum gráfico pode cobrir. Página de no máximo 2 linhas (3 palavras, 16 caracteres no vertical).
+ */
+export const CAPTION_LAYOUT = {
+  bottom: { long: 92, shorts: 420 } as PerFormat<number>,
+  lineHeight: 1.18,
+  rowGap: 6,
+  /** a página entra subindo estes px */
+  enterShift: 14,
+  maxLines: 2,
+} as const;
+
 /** Aparência concreta de um estilo num formato. */
 export interface CaptionLook {
   fontSize: number;

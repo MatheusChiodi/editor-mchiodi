@@ -94,6 +94,7 @@ export const entry: ComponentEntry = {
   component: PhraseReveal,
   sample: { text: 'Sem abrir\no *terminal.*', eyebrow: 'o mais interessante', side: 'left', wordAt: [0.6, 0.9, 1.3, 1.6] },
   defaultDuration: 4.5,
+  vertical: { zone: 'top' },
   description:
     'Frase-chave em serifada grande ao lado do rosto, revelada palavra por palavra no ritmo da fala, com o trecho de sentido em itálico coral (`*assim*`). Padrão obrigatório do nível max.',
 };

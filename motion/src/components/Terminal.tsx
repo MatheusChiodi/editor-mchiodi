@@ -181,5 +181,6 @@ export const entry: ComponentEntry = {
   component: Terminal,
   sample: { ...sample },
   defaultDuration: 9,
+  vertical: { zone: 'full' },
   description: 'Janela de terminal com comandos digitados e saídas aparecendo; use quando a fala manda rodar um comando ou mostra o resultado dele.',
 };

@@ -130,5 +130,6 @@ export const entry: ComponentEntry = {
     sub: 'o tempo entre pedir e receber',
   },
   defaultDuration: 2.5,
+  vertical: { zone: 'top', scale: 0.6 },
   description: 'Uma única palavra-chave gigante no instante em que é dita, para cravar o conceito central da frase.',
 };

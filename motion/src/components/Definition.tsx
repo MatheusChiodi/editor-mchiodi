@@ -111,5 +111,6 @@ export const entry: ComponentEntry = {
     meaning: 'Propriedade de uma operação que dá o mesmo resultado se for executada uma ou mil vezes',
   },
   defaultDuration: 7,
+  vertical: { zone: 'top' },
   description: 'Apresenta um termo técnico na primeira vez em que aparece, no formato de verbete de dicionário.',
 };

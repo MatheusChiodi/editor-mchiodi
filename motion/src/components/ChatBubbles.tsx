@@ -197,5 +197,6 @@ export const entry: ComponentEntry = {
     ],
   },
   defaultDuration: 8,
+  vertical: { zone: 'full' },
   description: 'Recria uma conversa de chat (cliente, chefe, IA) quando a fala narra um diálogo; até ~6 mensagens curtas.',
 };

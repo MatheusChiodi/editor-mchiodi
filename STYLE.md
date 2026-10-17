@@ -184,6 +184,9 @@ ou dá ritmo?". Se a resposta for "é bonito", não entra. O espectador não pod
   que decide sozinho); quem anda pelo quadro → `"auto"` faz pan suave (zona morta 80 px, no máximo 240 px/s, sem
   tremedeira). Pan nunca atravessa corte: no corte o foco reposiciona seco. Gesto de mão não é motivo para pan;
   se o detector errar (fundo com pele/movimento), corrija em `analysis/focus-track.json` e rode `pnpm mce shorts focus <slug>`.
+- Gráficos no Short: o que reforça a fala no longo reforça no Short, re-diagramado (`shorts.graphics: "auto"`). Cartão em cima
+  do rosto, inserto (`full`) só para o que precisa ser lido (código, diagrama); legenda nunca coberta. CTA de inscrição e lower
+  third ficam de fora: o app já mostra o canal. Gráfico que começa antes do trecho não entra; ancore um novo dentro, se fizer falta.
 - `stabilize` só em câmera na mão com tremor visível (externa, celular); em tripé ou tela gravada fica desligado: o vidstab corta as bordas (zoom fixo) e pode "nadar" em fundo sem textura.
 
 ## 5. Animações e gráficos

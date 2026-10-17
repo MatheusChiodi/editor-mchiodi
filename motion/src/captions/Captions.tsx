@@ -3,7 +3,7 @@ import { AbsoluteFill, interpolate, Sequence, useCurrentFrame, useVideoConfig } 
 
 import { motion, theme } from '../theme';
 import type { CaptionStyle, StyledCaption } from '../types';
-import { ACTIVE_TAIL_MS, type CaptionLook, type CaptionPreset, captionPresets, enforceMaxWords, resolveLook, wordPhase } from './presets';
+import { ACTIVE_TAIL_MS, CAPTION_LAYOUT, type CaptionLook, type CaptionPreset, captionPresets, enforceMaxWords, resolveLook, wordPhase } from './presets';
 
 interface Page {
   startMs: number;
@@ -150,7 +150,7 @@ const CaptionPage: React.FC<{ page: Page; style: CaptionStyle; look: CaptionLook
       style={{
         justifyContent: 'flex-end',
         alignItems: 'center',
-        paddingBottom: shorts ? 420 : 92,
+        paddingBottom: CAPTION_LAYOUT.bottom[style],
         paddingLeft: theme.safe.x,
         paddingRight: theme.safe.x,
       }}
@@ -162,14 +162,14 @@ const CaptionPage: React.FC<{ page: Page; style: CaptionStyle; look: CaptionLook
           whiteSpace: look.singleLine ? 'nowrap' : undefined,
           justifyContent: 'center',
           columnGap: look.wordGap,
-          rowGap: 6,
+          rowGap: CAPTION_LAYOUT.rowGap,
           maxWidth: shorts ? 900 : 1500,
           opacity: enter,
-          translate: `0 ${(1 - enter) * 14}px`,
+          translate: `0 ${(1 - enter) * CAPTION_LAYOUT.enterShift}px`,
           fontFamily: theme.font.body,
           fontWeight: look.fontWeight,
           fontSize: look.fontSize,
-          lineHeight: 1.18,
+          lineHeight: CAPTION_LAYOUT.lineHeight,
           letterSpacing: '-0.01em',
           textTransform: look.uppercase ? 'uppercase' : 'none',
           // a pill fica atrás do texto, mas dentro da página

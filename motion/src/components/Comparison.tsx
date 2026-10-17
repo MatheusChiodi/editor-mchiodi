@@ -197,5 +197,6 @@ export const entry: ComponentEntry = {
     revealAt: [0.6, 1.6, 2.6, 3.8, 4.8, 5.8],
   },
   defaultDuration: 9,
+  vertical: { zone: 'full', scale: 0.55 },
   description: 'Confronto "A vs B" entre duas tecnologias ou abordagens, item a item; com `winner`, destaca a escolhida no fim.',
 };

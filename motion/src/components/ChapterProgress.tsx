@@ -128,5 +128,6 @@ export const entry: ComponentEntry = {
     current: 1,
   },
   defaultDuration: 4,
+  vertical: { zone: 'skip' },
   description: 'Barra fina no topo com os capítulos do vídeo e o atual em destaque; fica poucos segundos na troca de capítulo.',
 };

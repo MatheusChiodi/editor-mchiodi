@@ -60,7 +60,7 @@ describe('shorts', () => {
     expect(verticalCrop(0.2, { width: 540, height: 960 })).toContain('scale=540:960');
   });
 
-  it('shortsEdl deriva uma EDL vertical só com o trecho, sem gráficos 16:9', () => {
+  it('shortsEdl deriva uma EDL vertical só com o trecho e os overlays ancorados nele', () => {
     const edl = edlWith({
       shorts: { start: 40, end: 80, focusX: 0.45, reason: 'melhor explicação' },
       overlays: [{ id: 'o1', component: 'LowerThird', at: 45, duration: 3, reason: 'nome' }],
@@ -78,7 +78,9 @@ describe('shorts', () => {
     expect(short.output).toEqual({ fps: 30, ...SHORTS_SIZE });
     expect(short.clips.map((clip) => [clip.id, clip.start, clip.end])).toEqual([['c1', 40, 50], ['c2', 60, 80]]);
     expect(short.captions).toMatchObject({ enabled: true, style: 'shorts', maxWordsPerPage: 3 });
-    expect(short.overlays).toEqual([]);
+    // a zona vertical (LowerThird = skip) é decidida na camada de gráficos; aqui só a seleção por trecho
+    expect(short.overlays.map((item) => item.id)).toEqual(['o1']);
+    expect(shortsEdl({ ...edl, shorts: { ...edl.shorts!, graphics: 'none' } }).overlays).toEqual([]);
     expect(short.zooms.map((zoom) => zoom.id)).toEqual(['z1']);
     expect(short.transitions.map((transition) => transition.id)).toEqual(['t1']);
     expect(short.chapters).toEqual([]);

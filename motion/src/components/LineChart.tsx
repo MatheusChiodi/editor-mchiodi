@@ -272,5 +272,6 @@ export const entry: ComponentEntry = {
     ],
   },
   defaultDuration: 6,
+  vertical: { zone: 'full' },
   description: 'Mostra a evolução de um número ao longo do tempo quando a fala fala de crescimento, queda ou tendência.',
 };

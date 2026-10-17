@@ -133,5 +133,6 @@ export const entry: ComponentEntry = {
     label: 'downloads semanais do React no npm',
   },
   defaultDuration: 4,
+  vertical: { zone: 'top' },
   description: 'Dá peso a um número citado na fala, contando até o valor final.',
 };

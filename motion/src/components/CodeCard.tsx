@@ -422,5 +422,6 @@ export const entry: ComponentEntry = {
   component: CodeCard,
   sample: { ...sample },
   defaultDuration: 9,
+  vertical: { zone: 'full' },
   description: 'Janela de editor com código digitado ou revelado linha a linha; use sempre que código for dito em voz alta (máx. 12 linhas).',
 };

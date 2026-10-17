@@ -147,5 +147,6 @@ export const entry: ComponentEntry = {
     y: 0.3,
   },
   defaultDuration: 3.5,
+  vertical: { zone: 'top', scale: 0.75 },
   description: 'Balão de fala saindo de alguém na imagem: pensamento em voz alta, resposta imaginária ou a frase clássica de dev; tom de humor.',
 };

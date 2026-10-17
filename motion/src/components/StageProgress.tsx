@@ -197,6 +197,7 @@ export const entry: ComponentEntry = {
     ],
   },
   defaultDuration: 7,
+  vertical: { zone: 'skip' },
   description:
     'Indicador de progresso persistente ("EXEMPLO 2/6", capítulos, passos) que atravessa vários layouts: rótulo, chips numerados com o atual em coral e maior, e o nome do passo. Use com `"layer": "persistent"` no overlay, cobrindo a série inteira; `steps[].at` marca quando cada passo vira o atual.',
 };

@@ -143,5 +143,6 @@ export const entry: ComponentEntry = {
     caption: 'Rápido de verdade — só perde ponto na compatibilidade com pacotes nativos.',
   },
   defaultDuration: 5,
+  vertical: { zone: 'top' },
   description: 'Dá a nota de uma ferramenta, biblioteca ou produto em review, em estrelas (aceita meio ponto).',
 };

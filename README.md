@@ -769,7 +769,11 @@ Conventions, from [`CLAUDE.md`](CLAUDE.md):
   They are not cut automatically, because the automatic cut only shortens pauses with measured silence.
 - **No clap marker.** Use the spoken marker "corta" (cut) to flag a retake while recording.
 - **The graphics layer is the render bottleneck.** Output is 30 fps by default because 60 fps doubles render time.
-- **The Short** crops the frame to 9:16 around `focusX`. The 16:9 graphics do not go into it, only the captions.
+- **The Short** crops the footage to 9:16 around `focusX` (fixed, `"auto"` or keyframes). Graphics anchored inside
+  the stretch are re-laid out, not cropped: each component is drawn in its own vertical box (above the face, or as a
+  full insert down to the captions) and never covers the caption band. The face band is an assumption (30–60 % of
+  the height, `shorts.faceBand` to change it), not a detection. Stage layouts (`presenter`), the persistent layer and
+  wide components (lower third, subscribe CTA) stay out of the Short.
 - **One edit at a time.** The queue is sequential by design; the machine it was built on has 16 GB of RAM.
 - **Unattended mode trusts the director.** There is no human review step between the evaluation and the final render.
   Read `relatorio.md` before publishing.

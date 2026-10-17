@@ -190,5 +190,6 @@ export const entry: ComponentEntry = {
     channel: 'MChiodi',
   },
   defaultDuration: 4,
+  vertical: { zone: 'skip' },
   description: 'Lembrete discreto de inscrição no canto da tela, depois de entregar o primeiro valor e no encerramento.',
 };

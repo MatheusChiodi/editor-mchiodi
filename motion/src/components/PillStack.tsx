@@ -176,6 +176,7 @@ export const entry: ComponentEntry = {
     corner: 'top-left',
   },
   defaultDuration: 7,
+  vertical: { zone: 'top', scale: 0.7 },
   description:
     'Pílulas que empilham num canto resumindo a fala em 2–5 palavras (até 5; a última é a conclusão em coral), com palavra-título opcional em serifada itálica coral; cada pílula entra quando a ideia é dita e pode ser riscada (`strikeAt`). Padrão obrigatório do nível max.',
 };

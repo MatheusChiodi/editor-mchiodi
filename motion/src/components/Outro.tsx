@@ -183,5 +183,6 @@ export const entry: ComponentEntry = {
   component: Outro,
   sample: { ...sample },
   defaultDuration: 8,
+  vertical: { zone: 'skip' },
   description: 'Tela final opaca (~8s) com espaços reservados para os cards do YouTube e o handle do canal; use como último plano do vídeo.',
 };

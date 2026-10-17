@@ -123,5 +123,6 @@ export const entry: ComponentEntry = {
     position: 'top-right',
   },
   defaultDuration: 4,
+  vertical: { zone: 'top' },
   description: 'Notificação de sistema que desliza do canto: aviso rápido, resultado de uma ação ou comentário lateral à fala.',
 };

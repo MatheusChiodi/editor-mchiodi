@@ -224,6 +224,7 @@ export const entry: ComponentEntry = {
   component: CineShowcase,
   opaque: true,
   defaultDuration: 8,
+  vertical: { zone: 'full' },
   description:
     'Abertura de bloco em cena de papel com profundidade (padrão MChiodi Cinema): folha que pousa com peso, câmera em dolly com rack focus, varredura de luz no pouso, título palavra a palavra com um acento coral e etiquetas de apoio. Use na tese de um capítulo ou na promessa do vídeo, em tela cheia (esconde o footage); no máximo uma por capítulo.',
   sample: {

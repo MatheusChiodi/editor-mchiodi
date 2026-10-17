@@ -112,5 +112,6 @@ export const entry: ComponentEntry = {
   component: Intro,
   sample: { ...sample },
   defaultDuration: 2.5,
+  vertical: { zone: 'skip' },
   description: 'Vinheta de abertura em tela cheia (2,5s) com o disco coral e o nome do canal; use uma vez, logo depois do gancho.',
 };

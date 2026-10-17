@@ -167,6 +167,7 @@ export const entry: ComponentEntry = {
     position: 'top',
   },
   defaultDuration: 6,
+  vertical: { zone: 'top' },
   description:
     'Fileira de ícones de tecnologia (até 8) que entram um a um quando cada uma é citada, com o nome embaixo. Variantes `brand` (cor oficial em ladrilho), `mono` (tinta única) e `chip` (ícone + nome em pílula). Use quando a fala enumera tecnologias sobre o talking head.',
 };

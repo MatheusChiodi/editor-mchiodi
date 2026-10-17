@@ -222,5 +222,6 @@ export const entry: ComponentEntry = {
     ],
   },
   defaultDuration: 8,
+  vertical: { zone: 'full', scale: 0.55 },
   description: 'Linha do tempo horizontal (3 a 6 marcos) para contar uma história em ordem cronológica, um marco por vez.',
 };

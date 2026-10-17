@@ -124,6 +124,7 @@ export const entry: ComponentEntry = {
     note: { text: 'o agente muda o próprio sistema', at: 3.2 },
   },
   defaultDuration: 7,
+  vertical: { zone: 'top', scale: 0.75 },
   description:
     'Trecho de documentação num cartão colado com fita, com marca-texto correndo sobre a frase que importa (`==assim==`) quando ela é lida, e uma pílula de conclusão. Combine com `presenter: { "slot": "pip-br" }`. Padrão obrigatório do nível max.',
 };

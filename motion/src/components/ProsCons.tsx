@@ -143,5 +143,6 @@ export const entry: ComponentEntry = {
     cons: ['Rede vira parte do problema', 'Observabilidade é obrigatória', 'Custo de infra sobe'],
   },
   defaultDuration: 9,
+  vertical: { zone: 'full', scale: 0.55 },
   description: 'Balanço de vantagens e desvantagens de UMA decisão ou tecnologia; para confrontar duas opções use Comparison.',
 };

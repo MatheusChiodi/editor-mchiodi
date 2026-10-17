@@ -216,5 +216,6 @@ export const entry: ComponentEntry = {
     steps: ['Configurar', 'Utils', 'Componentes', 'Strict'],
   },
   defaultDuration: 5,
+  vertical: { zone: 'top' },
   description: 'Mostra o quanto de algo já foi feito (migração, cobertura, etapa do tutorial), com marcos opcionais.',
 };

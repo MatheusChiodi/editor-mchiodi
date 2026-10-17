@@ -134,5 +134,6 @@ export const entry: ComponentEntry = {
     text: 'Curtiu? Deixa o like',
   },
   defaultDuration: 4,
+  vertical: { zone: 'skip' },
   description: 'Lembrete compacto de curtir no canto inferior esquerdo, logo depois de uma dica que funcionou; no máximo uma vez por vídeo.',
 };
