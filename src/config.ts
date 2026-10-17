@@ -4,6 +4,7 @@ import { z } from 'zod';
 
 import { DEFAULT_LEVEL, LEVEL_IDS } from './edl/levels.ts';
 import { readJson, ROOT } from './project/paths.ts';
+import { DEFAULT_CHANNEL_TERMS, DEFAULT_HOOK_TERMS, DEFAULT_IMPERATIVES, DEFAULT_WEAK_OPENERS } from './render/shorts-suggest.ts';
 
 /**
  * Parâmetros numéricos do pipeline. O STYLE.md explica o porquê de cada um para o diretor;
@@ -94,6 +95,20 @@ export const configSchema = z.object({
       autoOpen: z.boolean().default(true),
       /** porta do Studio; o índice das cenas usa a seguinte */
       port: z.number().int().positive().default(4173),
+    })
+    .prefault({}),
+  shorts: z
+    .object({
+      /** gancho nos primeiros segundos do Short (`mce shorts suggest`); sem acento/caixa, por palavra inteira */
+      hookTerms: z.array(z.string()).default(DEFAULT_HOOK_TERMS),
+      /** imperativo que vira gancho quando abre frase */
+      imperatives: z.array(z.string()).default(DEFAULT_IMPERATIVES),
+      /** abertura que depende do contexto anterior (penaliza a autossuficiência) */
+      weakOpeners: z.array(z.string()).default(DEFAULT_WEAK_OPENERS),
+      /** apresentação, pedido de inscrição e despedida: no Short soam como pedaço do vídeo longo */
+      channelTerms: z.array(z.string()).default(DEFAULT_CHANNEL_TERMS),
+      /** janela do gancho, em segundos do Short */
+      hookWindowSec: z.number().positive().default(3),
     })
     .prefault({}),
   notify: z

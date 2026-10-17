@@ -21,7 +21,7 @@ import { run } from '../lib/exec.ts';
 import { createVramSampler, deepFilterCheck, doctorLines, queryVram, type ToolCheck, vidstabCheck } from '../project/health.ts';
 import { resolveDeepFilterBinary } from '../render/denoise.ts';
 import { clearLive, liveFile, type LiveTask, trackProgress, writeLive } from '../project/live.ts';
-import { projectPaths, readJson, requireProject, ROOT, slugFromFile } from '../project/paths.ts';
+import { projectPaths, readJson, requireProject, ROOT, slugFromFile, writeJson } from '../project/paths.ts';
 import { renderDashboard, shouldColor, watchInterval } from '../project/dashboard.ts';
 import { runDashboard } from '../project/dashboard-watch.ts';
 import { listProjects } from '../project/pipeline.ts';
@@ -36,7 +36,9 @@ import { generateSfx, listAssets } from '../assets/library.ts';
 import { collectEvaluations, evaluate, formatReport } from '../eval/index.ts';
 import { writeReport } from '../report/write.ts';
 import { render, renderDir } from '../render/index.ts';
-import { rankShortCandidates } from '../render/shorts.ts';
+import { SHORTS_MAX_SEC } from '../render/shorts.ts';
+import { applySuggestion, formatSuggestions, suggestShorts } from '../render/shorts-suggest.ts';
+import { findTechMentions } from '../tech/detect.ts';
 import { hasVidstab } from '../render/stabilize.ts';
 import { registerAnalogies } from '../analogy/cli.ts';
 import { registerPack } from '../pack/cli.ts';
@@ -195,23 +197,37 @@ program
     log(`${result.file}\n${formatClock(result.durationSec)} de vídeo em ${formatClock(result.elapsedSec, 0)}`);
   });
 
-program
-  .command('shorts <project>')
-  .description('Sugere trechos (≤ 60s no vídeo final) para o Short; o diretor escolhe e grava em edl.shorts')
+const shorts = program.command('shorts').description('Short vertical: escolha do trecho');
+
+shorts
+  .command('suggest <project>', { isDefault: true })
+  .description('Ranqueia trechos da edição atual para o Short (nota explicada por componentes); o diretor escolhe')
   .option('-v, --edl <n>', 'versão da EDL (padrão: a mais recente)', Number)
-  .option('-n, --limit <n>', 'quantas sugestões', Number, 5)
-  .action((project: string, options: { edl?: number; limit: number }) => {
+  .option('-n, --count <n>', 'quantos candidatos', Number, 3)
+  .option('--min <s>', 'duração mínima no Short (s)', Number, 20)
+  .option('--max <s>', 'duração máxima no Short (s)', Number, SHORTS_MAX_SEC)
+  .option('--apply <n>', 'grava o candidato n como `shorts` numa nova versão da EDL', Number)
+  .action((project: string, options: { edl?: number; count: number; min: number; max: number; apply?: number }) => {
     const paths = requireProject(project);
     const current = loadEdl(paths, options.edl);
     const analysis = readJson<Analysis>(paths.analysis);
-    const candidates = rankShortCandidates(analysis.phrases, buildTimeline(current.clips, current.output.fps), options.limit);
-    if (candidates.length === 0) log('nenhum trecho de 20–60s encontrado');
-    for (const candidate of candidates) {
-      log(
-        `fonte ${candidate.start.toFixed(2)}–${candidate.end.toFixed(2)}s (${candidate.outputSec.toFixed(0)}s no final, nota ${candidate.score.toFixed(2)}) ` +
-          `[${candidate.reasons.join('; ') || 'sem destaque'}]\n   "${candidate.opening}"`,
-      );
-    }
+    const { words } = readJson<Transcript>(paths.words);
+    const config = loadConfig();
+    const { hookTerms, imperatives, weakOpeners, channelTerms, hookWindowSec } = config.shorts;
+    const settings = { count: Math.max(options.count, options.apply ?? 0), minSec: options.min, maxSec: Math.min(options.max, SHORTS_MAX_SEC) };
+    const candidates = suggestShorts(
+      { words, clips: current.clips, silences: analysis.silences, flags: analysis.flags, tech: findTechMentions(words), focusX: current.shorts?.focusX },
+      { ...settings, minSilenceSec: config.cuts.minSilenceSec, hookWindowSec, rules: { terms: hookTerms, imperatives, weakOpeners, channelTerms } },
+    );
+    const file = join(paths.analysisDir, 'shorts-candidates.json');
+    writeJson(file, { project: paths.slug, edlVersion: current.version, createdAt: new Date().toISOString(), options: settings, candidates });
+    log(formatSuggestions(candidates));
+    log(`\n${file}`);
+    if (options.apply === undefined) return;
+    const chosen = candidates.find((candidate) => candidate.rank === options.apply);
+    if (!chosen) throw new Error(`candidato #${options.apply} não existe (${candidates.length} sugeridos)`);
+    const saved = saveNewVersion(paths, applySuggestion(current, chosen));
+    log(`aplicado: ${edlPath(paths, saved.version)}`);
   });
 
 program

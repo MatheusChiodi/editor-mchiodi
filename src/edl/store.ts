@@ -106,7 +106,7 @@ export function diffEdl(a: Edl, b: Edl): string[] {
     const dropped = [...before].filter((item) => !after.has(item)).length;
     if (added || dropped) lines.push(`${key}: +${added} / -${dropped}`);
   }
-  for (const key of ['captions', 'grade', 'audio', 'music'] as const) {
+  for (const key of ['captions', 'grade', 'audio', 'music', 'shorts'] as const) {
     if (JSON.stringify(a[key]) !== JSON.stringify(b[key])) lines.push(`${key}: alterado`);
   }
   return lines;

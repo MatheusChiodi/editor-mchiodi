@@ -503,7 +503,7 @@ badge). Whatever the agent cannot know for certain, such as links and social han
 |---|---|
 | `mce render <slug> [--final] [--shorts] [--no-overlay] [-v <n>]` | Run the EDL: fast preview by default, `--final` for full quality from the original file, `--shorts` for the vertical cut, `--no-overlay` for cuts and audio only |
 | `mce eval <slug> [--final] [--no-transcribe] [--views <n>] [-v <n>]` | Evaluate the *rendered* video: cuts, clicks, loudness, caption sync, level budget, plus images to check. Exit code 2 when it fails |
-| `mce shorts <slug> [-n <n>]` | Suggest stretches for the Short |
+| `mce shorts suggest <slug> [--count 3] [--min 20] [--max 60] [--apply <n>] [-v <n>]` | Rank stretches of the current edit for the Short (deterministic score split into hook, closure, density, clean speech, tech terms, self-containment, length; edges only at EDL cuts or measured silence) → `analysis/shorts-candidates.json`; `--apply <n>` saves candidate n as `shorts` in a new EDL version. `mce shorts <slug>` is the same |
 | `mce report <slug>` | Write `relatorio.md` and `capitulos.txt` |
 | `mce retention import <slug> <file.csv> [-v <n>] [--duration <s>]` / `mce retention lessons` | Import the YouTube Studio retention CSV (EN/PT): drops and rewatch spikes mapped to source time, clip, chapter, graphics and speech → `analysis/retention.json`, `project.md`, `relatorio.md`; `lessons` aggregates patterns across all projects |
 

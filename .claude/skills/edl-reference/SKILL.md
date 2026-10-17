@@ -175,7 +175,7 @@ mensagem traz o `start`/`end` prontos). Declarar não isenta do resto: o respiro
 
 - `"intro": true` / `"outro": true` emendam a abertura (2,5s) e a tela final (8s) do canal.
 - `"shorts": { "start": 201.0, "end": 262.0, "focusX": 0.5, "reason": "explicação completa em 55s" }`: trecho da fonte que vira o vertical
-  (≤ 60s no vídeo final; `pnpm mce shorts <slug>` sugere candidatos). Render: `pnpm mce render <slug> --shorts`.
+  (≤ 60s no vídeo final; `pnpm mce shorts suggest <slug>` ranqueia candidatos e imprime o objeto pronto; `--apply <n>` grava como nova versão). Render: `pnpm mce render <slug> --shorts`.
 
 ## Tela gravada (`layout`)
 

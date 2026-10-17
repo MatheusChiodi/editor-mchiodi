@@ -146,11 +146,18 @@ os que o vídeo usou e os que nasceram dele.
 pnpm mce scenes audit <slug>              # toda animação nova deixou um modelo?
 pnpm mce render <slug> --final            # output/<slug>/final.mp4
 pnpm mce eval <slug> --final
-pnpm mce shorts <slug>                    # candidatos; escolha lendo o conteúdo, grave em edl.shorts
+pnpm mce shorts suggest <slug>            # candidatos ao Short com nota explicada (ver abaixo)
 pnpm mce render <slug> --final --shorts   # output/<slug>/final-shorts.mp4 (opcional)
 pnpm mce report <slug>                    # relatorio.md + capitulos.txt
 pnpm mce note <slug> "<decisão ou pendência>"
 ```
+
+**Short**: rode `pnpm mce shorts suggest <slug> [--count 3] [--min 20] [--max 60]`. Ele lê só o que a EDL atual mantém e
+ranqueia trechos com bordas em corte da EDL ou pausa com silêncio medido; a nota vem por componente (gancho nos 3 s, fecho,
+densidade, limpo, tecnologia, autossuficiência, duração) e a lista vai para `analysis/shorts-candidates.json`. **Você decide**:
+leia o texto de cada candidato (abre sem depender do vídeo longo? fecha a ideia?) e só então grave com `--apply <n>` (nova
+versão da EDL, notes explicando) ou ajuste o trecho à mão e `mce edl save`, reescrevendo o `reason`. Nota alta não é ordem: um
+candidato que começa no meio da frase ou fecha com despedida do canal não vira Short, por maior que seja a nota.
 
 Depois do `report`, delegue ao sub-agente **`packager`** (passe o slug) a capa, o título e a descrição: ele entrega `capa-<n>.png`, `titulo.txt`, `descricao.txt` e `tags.txt` em `output/<slug>/`; também no modo headless.
 
