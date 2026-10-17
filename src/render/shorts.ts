@@ -106,6 +106,7 @@ export function shortsEdl(edl: Edl): Edl {
     captions: { ...edl.captions, enabled: true, style: 'shorts', maxWordsPerPage: Math.min(edl.captions.maxWordsPerPage, 3) },
     // a diagramação vertical de cada um acontece na camada de gráficos (props.vertical)
     overlays: pickShortsOverlays(edl, buildTimeline(clips, edl.output.fps)).kept,
+    broll: edl.broll.filter((item) => clips.some((clip) => item.start >= clip.start && item.start < clip.end)),
     zooms: inRange(edl.zooms),
     effects: inRange(edl.effects),
     sfx: inRange(edl.sfx),

@@ -15,7 +15,7 @@ import { prepareDenoise } from './denoise.ts';
 import { compose, measureChain, totalDuration } from './compose.ts';
 import { renderCut } from './cuts.ts';
 import { effectFilters, placeEffects } from './effects.ts';
-import { placeLayout, resolveScreen, screenAlign } from './layout.ts';
+import { placeBroll, placeLayout, resolveScreen, screenAlign } from './layout.ts';
 import { buildOverlayProps, overlayFile, renderBumper, renderOverlay } from './overlay.ts';
 import { formatShortsPick, pickShortsOverlays, shortsEdl, shortsFrame, SHORTS_MAX_SEC, verticalCrop } from './shorts.ts';
 import { resolveShortFocus } from './shorts-focus.ts';
@@ -173,6 +173,14 @@ export async function render(paths: ProjectPaths, source: Edl, options: RenderOp
     if (path) music = { ...edl.music, file: path };
     else missing.push(`music/${edl.music.file}`);
   }
+  const broll = placeBroll(
+    edl.broll.flatMap((item) => {
+      const path = resolveAsset('broll', item.file);
+      if (!path) missing.push(`broll/${item.file}`);
+      return path ? [{ ...item, file: path }] : [];
+    }),
+    timeline,
+  );
   if (missing.length) log(`aviso: assets não encontrados (ignorados): ${[...new Set(missing)].join(', ')}`);
 
   const names = outputNames(options.mode, variant);
@@ -202,6 +210,7 @@ export async function render(paths: ProjectPaths, source: Edl, options: RenderOp
     outro,
     screen: screenCut,
     layout,
+    broll,
     output: file,
     graphFile: join(dir, 'compose.graph.txt'),
     quality: final ? 'final' : 'preview',

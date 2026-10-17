@@ -200,6 +200,17 @@ mensagem traz o `start`/`end` prontos). Declarar não isenta do resto: o respiro
   `"shorts": { "zone": "full", "scale": 0.8 }` (troca a zona/escala). `shorts.faceBand: { "top": 0.3, "bottom": 0.6 }` (fração da
   altura) é onde o rosto fica no recorte; mude se o enquadramento for outro. Prévia: `pnpm mce still OverlayShorts`.
 
+## B-roll (`broll`)
+
+`"broll": [ { "id": "broll-1", "file": "cafe/caneca.mp4", "start": 40.15, "end": 43.15, "from": 0, "fit": "cover", "reason": "ilustra \"caderno\" (objeto citado)" } ]`.
+Vídeo da biblioteca `assets/broll/` (caminho relativo a ela, ou absoluto) que cobre o quadro inteiro por cima do apresentador, abaixo
+dos gráficos (a legenda continua por cima). `start`/`end` em segundos da FONTE; `start` precisa cair num clipe mantido. Se o trecho
+atravessa um corte, o b-roll corre contínuo por cima dele (esconde o salto). `from` = de que segundo do arquivo começa; `fit`: `cover`
+preenche e corta as sobras, `contain` encaixa inteiro sobre fundo escuro (vídeo vertical de celular). O áudio do b-roll nunca entra e a
+duração do vídeo não muda; arquivo mais curto que o trecho devolve o quadro à câmera quando acaba. `reason` é obrigatório.
+Não ponha b-roll sobre palco/gráfico nem sobre tela gravada: um quadro por vez. No Short, só o que começa dentro do trecho.
+`pnpm mce broll suggest <slug> [--apply]` propõe os trechos (STYLE.md §5).
+
 ## Tela gravada (`layout`)
 
 `"layout": { "screen": { "path": "<arquivo>", "offsetSec": 0 }, "segments": [ { "start": 40, "end": 95, "mode": "pip", "pipCorner": "bottom-right" } ] }`.

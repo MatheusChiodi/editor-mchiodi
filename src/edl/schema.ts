@@ -93,6 +93,27 @@ export const overlaySchema = z.object({
     .optional(),
 });
 
+/**
+ * B-roll: vídeo da biblioteca (assets/broll) que cobre o quadro inteiro por cima do apresentador, abaixo dos gráficos.
+ * `start`/`end` em segundos da FONTE; o inserto segue contínuo por cima de um corte no meio. A voz continua; o áudio do
+ * b-roll nunca entra. A duração do vídeo não muda.
+ */
+export const brollSchema = z
+  .object({
+    id,
+    /** caminho relativo a assets/broll (ou absoluto) */
+    file: z.string().min(1),
+    start: seconds,
+    end: seconds,
+    /** de que segundo do arquivo de b-roll o inserto começa */
+    from: seconds.default(0),
+    /** `cover` preenche o quadro (corta as sobras); `contain` encaixa inteiro sobre fundo escuro */
+    fit: z.enum(['cover', 'contain']).default('cover'),
+    /** o que o inserto reforça na fala (STYLE.md §1) */
+    reason: z.string().trim().min(1, 'diga o que o b-roll reforça'),
+  })
+  .refine((item) => item.end > item.start, { message: 'end precisa ser maior que start' });
+
 export const zoomSchema = z.object({
   id,
   at: seconds,
@@ -268,6 +289,7 @@ export const edlSchema = z
     removed: z.array(removalSchema).default([]),
     captions: captionsSchema.default(captionsSchema.parse({})),
     overlays: z.array(overlaySchema).default([]),
+    broll: z.array(brollSchema).default([]),
     zooms: z.array(zoomSchema).default([]),
     transitions: z.array(transitionSchema).default([]),
     effects: z.array(effectSchema).default([]),
@@ -299,7 +321,7 @@ export const edlSchema = z
     });
 
     const ids = new Set<string>();
-    const all = [...edl.clips, ...edl.overlays, ...edl.zooms, ...edl.transitions, ...edl.effects, ...edl.sfx];
+    const all = [...edl.clips, ...edl.overlays, ...edl.broll, ...edl.zooms, ...edl.transitions, ...edl.effects, ...edl.sfx];
     for (const item of all) {
       if (ids.has(item.id)) issue([], `id duplicado: "${item.id}"`);
       ids.add(item.id);
@@ -320,6 +342,10 @@ export const edlSchema = z
         }
       });
     }
+
+    edl.broll.forEach((item, index) => {
+      if (!inKeptClip(item.start)) issue(['broll', index, 'start'], `${item.start}s cai num trecho cortado; comece o b-roll num instante que ficou no vídeo`);
+    });
 
     const clipIds = new Set(edl.clips.map((clip) => clip.id));
     edl.transitions.forEach((transition, index) => {
@@ -346,6 +372,7 @@ export type EdlInput = z.input<typeof edlSchema>;
 export type Clip = z.infer<typeof clipSchema>;
 export type Removal = z.infer<typeof removalSchema>;
 export type Overlay = z.infer<typeof overlaySchema>;
+export type Broll = z.infer<typeof brollSchema>;
 export type Breather = z.infer<typeof breatherSchema>;
 export type Zoom = z.infer<typeof zoomSchema>;
 export type Transition = z.infer<typeof transitionSchema>;

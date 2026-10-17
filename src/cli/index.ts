@@ -43,6 +43,7 @@ import { manualTrackPath, parseFocusTrackFile } from '../analyze/focus.ts';
 import { findTechMentions } from '../tech/detect.ts';
 import { hasVidstab } from '../render/stabilize.ts';
 import { registerAnalogies } from '../analogy/cli.ts';
+import { registerBroll } from '../broll/cli.ts';
 import { registerPack } from '../pack/cli.ts';
 import { registerRetention } from '../retention/cli.ts';
 import { registerTech } from '../tech/cli.ts';
@@ -615,6 +616,7 @@ registerPack(program, log, fromUser);
 registerRetention(program, log, fromUser);
 registerAnalogies(program, log);
 registerTech(program, log);
+registerBroll(program, log);
 
 // `mce`, `mce scenes`, `mce edl`... sem subcomando: ajuda no stdout e código 0 (não é erro)
 bareGroup(program, process.argv.slice(2))?.help();

@@ -504,6 +504,9 @@ badge). Whatever the agent cannot know for certain, such as links and social han
 | `mce render <slug> [--final] [--shorts] [--no-overlay] [-v <n>]` | Run the EDL: fast preview by default, `--final` for full quality from the original file, `--shorts` for the vertical cut, `--no-overlay` for cuts and audio only |
 | `mce eval <slug> [--final] [--no-transcribe] [--views <n>] [-v <n>]` | Evaluate the *rendered* video: cuts, clicks, loudness, caption sync, level budget, plus images to check. Exit code 2 when it fails |
 | `mce shorts suggest <slug> [--count 3] [--min 20] [--max 60] [--apply <n>] [-v <n>]` | Rank stretches of the current edit for the Short (deterministic score split into hook, closure, density, clean speech, tech terms, self-containment, length; edges only at EDL cuts or measured silence) → `analysis/shorts-candidates.json`; `--apply <n>` saves candidate n as `shorts` in a new EDL version. `mce shorts <slug>` is the same |
+| `mce broll index` | Scan `assets/broll/` (ffprobe) and write `assets/broll/index.json`: file, tags (from folder and file name, accent-free PT-BR stems), duration, resolution, source and license. Manual tags and license survive a re-scan |
+| `mce broll suggest <slug> [--apply] [-v <n>]` | Spoken stretches that ask for b-roll (concrete object/place/action or tech mentioned, long stretch without graphics), never over a graphic or screen recording, within the EDL level's budget, matched to the library by tags and simple synonyms → `analysis/broll-candidates.json` (source seconds, trigger word, `reason`, file or "missing: search <term>"); `--apply` saves the ones with a file as `broll` in a new EDL version |
+| `mce broll fetch <slug> [-n 5]` | Only with `PEXELS_API_KEY`: download short HD videos (Pexels License) for the missing terms into `assets/broll/pexels/` and record author/license in the index. Without the key it says so and exits 0 |
 | `mce report <slug>` | Write `relatorio.md` and `capitulos.txt` |
 | `mce retention import <slug> <file.csv> [-v <n>] [--duration <s>]` / `mce retention lessons` | Import the YouTube Studio retention CSV (EN/PT): drops and rewatch spikes mapped to source time, clip, chapter, graphics and speech → `analysis/retention.json`, `project.md`, `relatorio.md`; `lessons` aggregates patterns across all projects |
 
@@ -588,6 +591,10 @@ Create `mce.config.json` at the project root. Every key is optional; the default
 | `notify.ntfyTopic` | `""` | ntfy topic for phone notifications; empty turns them off |
 | `notify.ntfyServer` | `"https://ntfy.sh"` | ntfy server |
 
+**Environment variables.** `PEXELS_API_KEY` (optional) turns on `mce broll fetch`: create a free key at
+<https://www.pexels.com/api/> and set it in your user environment (`setx PEXELS_API_KEY <key>` in PowerShell, then open a new terminal).
+Without it everything else in b-roll works with your local `assets/broll/` folder.
+
 Taste is not configuration. Rhythm, zoom, graphics density, caption style, tone, audio targets and color are described
 in [`STYLE.md`](STYLE.md), the guide the director follows. Edit it freely: when a correction applies to every video,
 that is where it goes.
@@ -615,7 +622,7 @@ transcriber/   Python sidecar (WhisperX): transcribe.py
 scripts/       install-cli.ts (the global mce command)
 tests/         Vitest: unit tests and integration tests on synthetic media
 docs/          referencia-max.md (analysis behind the max level), assets/ (the illustrations in this README)
-assets/        sfx/ (generated), music/, memes/, luts/, brand/ (your own library, not versioned)
+assets/        sfx/ (generated), music/, memes/, luts/, brand/, broll/ + index.json (your own library, not versioned)
 .claude/       skills (edit-video, edl-reference), agents (motion-designer, packager), settings.json
 
 inbox/                     drop videos here for mce watch            (not versioned)

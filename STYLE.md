@@ -208,6 +208,19 @@ ou dá ritmo?". Se a resposta for "é bonito", não entra. O espectador não pod
     como modelo (nome pela forma, tudo em props) para servir nos próximos vídeos; cena presa a um vídeo é exceção e declara o seu `MODEL`.
 - Todo overlay na EDL tem `reason` explicando o que ele reforça.
 
+### B-roll
+
+- Quando: a fala cita algo concreto que se vê (objeto, lugar, ação: "pego o celular", "num escritório", "programando") num trecho
+  sem gráfico, de preferência longo (o loop de retenção mostra que trecho sem gráfico perde mais). Não quando a frase é opinião,
+  conceito abstrato ou história pessoal em que o rosto é o conteúdo; nunca no gancho (primeiros 5 s).
+- Duração e frequência por nível (`src/edl/levels.ts`, `broll`): `limpa` nenhum; `normal` até 0,75/min, 3 s, 25 s entre eles;
+  `pro` 1,5/min, 3,5 s, 15 s; `max` 2,5/min, 4 s, 10 s.
+- Um quadro por vez: b-roll não entra sobre gráfico, palco ou tela gravada. Começa na palavra que ele ilustra; a voz continua, o som do
+  b-roll nunca. Um bom lugar é por cima de um corte: esconde o salto.
+- Literal demais cansa: o mesmo termo no máximo 2 vezes por vídeo, e o mesmo arquivo não se repete se houver outro.
+- Arquivo: biblioteca local `assets/broll/` (`pnpm mce broll index`); do Pexels, só curto e HD, com origem e licença no índice.
+- `reason` diz o que a imagem reforça, como todo overlay.
+
 ## 6. Transições
 
 O arsenal tem 50 (`pnpm mce arsenal transitions`), de dois tipos: `xfade` (mistura a imagem dos dois lados do corte)

@@ -4,7 +4,7 @@ import { isAbsolute, join } from 'node:path';
 import { ffmpeg } from '../lib/ffmpeg.ts';
 import { ASSETS_DIR } from '../project/paths.ts';
 
-export type AssetKind = 'music' | 'sfx' | 'memes' | 'luts' | 'brand';
+export type AssetKind = 'music' | 'sfx' | 'memes' | 'luts' | 'brand' | 'broll';
 
 /** Resolve um asset da EDL: caminho absoluto, ou nome relativo à pasta do tipo em assets/. */
 export function resolveAsset(kind: AssetKind, file: string, root = ASSETS_DIR): string | null {

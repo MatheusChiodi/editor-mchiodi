@@ -83,6 +83,12 @@ quando houver várias. No pedido, entregue: a fala (texto + tempos da fonte), o 
 o tom, o slug do projeto e a duração disponível. **Peça o MODELO, não a cena**: toda animação nova vira um modelo reutilizável em
 `motion/src/scenes/modelos/` (nome pela forma, tudo em props, testado com dois conjuntos de props) e ele devolve o trecho da EDL
 com `scene:modelos/<Nome>` e as props deste vídeo. Cena sob medida (`scene:<slug>/<Nome>`) só para ideia irrepetível, e declarando o `MODEL`.
+**B-roll (opcional, nível `normal` para cima):** `pnpm mce broll suggest <slug>` lista os trechos sem gráfico em que a fala cita algo
+concreto (objeto, lugar, ação, tecnologia) e o arquivo da biblioteca que casa, ou `faltando: buscar "<termo>"`. Decida um a um pelo STYLE.md §5:
+o que só repete a fala sem acrescentar nada fica de fora. Se faltar arquivo e houver `PEXELS_API_KEY`, `pnpm mce broll fetch <slug>` baixa e
+você roda o suggest de novo. Para gravar: `--apply` (nova versão com todos os que têm arquivo) ou copie os escolhidos para `broll` na EDL de
+trabalho. Em `limpa` o suggest não propõe nada: não force.
+
 Antes de delegar a primeira cena, suba o visor em segundo plano: `pnpm mce scenes watch <slug>` (Remotion Studio no Chrome;
 cada cena gravada aparece sozinha e `Roteiro-<slug>` toca todas em sequência). No modo headless o watcher já o subiu: pule.
 
