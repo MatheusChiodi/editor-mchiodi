@@ -58,7 +58,11 @@ export const cutOpSchema = z.discriminatedUnion('type', [
     reason: z.string().optional(),
   }),
   z.object({ type: z.literal('insertItem'), kind, item: z.record(z.string(), z.unknown()) }),
-  z.object({ type: z.literal('updateItem'), kind, id: z.string(), patch: z.record(z.string(), z.unknown()) }),
+  z.object({
+    type: z.literal('updateItem'), kind, id: z.string(), patch: z.record(z.string(), z.unknown()),
+    /** chaves a remover do item (campo opcional apagado no formulário; o schema reaplica o padrão, se houver) */
+    unset: z.array(z.string()).optional(),
+  }),
   z.object({ type: z.literal('removeItem'), kind, id: z.string() }),
   z.object({ type: z.literal('captionReplace'), from: z.string().min(1), to: z.string().nullable() }),
   z.object({ type: z.literal('captionHighlight'), word: z.string().min(1), on: z.boolean() }),
@@ -224,6 +228,15 @@ function setItems(edl: Edl, kind: ItemKind, items: AnyItem[]): void {
   (edl as unknown as Record<ItemKind, AnyItem[]>)[kind] = items;
 }
 
+/**
+ * Chaves que um `updateItem` tira do item: as de `unset` e as do patch sem valor (`undefined` ou texto vazio),
+ * porque mesclar raso manteria o valor antigo. `null` fica: em campo anulável é um valor (presenter: null).
+ */
+export function unsetKeys(patch: Record<string, unknown>, unset: string[] = []): string[] {
+  const empty = Object.keys(patch).filter((key) => patch[key] === undefined || (typeof patch[key] === 'string' && (patch[key] as string).trim() === ''));
+  return [...new Set([...unset, ...empty])];
+}
+
 function parseItem(kind: ItemKind, raw: unknown): AnyItem {
   const parsed = ITEM_SCHEMAS[kind].safeParse(raw);
   if (!parsed.success) {
@@ -339,10 +352,14 @@ function applyOne(edl: Edl, op: CutOp, context: SpeechContext, snaps: SnapResult
       const items = itemsOf(edl, op.kind);
       const index = items.findIndex((item) => item.id === op.id);
       if (index < 0) throw new Error(`${op.kind}: "${op.id}" não existe`);
-      const updated = parseItem(op.kind, { ...items[index], ...op.patch, id: op.id });
+      const unset = unsetKeys(op.patch, op.unset);
+      if (unset.includes('id')) throw new Error('o id de um item não sai');
+      const merged: Record<string, unknown> = { ...items[index], ...op.patch, id: op.id };
+      for (const key of unset) delete merged[key];
+      const updated = parseItem(op.kind, merged);
       requireReason(op.kind, updated);
       setItems(edl, op.kind, items.map((item, position) => (position === index ? updated : item)));
-      return { label: itemLabel(op.kind, updated), fields: Object.keys(op.patch) };
+      return { label: itemLabel(op.kind, updated), fields: [...new Set([...Object.keys(op.patch), ...unset])] };
     }
     case 'removeItem': {
       const items = itemsOf(edl, op.kind);

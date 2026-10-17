@@ -109,6 +109,7 @@ export function describeStatus(status: ProjectStatus): string {
   else if (!status.delivered.includes('final.mp4')) next = `pnpm mce render ${status.slug} --final`;
   else if (!status.delivered.includes('relatorio.md')) next = `pnpm mce report ${status.slug}`;
   else next = 'concluído; novas correções viram uma nova versão da EDL';
+  if (latest !== undefined) lines.push(`opcional: revisar no editor: pnpm mce cut ${status.slug}`);
   lines.push(`próximo passo: ${next}`);
   return lines.join('\n');
 }

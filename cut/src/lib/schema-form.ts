@@ -168,15 +168,27 @@ export function formatFieldValue(field: Field, value: unknown): string | boolean
   return String(value);
 }
 
-/** Patch com as chaves de primeiro nível que mudaram (o `updateItem` mescla raso). */
-export function buildPatch(original: Record<string, unknown>, edited: Record<string, unknown>): Record<string, unknown> {
+/**
+ * O que mudou nas chaves de primeiro nível. O `updateItem` mescla raso e o JSON some com `undefined`: campo opcional
+ * apagado (ausente/undefined/texto vazio) vai em `unset`, senão a chave antiga ficaria na EDL.
+ */
+export function buildUpdate(original: Record<string, unknown>, edited: Record<string, unknown>): { patch: Record<string, unknown>; unset: string[] } {
   const patch: Record<string, unknown> = {};
+  const unset: string[] = [];
   const keys = new Set([...Object.keys(original), ...Object.keys(edited)]);
   for (const key of keys) {
-    if (key === 'id') continue;
-    if (JSON.stringify(original[key]) !== JSON.stringify(edited[key])) patch[key] = edited[key];
+    if (key === 'id' || JSON.stringify(original[key]) === JSON.stringify(edited[key])) continue;
+    const value = edited[key];
+    if (value === undefined || (typeof value === 'string' && value.trim() === '')) {
+      if (original[key] !== undefined) unset.push(key);
+    } else patch[key] = value;
   }
-  return patch;
+  return { patch, unset };
+}
+
+/** Só o patch (sem as remoções); ver `buildUpdate`. */
+export function buildPatch(original: Record<string, unknown>, edited: Record<string, unknown>): Record<string, unknown> {
+  return buildUpdate(original, edited).patch;
 }
 
 /** `reason` obrigatório (STYLE.md §1): sem ele o item não salva. O SFX não tem o campo. */

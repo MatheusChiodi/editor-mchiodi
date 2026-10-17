@@ -28,6 +28,7 @@
  * GET  /api/projects/:slug/waveform                 → { peaksPerSec, durationSec, peaks[] } (0–255, cache em renders/proxy/peaks.json)
  * GET  /api/projects/:slug/still?at=                → PNG do frame da fonte em `at` (o mesmo do `mce frame`)
  * GET  /api/projects/:slug/srt?version=             → .srt no tempo de SAÍDA (com a vinheta de abertura)
+ * POST /api/projects/:slug/srt/save   { version? }               → grava o .srt ao lado do render da versão: { path, file, url }
  * POST /api/projects/:slug/srt/import { baseVersion, srt }          → { ops[] (captionReplace), changes[], unmatched[] }; salvar = /save
  * GET  /api/projects/:slug/file?path=renders/...    → arquivo de renders/ ou analysis/views/ (mp4 com Range, png, srt, json)
  * POST /api/projects/:slug/jobs { kind, edl?, export? }            → 202 { job }; kind: render | final | shorts | eval | evalFinal | export
@@ -50,12 +51,13 @@
  *        claude-done  { ok, baseVersion, proposedVersion|null, diff[], result }
  * GET  /api/arsenal?kind=&q=                        → { items[] } (com `gallery` quando há folha) ou { kinds: { [kind]: items[] } }
  * GET  /api/gallery/:file.png                       → miniatura da galeria (projects/.gallery)
- * GET  /*                                           → build da UI em cut/dist (SPA); sem build, 404 com aviso
+ * GET  /*                                           → build da UI em cut/dist (SPA), senão arquivo de assets/ (staticFile);
+ *                                                     sem build, 404 com aviso
  */
-import { createReadStream, existsSync, mkdirSync, statSync } from 'node:fs';
+import { createReadStream, existsSync, mkdirSync, statSync, writeFileSync } from 'node:fs';
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 import type { AddressInfo } from 'node:net';
-import { extname, join, relative, resolve, sep } from 'node:path';
+import { dirname, extname, join, relative, resolve, sep } from 'node:path';
 import { type FSWatcher, watch } from 'chokidar';
 import { z } from 'zod';
 
@@ -63,6 +65,8 @@ import { extractFrame } from '../analyze/timeline-view.ts';
 import type { Analysis, Transcript } from '../analyze/types.ts';
 import { ARSENAL_KINDS, type ArsenalKind, catalog, search } from '../arsenal/catalog.ts';
 import { loadConfig } from '../config.ts';
+import { findReverts, formatRevert } from '../edl/decisions.ts';
+import type { Edl } from '../edl/schema.ts';
 import { diffEdl, listVersions, loadEdl } from '../edl/store.ts';
 import { buildTimeline, outputToSource } from '../edl/timeline.ts';
 import { collectEvaluations } from '../eval/index.ts';
@@ -74,7 +78,7 @@ import { bumperDurations } from '../render/bumpers.ts';
 import { planExport } from '../render/formats.ts';
 import { buildSrt, importSrt } from '../render/srt.ts';
 import { headlessEnv } from '../watcher/headless.ts';
-import { jobOutputRel, jobSucceeded, JOB_KINDS, type JobRequest, mceArgs, spawnMce, type SpawnedJob } from './jobs.ts';
+import { jobOutputRel, jobSucceeded, srtSidecarRel, JOB_KINDS, type JobRequest, mceArgs, spawnMce, type SpawnedJob } from './jobs.ts';
 import { ensureProxy, ensureWaveform } from './media.ts';
 import { cutOpSchema, CutOpError } from './ops.ts';
 import {
@@ -98,6 +102,8 @@ export interface CutServerOptions {
   projectsDir?: string;
   /** build da UI (fase B); padrão cut/dist */
   distDir?: string;
+  /** arquivos pedidos por staticFile() (memes, marca, b-roll); padrão assets/ */
+  assetsDir?: string;
   /** observa projects/<slug>/edl/ (chokidar) para avisar a UI de versão nova */
   watch?: boolean;
   /** como chamar o `claude` do painel (testes trocam por um falso) */
@@ -128,7 +134,16 @@ const TYPES: Record<string, string> = {
   '.woff2': 'font/woff2',
   '.woff': 'font/woff',
   '.ico': 'image/x-icon',
+  '.gif': 'image/gif',
+  '.ttf': 'font/ttf',
+  '.otf': 'font/otf',
   '.mp4': 'video/mp4',
+  '.webm': 'video/webm',
+  '.mov': 'video/quicktime',
+  '.mp3': 'audio/mpeg',
+  '.wav': 'audio/wav',
+  '.ogg': 'audio/ogg',
+  '.m4a': 'audio/mp4',
   '.srt': 'application/x-subrip; charset=utf-8',
   '.txt': 'text/plain; charset=utf-8',
   '.md': 'text/markdown; charset=utf-8',
@@ -175,6 +190,13 @@ export function parseRange(header: string | undefined, size: number): { start: n
   }
   if (start > end || start >= size) return 'invalid';
   return { start, end };
+}
+
+/** Diff da proposta do Claude + o que ela desfaz de decisões "Matheus:" até a base (a UI mostra antes de aceitar). */
+function proposalDiff(paths: ProjectPaths, baseVersion: number, proposed: number): string[] {
+  const history = listVersions(paths).filter((version) => version <= baseVersion).map((version) => loadEdl(paths, version));
+  const reverts = findReverts(history, loadEdl(paths, proposed)).map((revert) => `⚠ ${formatRevert(revert)}`);
+  return [...reverts, ...diffEdl(loadEdl(paths, baseVersion), loadEdl(paths, proposed))];
 }
 
 function sendJson(res: ServerResponse, status: number, body: unknown): void {
@@ -234,6 +256,7 @@ const saveBody = z.object({ baseVersion: version, ops: z.array(cutOpSchema), mes
 const previewBody = z.object({ baseVersion: version, ops: z.array(cutOpSchema) });
 const revertBody = z.object({ version, baseVersion: version });
 const srtImportBody = z.object({ baseVersion: version, srt: z.string().min(1) });
+const srtSaveBody = z.object({ version: version.optional() });
 const proposalBody = z.object({ proposedVersion: version });
 const claudeBody = z.object({
   instruction: z.string().trim().min(1).max(4000),
@@ -278,6 +301,7 @@ interface ClaudeState {
 export async function startCutServer(options: CutServerOptions = {}): Promise<CutServer> {
   const projectsDir = options.projectsDir ?? PROJECTS_DIR;
   const distDir = options.distDir ?? join(ROOT, 'cut', 'dist');
+  const assetsDir = options.assetsDir ?? join(ROOT, 'assets');
   const galleryDir = join(projectsDir, '.gallery');
   const log = options.log ?? (() => {});
   const streams = new Map<string, Set<ServerResponse>>();
@@ -404,7 +428,7 @@ export async function startCutServer(options: CutServerOptions = {}): Promise<Cu
         const newest = listVersions(paths).at(-1) ?? body.baseVersion;
         const proposed = newest > body.baseVersion ? newest : null;
         session.proposedVersion = proposed;
-        const diff = proposed ? diffEdl(loadEdl(paths, body.baseVersion), loadEdl(paths, proposed)) : [];
+        const diff = proposed ? proposalDiff(paths, body.baseVersion, proposed) : [];
         emit(paths.slug, 'claude-done', { ok: ok && proposed !== null, baseVersion: body.baseVersion, proposedVersion: proposed, diff, result: resultText });
       });
   };
@@ -441,14 +465,24 @@ export async function startCutServer(options: CutServerOptions = {}): Promise<Cu
   };
 
   const serveStatic = (req: IncomingMessage, res: ServerResponse, pathname: string) => {
+    let relative: string;
+    try {
+      relative = decodeURIComponent(pathname).replace(/^\/+/, '');
+    } catch {
+      throw new HttpError(400, 'caminho inválido');
+    }
+    const isFile = (file: string | null): file is string => file !== null && existsSync(file) && statSync(file).isFile();
+    const built = relative ? safeJoin(distDir, relative) : null;
+    if (isFile(built)) return sendFile(req, res, built);
+    // staticFile() dos componentes do Remotion pede /memes/x.png na raiz: no build vem de assets/ (no cut:dev, publicDir do Vite)
+    const asset = relative ? safeJoin(assetsDir, relative) : null;
+    if (isFile(asset)) return sendFile(req, res, asset);
     const index = join(distDir, 'index.html');
     if (!existsSync(index)) {
       sendJson(res, 404, { error: 'a UI ainda não foi construída (cut/dist); a API está em /api' });
       return;
     }
-    const relative = decodeURIComponent(pathname).replace(/^\/+/, '');
-    const file = relative ? safeJoin(distDir, relative) : index;
-    if (file && existsSync(file) && statSync(file).isFile()) return sendFile(req, res, file);
+    if (!relative) return sendFile(req, res, index);
     // rota da SPA
     if (!extname(relative)) return sendFile(req, res, index);
     sendJson(res, 404, { error: 'não encontrado' });
@@ -532,13 +566,25 @@ export async function startCutServer(options: CutServerOptions = {}): Promise<Cu
       const file = await extractFrame(analysis.proxy, at, join(paths.analysisDir, 'views', `frame-${at.toFixed(2)}.png`));
       return sendFile(req, res, file, 'image/png');
     }
+    const srtOf = (edl: Edl) => {
+      const { words } = readJson<Transcript>(paths.words);
+      return buildSrt(words, buildTimeline(edl.clips, edl.output.fps), edl.captions, bumperDurations(edl).introSec);
+    };
     if (rest === '/srt' && get) {
       const wanted = url.searchParams.get('version');
       const edl = loadEdl(paths, wanted ? Number(wanted) : undefined);
-      const { words } = readJson<Transcript>(paths.words);
-      const text = buildSrt(words, buildTimeline(edl.clips, edl.output.fps), edl.captions, bumperDurations(edl).introSec);
+      const text = srtOf(edl);
       res.writeHead(200, { 'Content-Type': TYPES['.srt']!, 'Content-Disposition': `attachment; filename="${slug}-v${edl.version}.srt"`, 'Cache-Control': 'no-store' });
       return void res.end(text);
+    }
+    if (rest === '/srt/save' && method === 'POST') {
+      const body = parseWith(srtSaveBody, await readBody(req));
+      const edl = loadEdl(paths, body.version);
+      const relativePath = srtSidecarRel(slug, edl.version, (rel) => existsSync(join(paths.dir, rel)));
+      const file = safeJoin(paths.dir, relativePath)!;
+      mkdirSync(dirname(file), { recursive: true });
+      writeFileSync(file, srtOf(edl), 'utf8');
+      return sendJson(res, 200, { path: relativePath, file, url: `${apiBase}/file?path=${encodeURIComponent(relativePath)}` });
     }
     if (rest === '/srt/import' && method === 'POST') {
       const body = parseWith(srtImportBody, await readBody(req));

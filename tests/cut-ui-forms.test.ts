@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { captionPages, highlightOp, pageAt, replaceOp } from '../cut/src/lib/captions.ts';
 import { draftInsert } from '../cut/src/lib/insert.ts';
-import { buildPatch, fieldsFromJsonSchema, fieldsFromSample, formatFieldValue, getAt, missingReason, parseFieldInput, setAt } from '../cut/src/lib/schema-form.ts';
+import { buildPatch, buildUpdate, fieldsFromJsonSchema, fieldsFromSample, formatFieldValue, getAt, missingReason, parseFieldInput, setAt } from '../cut/src/lib/schema-form.ts';
 import { budgetUse, evalMarkers, percentFromLine, themeCssVars, withAlpha } from '../cut/src/lib/ui.ts';
 import { createTimeMap } from '../cut/src/lib/timemap.ts';
 import { applyOps } from '../src/cut/ops.ts';
@@ -61,8 +61,23 @@ describe('formulário do schema Zod', () => {
     expect(getAt(edited, ['focus', 'x'])).toBe(0.7);
     expect(original.focus.x).toBe(0.5);
     expect(buildPatch(original, edited)).toEqual({ focus: { x: 0.7, y: 0.4 } });
+    expect(buildUpdate(original, edited)).toEqual({ patch: { focus: { x: 0.7, y: 0.4 } }, unset: [] });
     expect(missingReason('zooms', { reason: ' ' })).toBe(true);
     expect(missingReason('sfx', {})).toBe(false);
+  });
+});
+
+describe('buildUpdate', () => {
+  it('campo opcional apagado vira unset (o JSON perderia o undefined e a chave antiga ficaria)', () => {
+    const original = { id: 'o1', at: 1, shorts: false, label: 'x', reason: 'a' };
+    const edited = setAt(setAt(original, ['shorts'], undefined), ['label'], ' ');
+    expect('shorts' in edited).toBe(false);
+    expect(buildUpdate(original, { ...edited, at: 2 })).toEqual({ patch: { at: 2 }, unset: ['shorts', 'label'] });
+    expect(JSON.parse(JSON.stringify(buildUpdate(original, edited)))).toEqual({ patch: {}, unset: ['shorts', 'label'] });
+  });
+
+  it('chave que já não existia não vira unset', () => {
+    expect(buildUpdate({ id: 'a' }, { id: 'a', extra: undefined })).toEqual({ patch: {}, unset: [] });
   });
 });
 

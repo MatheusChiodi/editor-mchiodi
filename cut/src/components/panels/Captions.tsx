@@ -105,7 +105,15 @@ export function CaptionsPanel() {
                 link.download = `${project.slug}-v${project.latest}.srt`;
                 link.click();
               }} title="baixa o .srt da versão salva (tempo de saída)">
-              exportar .srt
+              baixar .srt
+            </Button>
+            <Button small onClick={() => {
+                api.srtSave(project.slug, project.latest ?? undefined).then(
+                  (saved) => toast(`.srt gravado em ${saved.path}`, 'ok', 7000),
+                  (error: unknown) => toast(`.srt falhou: ${error instanceof Error ? error.message : String(error)}`, 'error'),
+                );
+              }} title="grava o .srt da versão salva ao lado do render (final > preview; sem render, em renders/)">
+              gravar .srt
             </Button>
             <Button small onClick={() => file.current?.click()}>
               importar .srt

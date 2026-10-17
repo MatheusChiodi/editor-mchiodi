@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { request } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -85,6 +85,9 @@ beforeAll(async () => {
   });
   writeJson(join(dir, 'analysis', 'words.json'), { meta: {}, segments: [], words: WORDS });
   writeFileSync(join(dir, 'analysis', 'takes.md'), '# takes\n', 'utf8');
+  mkdirSync(join(root, 'assets', 'memes'), { recursive: true });
+  writeFileSync(join(root, 'assets', 'memes', 'gato bravo.png'), 'PNG', 'utf8');
+  writeFileSync(join(root, 'assets', '.segredo'), 'x', 'utf8');
   writeJson(join(dir, 'edl', 'edl.v1.json'), baseEdl({ source: { path: proxy, durationSec: DURATION, fps: 30, width: 320, height: 180 } }));
   // "claude" falso: grava uma nova versão a partir da atual e fala em stream-json, como a sessão real
   writeFileSync(
@@ -107,6 +110,7 @@ console.log(JSON.stringify({ type: 'result', result: 'RESULTADO: ok — v' + edl
     port: 0,
     projectsDir,
     distDir: join(root, 'sem-ui'),
+    assetsDir: join(root, 'assets'),
     claudeCommand: (args) => ({ command: process.execPath, args: [fakeClaude, projectsDir, ...args] }),
   });
 }, 60_000);
@@ -186,6 +190,27 @@ describe('MChiodi Cut: servidor', () => {
     const edl = (await (await api(`/projects/demo/edl/${saved.version}`)).json()) as { captions: { replacements: Record<string, string> } };
     expect(edl.captions.replacements).toEqual({ reakt: 'React' });
     expect(await (await api('/projects/demo/srt')).text()).toContain('React');
+  });
+
+  it('SRT gravado ao lado do render da versão (sem render, em renders/)', async () => {
+    const loose = (await (await post('/projects/demo/srt/save', { version: 1 })).json()) as { path: string; url: string };
+    expect(loose.path).toBe('renders/demo-v1.srt');
+    expect(readFileSync(join(dir, loose.path), 'utf8')).toContain('reakt');
+    mkdirSync(join(dir, 'renders', 'v1-preview'), { recursive: true });
+    writeFileSync(join(dir, 'renders', 'v1-preview', 'preview.mp4'), 'mp4', 'utf8');
+    const beside = (await (await post('/projects/demo/srt/save', { version: 1 })).json()) as { path: string; url: string };
+    expect(beside.path).toBe('renders/v1-preview/preview.srt');
+    expect(await (await fetch(`${server.url}${beside.url}`)).text()).toContain('-->');
+  });
+
+  it('assets/ pedidos por staticFile() saem pelo servidor também no build, só dentro da pasta', async () => {
+    const meme = await fetch(`${server.url}/memes/gato%20bravo.png`);
+    expect(meme.status).toBe(200);
+    expect(meme.headers.get('content-type')).toBe('image/png');
+    expect(await meme.text()).toBe('PNG');
+    expect((await fetch(`${server.url}/.segredo`)).status).toBe(404);
+    expect((await fetch(`${server.url}/memes/..%2F..%2Fprojects%2Fdemo%2Fanalysis%2Fwords.json`)).status).toBe(404);
+    expect((await fetch(`${server.url}/%E0%A4%A`)).status).toBe(400);
   });
 
   it('proxy com Range, forma de onda e still', async () => {

@@ -5,6 +5,7 @@ import { Command } from 'commander';
 import { analyze } from '../analyze/index.ts';
 import { extractFrame, renderTimelineView, sourceBands, viewPath } from '../analyze/timeline-view.ts';
 import type { Analysis, Transcript } from '../analyze/types.ts';
+import { findReverts, formatRevert } from '../edl/decisions.ts';
 import { diffEdl, draftEdl, edlPath, listVersions, loadEdl, saveNewVersion, validateEdl } from '../edl/store.ts';
 import { formatLevels, LEVEL_IDS, type LevelId, levelProfile, parseLevel } from '../edl/levels.ts';
 import { buildTimeline } from '../edl/timeline.ts';
@@ -647,8 +648,11 @@ edl
   .action((project: string, file: string) => {
     const paths = requireProject(project);
     const { version: _version, createdAt: _createdAt, ...data } = JSON.parse(readFileSync(fromUser(file), 'utf8'));
+    const history = listVersions(paths).map((version) => loadEdl(paths, version));
     const saved = saveNewVersion(paths, data);
     log(edlPath(paths, saved.version));
+    // aviso, não bloqueio: o Matheus pode ter pedido a reversão; quem decide é ele, e as notes devem dizer isso
+    for (const revert of findReverts(history, saved)) console.warn(`aviso: ${formatRevert(revert)}`);
   });
 
 edl

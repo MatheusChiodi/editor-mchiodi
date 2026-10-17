@@ -12,6 +12,8 @@ EDL na skill `edl-reference`.
 ## 0. Antes de começar
 
 - `pnpm mce status <slug>`: se o projeto já existe, continue do "próximo passo" e leia `projects/<slug>/project.md`.
+- Projeto com EDL: `pnpm mce edl list <slug>` e leia as `notes` de **todas** as versões. As que começam com `Matheus:`
+  são decisão dele (gravadas pelo MChiodi Cut ou ditadas por ele): ver "Decisões do Matheus" abaixo.
 - Vídeo novo: `pnpm mce analyze "<arquivo>"` (o slug sai do nome do arquivo; `-p <slug>` para escolher).
 - Biblioteca de SFX vazia? `pnpm mce assets init`.
 - Opcional, se já há vídeos com retenção importada: `pnpm mce retention lessons` antes de dirigir. Diz onde o público
@@ -99,6 +101,9 @@ cada cena gravada aparece sozinha e `Roteiro-<slug>` toca todas em sequência). 
 2. Copie `projects/<slug>/edl/edl.vN.json` para um arquivo de trabalho, edite (skill `edl-reference`) e grave:
    `pnpm mce edl save <slug> <arquivo>`. Preencha `notes` com o que mudou e por quê.
 3. Nunca edite um `edl.vN.json` já gravado.
+4. Parta da versão mais recente (ela carrega as decisões do Matheus), não de uma antiga nem de um `draft` novo.
+   Se o `edl save` imprimir `aviso: desfaz decisão do Matheus (vN): ...`, a versão nova voltou atrás numa decisão dele:
+   corrija e grave de novo, salvo se ele pediu exatamente isso (aí diga nas `notes`: "a pedido do Matheus, ...").
 
 ## 5. Renderizar, avaliar, corrigir (no máximo 3 voltas)
 
@@ -168,6 +173,19 @@ candidato que começa no meio da frase ou fecha com despedida do canal não vira
 Depois do `report`, delegue ao sub-agente **`packager`** (passe o slug) a capa, o título e a descrição: ele entrega `capa-<n>.png`, `titulo.txt`, `descricao.txt` e `tags.txt` em `output/<slug>/`; também no modo headless.
 
 Resposta final: caminho dos arquivos, duração antes → depois, o que a avaliação apontou e o que ficou pendente. Sem recapitular o processo.
+
+## Decisões do Matheus (notes "Matheus:")
+
+Versão cuja `notes` começa com `Matheus:` é decisão dele: corte movido, trecho removido ou restaurado, legenda corrigida,
+destaque, item inserido/editado/removido, nível. O MChiodi Cut (`pnpm mce cut <slug>`) grava assim tudo o que ele faz na UI.
+
+- **Não desfaça sem ele pedir.** Isso vale também para a avaliação: se o `eval` reclama de algo que é decisão dele
+  (um corte que ele afrouxou, um trecho que ele restaurou), registre em `notes` e no relatório; não "conserte".
+- Antes de propor versão nova, leia as `notes` das anteriores e preserve essas mudanças na sua. `pnpm mce edl diff <slug> <a> <b>`
+  mostra o que cada versão mudou.
+- O `pnpm mce edl save` avisa (`aviso: desfaz decisão do Matheus ...`) quando a versão nova reverte uma delas; o painel
+  Claude do editor mostra o mesmo aviso no diff da proposta. Aviso = corrigir, a menos que o pedido dele seja a reversão.
+- Suas `notes` não começam com `Matheus:` (só as dele); escreva o que mudou e por quê.
 
 ## Correções do Matheus
 

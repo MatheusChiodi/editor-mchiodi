@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { jobOutputRel } from '../src/cut/jobs.ts';
+import { jobOutputRel, srtSidecarRel } from '../src/cut/jobs.ts';
 import type { ProjectPaths } from '../src/project/paths.ts';
 import { outputNames, renderDir } from '../src/render/index.ts';
 import { baseEdl } from './cut-fixture.ts';
@@ -26,5 +26,17 @@ describe('jobOutputRel', () => {
     expect(jobOutputRel('eval', 4)).toBeNull();
     expect(jobOutputRel('evalFinal', 4)).toBeNull();
     expect(jobOutputRel('export', 4)).toBeNull();
+  });
+});
+
+describe('srtSidecarRel', () => {
+  it('ao lado do vídeo mais acabado da versão, com o mesmo nome-base', () => {
+    const has = (...files: string[]) => (relative: string) => files.includes(relative);
+    expect(srtSidecarRel('aula', 4, has('renders/v4-preview/preview.mp4', 'renders/v4-final/final.mp4'))).toBe('renders/v4-final/final.srt');
+    expect(srtSidecarRel('aula', 4, has('renders/v4-preview/preview.mp4', 'renders/v3-final/final.mp4'))).toBe('renders/v4-preview/preview.srt');
+  });
+
+  it('sem render da versão, em renders/ como o mce export', () => {
+    expect(srtSidecarRel('aula', 5, () => false)).toBe('renders/aula-v5.srt');
   });
 });

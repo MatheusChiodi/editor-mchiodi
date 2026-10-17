@@ -28,6 +28,7 @@ the editing process. Claude is the director; the tools only execute.
 - [Following an edit](#following-an-edit)
 - [The arsenal](#the-arsenal)
 - [Packaging for YouTube](#packaging-for-youtube)
+- [MChiodi Cut (visual editor)](#mchiodi-cut-visual-editor)
 - [Command reference](#command-reference)
 - [Configuration](#configuration)
 - [Project layout](#project-layout)
@@ -467,6 +468,31 @@ a frame of the video, two to four words with one of them in coral and at most on
 badge). Whatever the agent cannot know for certain, such as links and social handles, is written as
 `[PREENCHER: ...]` ("fill in") in the description for you to complete. It never invents a link, a number or a sponsor.
 
+## MChiodi Cut (visual editor)
+
+A local "CapCut" over the EDL, to open, adjust and export what `mce` produced, with Claude Code inside the editor:
+timeline (clips, captions, overlays, zooms, transitions, waveform and words), preview (light proxy + the real Remotion
+graphics layer), word-by-word caption editing with `.srt` export/import, arsenal inserts with a schema-generated form,
+level, versions/diff, render/eval and a Claude panel. 100% local and offline: no account, no upload, no telemetry.
+
+```powershell
+pnpm cut:build                    # build the UI once (cut/dist); fonts are bundled, so it works offline
+pnpm mce cut <slug>               # server on 127.0.0.1 (first free port from 4870) + opens the browser
+pnpm mce cut <slug> --no-open     # same, without opening the browser; `pnpm mce cut` alone lists the projects
+pnpm cut:dev                      # UI development (Vite, proxies /api to a running mce cut)
+```
+
+Principles:
+
+- **The EDL is the truth.** The editor has no editing state of its own and never processes video on the side. Every
+  change becomes `edl.v(N+1).json` (same logic as `mce edl save`); the final render is always `mce render`.
+- **Snap to measured silence.** Trimming or moving a clip edge always lands in a pause with measured silence, never
+  inside a word: dragging into a word shows a warning and snaps to the nearest pause.
+- **`Matheus:` notes are decisions.** Versions saved from the editor get notes like
+  `Matheus: moveu início de c012 +0.18s; corrigiu legenda 'reakt'→'React'`. The `edit-video` skill treats them as your
+  decisions: Claude does not undo them unless you ask, `mce edl save` warns when a new version reverts one, and the
+  Claude panel shows the same warning in the proposal's diff.
+
 ## Command reference
 
 `mce` alone lists the commands; `mce scenes`, `mce edl`, `mce assets` and `mce pack` list their subcommands;
@@ -507,6 +533,7 @@ badge). Whatever the agent cannot know for certain, such as links and social han
 | `mce broll index` | Scan `assets/broll/` (ffprobe) and write `assets/broll/index.json`: file, tags (from folder and file name, accent-free PT-BR stems), duration, resolution, source and license. Manual tags and license survive a re-scan |
 | `mce broll suggest <slug> [--apply] [-v <n>]` | Spoken stretches that ask for b-roll (concrete object/place/action or tech mentioned, long stretch without graphics), never over a graphic or screen recording, within the EDL level's budget, matched to the library by tags and simple synonyms → `analysis/broll-candidates.json` (source seconds, trigger word, `reason`, file or "missing: search <term>"); `--apply` saves the ones with a file as `broll` in a new EDL version |
 | `mce broll fetch <slug> [-n 5]` | Only with `PEXELS_API_KEY`: download short HD videos (Pexels License) for the missing terms into `assets/broll/pexels/` and record author/license in the index. Without the key it says so and exits 0 |
+| `mce export <slug> [-f 16x9\|9x16\|1x1] [--fit blur-pad\|center-crop] [--focus <0-1>] [--shorts] [-v <n>]` | Export for phones through the EDL render (mobile bitrate cap) → `renders/<slug>-<format>.mp4` + `.srt` beside it; `--shorts` exports the `edl.shorts` stretch through the Short render |
 | `mce report <slug>` | Write `relatorio.md` and `capitulos.txt` |
 | `mce retention import <slug> <file.csv> [-v <n>] [--duration <s>]` / `mce retention lessons` | Import the YouTube Studio retention CSV (EN/PT): drops and rewatch spikes mapped to source time, clip, chapter, graphics and speech → `analysis/retention.json`, `project.md`, `relatorio.md`; `lessons` aggregates patterns across all projects |
 
@@ -533,6 +560,7 @@ badge). Whatever the agent cannot know for certain, such as links and social han
 | `mce watch [--once]` | Watch `inbox/` and edit each new video, one at a time |
 | `mce queue [--retry]` | Show the queue; `--retry` requeues failed jobs |
 | `mce progress [slug] [-w [seconds]] [--no-bell]` | The dashboard |
+| `mce cut [slug] [--port <n>] [--no-open]` | Open the [MChiodi Cut](#mchiodi-cut-visual-editor) visual editor; without a slug, list the projects |
 
 **pnpm scripts**
 
@@ -540,6 +568,7 @@ badge). Whatever the agent cannot know for certain, such as links and social han
 |---|---|
 | `pnpm mce ...` | The CLI, from the project folder |
 | `pnpm studio` | Remotion Studio |
+| `pnpm cut:build` / `pnpm cut:dev` | Build the MChiodi Cut UI (`cut/dist`) / run it in development |
 | `pnpm watch` | Same as `pnpm mce watch` |
 | `pnpm test` / `pnpm typecheck` | Vitest / `tsc --noEmit` |
 | `pnpm run install-cli` / `pnpm run uninstall-cli` | Install or remove the global `mce` command |
@@ -609,6 +638,9 @@ src/
                audio mix, bumpers, screen-recording layout, Short, composition
   arsenal/     transition and effect catalogs, lookup (mce arsenal), gallery
   eval/        self-evaluation of the rendered video, level budget
+  broll/       assisted b-roll: library index, speech-driven suggestions, Pexels fetch
+  retention/   YouTube Studio retention mapped to source time, lessons across projects
+  cut/         MChiodi Cut: typed ops over the EDL (silence snap), "Matheus:" notes, local server
   pack/        thumbnail frames, thumbnail rendering, title/description checks
   preview/     scene viewer (Remotion Studio + index)
   report/      relatorio.md and capitulos.txt
@@ -616,6 +648,7 @@ src/
   watcher/     queue, unattended session (claude -p), deliverables check, notification
   project/     paths, per-project memory (project.md), status, dashboard
   cli/         the mce commands
+cut/           MChiodi Cut UI (React + Vite + Tailwind 4); pure logic in cut/src/lib/
 motion/src/    Remotion: theme, captions, components/ (+ registry), arsenal/ (entrances, stingers, fx, stage),
                scene-kit/ (paper and voxel), scenes/<slug>/, scenes/modelos/, thumbnail/
 transcriber/   Python sidecar (WhisperX): transcribe.py

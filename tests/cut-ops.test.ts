@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { applyOps, CutOpError, type CutOp, mergeIntervals, reconcileRemovals, rebuildClips } from '../src/cut/ops.ts';
+import { applyOps, CutOpError, type CutOp, mergeIntervals, reconcileRemovals, rebuildClips, unsetKeys } from '../src/cut/ops.ts';
 import { baseEdl, edgesInsideWords, SPEECH, WORDS } from './cut-fixture.ts';
 
 const apply = (ops: unknown[], edl = baseEdl()) => applyOps(edl, ops as CutOp[], SPEECH);
@@ -98,6 +98,23 @@ describe('itens', () => {
     const edl = baseEdl({ zooms: [{ id: 'z9', at: 0.5, duration: 1 }] });
     expect(() => apply([{ type: 'moveItem', kind: 'zooms', id: 'z9', at: 2.2 }], edl)).toThrow(/reason/);
     expect(apply([{ type: 'moveItem', kind: 'zooms', id: 'z9', at: 2.2, reason: 'ênfase' }], edl).edl.zooms[0]!.at).toBe(2.2);
+  });
+
+  it('campo opcional apagado sai da EDL (unset ou patch vazio), padrão volta e id não sai', () => {
+    const edl = baseEdl({ overlays: [{ id: 'lt', component: 'LowerThird', at: 0.5, duration: 1, reason: 'nome', shorts: false, hidesCaptions: true }] });
+    const viaUnset = apply([{ type: 'updateItem', kind: 'overlays', id: 'lt', patch: {}, unset: ['shorts', 'hidesCaptions'] }], edl);
+    expect('shorts' in viaUnset.edl.overlays[0]!).toBe(false);
+    expect(viaUnset.edl.overlays[0]!.hidesCaptions).toBe(false);
+    expect(viaUnset.applied[0]!.detail.fields).toEqual(['shorts', 'hidesCaptions']);
+    const viaEmpty = apply([{ type: 'updateItem', kind: 'overlays', id: 'lt', patch: { shorts: undefined, reason: 'nome novo' } }], edl);
+    expect('shorts' in viaEmpty.edl.overlays[0]!).toBe(false);
+    expect(viaEmpty.edl.overlays[0]!.reason).toBe('nome novo');
+    expect(() => apply([{ type: 'updateItem', kind: 'overlays', id: 'lt', patch: { reason: '' } }], edl)).toThrow(/reason/);
+    expect(() => apply([{ type: 'updateItem', kind: 'overlays', id: 'lt', patch: {}, unset: ['id'] }], edl)).toThrow(/id/);
+  });
+
+  it('unsetKeys: undefined e texto vazio saem; null fica (é valor em campo anulável)', () => {
+    expect(unsetKeys({ a: undefined, b: '  ', c: null, d: 0 }, ['e'])).toEqual(['e', 'a', 'b']);
   });
 
   it('não troca id por patch', () => {

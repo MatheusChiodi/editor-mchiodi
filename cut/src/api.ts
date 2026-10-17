@@ -137,6 +137,7 @@ export const api = {
   level: (slug: string) => request<LevelInfo>(`${base(slug)}/level`),
   waveform: (slug: string) => request<Waveform>(`${base(slug)}/waveform`),
   srtUrl: (slug: string, version?: number) => `${base(slug)}/srt${version ? `?version=${version}` : ''}`,
+  srtSave: (slug: string, version?: number) => request<{ path: string; url: string }>(`${base(slug)}/srt/save`, { body: version ? { version } : {} }),
   srtImport: (slug: string, baseVersion: number, srt: string) =>
     request<{ ops: CutOp[]; changes: { from: string; to: string }[]; unmatched: string[] }>(`${base(slug)}/srt/import`, { body: { baseVersion, srt } }),
   stillUrl: (slug: string, at: number) => `${base(slug)}/still?at=${at.toFixed(3)}`,

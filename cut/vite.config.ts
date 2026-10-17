@@ -3,6 +3,8 @@ import react from '@vitejs/plugin-react';
 import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vite';
 
+import { offlineGoogleFonts } from './fonts-plugin.ts';
+
 const root = fileURLToPath(new URL('.', import.meta.url));
 
 /**
@@ -12,7 +14,8 @@ const root = fileURLToPath(new URL('.', import.meta.url));
 export default defineConfig({
   root,
   base: '/',
-  plugins: [react(), tailwindcss()],
+  // build 100% offline: as fontes do tema vão empacotadas em dist/fonts (cut/src/lib/fonts.ts)
+  plugins: [offlineGoogleFonts(), react(), tailwindcss()],
   // os componentes do Remotion pedem arquivos por staticFile(): a mesma pasta que o render usa
   publicDir: fileURLToPath(new URL('../assets', import.meta.url)),
   build: {

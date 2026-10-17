@@ -58,6 +58,18 @@ export function jobOutputRel(kind: JobKind, version: number): string | null {
   return null;
 }
 
+/**
+ * Onde gravar o .srt "ao lado do render": junto do vídeo mais acabado da versão (final > preview), com o mesmo
+ * nome-base (player carrega sozinho). Sem render da versão, em renders/<slug>-v<N>.srt (como o `mce export`).
+ */
+export function srtSidecarRel(slug: string, version: number, exists: (relative: string) => boolean): string {
+  for (const kind of ['final', 'render'] as const) {
+    const video = jobOutputRel(kind, version)!;
+    if (exists(video)) return video.replace(/\.mp4$/, '.srt');
+  }
+  return `renders/${slug}-v${version}.srt`;
+}
+
 /** `mce eval` sai com 2 quando a avaliação reprova: o processo funcionou, os achados é que pedem correção. */
 export function jobSucceeded(kind: JobKind, code: number | null): boolean {
   return code === 0 || ((kind === 'eval' || kind === 'evalFinal') && code === 2);

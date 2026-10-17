@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import type { ItemKind } from '../../../../src/cut/ops.ts';
 import { sourceToOutput } from '../../../../src/edl/timeline.ts';
 import { findItem, planRemove, planTrim } from '../../lib/gestures.ts';
-import { buildPatch, missingReason } from '../../lib/schema-form.ts';
+import { buildUpdate, missingReason } from '../../lib/schema-form.ts';
 import { parseItemKey } from '../../lib/tracks.ts';
 import { seek } from '../../playback.ts';
 import { currentEdl, currentTimeline, setHint, speechOf, store, tryOps, useEditor } from '../../store.ts';
@@ -77,8 +77,8 @@ function ItemProps({ kind, id }: { kind: ItemKind; id: string }) {
   const [draft, setDraft] = useState<Record<string, unknown> | null>(null);
   useEffect(() => setDraft(item ? structuredClone(item) : null), [item]);
   if (!item || !draft) return <Empty>{kind} “{id}” não existe mais nesta versão</Empty>;
-  const patch = buildPatch(item, draft);
-  const changed = Object.keys(patch).length > 0;
+  const { patch, unset } = buildUpdate(item, draft);
+  const changed = Object.keys(patch).length > 0 || unset.length > 0;
   const noReason = missingReason(kind, draft);
   const at = (item.at ?? item.start) as number | undefined;
   const orphan = at !== undefined && sourceToOutput(timeline, at) === null;
@@ -93,7 +93,7 @@ function ItemProps({ kind, id }: { kind: ItemKind; id: string }) {
           small
           disabled={!changed || noReason}
           title={noReason ? 'reason é obrigatório (STYLE.md §1)' : ''}
-          onClick={() => void tryOps([{ type: 'updateItem', kind, id, patch }])}
+          onClick={() => void tryOps([{ type: 'updateItem', kind, id, patch, ...(unset.length ? { unset } : {}) }])}
         >
           aplicar
         </Button>
