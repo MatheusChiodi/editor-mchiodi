@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 380" width="100%" role="img" aria-labelledby="hero-title hero-desc" font-family="'Segoe UI', Helvetica, Arial, sans-serif">
+  <title id="hero-title">MChiodi Editor</title>
+  <desc id="hero-desc">Project banner. On the left, the name MChiodi Editor and the line "A raw recording goes in. A publish-ready video comes out." On the right, a video frame with a presenter, summary pills and a caption, above a timeline where two stretches have been cut out.</desc>
+  <defs>
+    <radialGradient id="h-glow-a" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#34d399" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#34d399" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="h-glow-b" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#ff5555" stop-opacity="0.16"/>
+      <stop offset="1" stop-color="#ff5555" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="h-footage" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#334155"/>
+      <stop offset="1" stop-color="#0f172a"/>
+    </linearGradient>
+    <clipPath id="h-frame"><rect x="560" y="48" width="392" height="220" rx="18"/></clipPath>
+    <clipPath id="h-card"><rect x="16" y="16" width="968" height="348" rx="28"/></clipPath>
+  </defs>
+
+  <rect x="16" y="16" width="968" height="348" rx="28" fill="#f8f8f2" stroke="#e2e8f0" stroke-width="2"/>
+  <g clip-path="url(#h-card)">
+    <circle cx="90" cy="40" r="230" fill="url(#h-glow-a)"/>
+    <circle cx="930" cy="360" r="260" fill="url(#h-glow-b)"/>
+  </g>
+
+  <!-- left: name and promise -->
+  <text x="64" y="92" font-size="14" font-weight="700" letter-spacing="4" fill="#64748b">VIDEO EDITING, DIRECTED BY CLAUDE CODE</text>
+  <text x="62" y="160" font-family="Georgia, 'Times New Roman', serif" font-size="60" font-weight="700" fill="#111827">MChiodi Editor</text>
+  <rect x="64" y="182" width="72" height="5" rx="2.5" fill="#ff5555"/>
+  <text x="64" y="226" font-size="21" fill="#334155">A raw recording goes in.</text>
+  <text x="64" y="256" font-size="21" fill="#334155">A publish-ready video comes out.</text>
+
+  <g font-size="14" font-weight="600" fill="#111827">
+    <rect x="64" y="290" width="62" height="32" rx="16" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+    <text x="95" y="311" text-anchor="middle">cuts</text>
+    <rect x="136" y="290" width="92" height="32" rx="16" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+    <text x="182" y="311" text-anchor="middle">captions</text>
+    <rect x="238" y="290" width="88" height="32" rx="16" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+    <text x="282" y="311" text-anchor="middle">graphics</text>
+    <rect x="336" y="290" width="68" height="32" rx="16" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+    <text x="370" y="311" text-anchor="middle">audio</text>
+    <rect x="414" y="290" width="106" height="32" rx="16" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+    <text x="467" y="311" text-anchor="middle">thumbnail</text>
+  </g>
+
+  <!-- right: an edited frame -->
+  <rect x="560" y="54" width="392" height="220" rx="18" fill="#0f172a" opacity="0.12"/>
+  <g clip-path="url(#h-frame)">
+    <rect x="560" y="48" width="392" height="220" fill="url(#h-footage)"/>
+    <!-- presenter -->
+    <circle cx="820" cy="136" r="40" fill="#94a3b8"/>
+    <path d="M736 268 C736 206 772 184 820 184 C868 184 904 206 904 268 Z" fill="#94a3b8"/>
+    <!-- summary pills -->
+    <rect x="584" y="74" width="150" height="30" rx="15" fill="#f8f8f2"/>
+    <text x="659" y="94" font-size="14" font-weight="700" text-anchor="middle" fill="#111827">reads the transcript</text>
+    <rect x="584" y="112" width="124" height="30" rx="15" fill="#f8f8f2"/>
+    <text x="646" y="132" font-size="14" font-weight="700" text-anchor="middle" fill="#111827">writes the EDL</text>
+    <rect x="584" y="150" width="136" height="30" rx="15" fill="#ff5555"/>
+    <text x="652" y="170" font-size="14" font-weight="700" text-anchor="middle" fill="#ffffff">checks its own cut</text>
+    <!-- caption -->
+    <text x="756" y="248" font-size="19" font-weight="800" text-anchor="middle" fill="#ffffff" stroke="#111827" stroke-width="4" paint-order="stroke" stroke-linejoin="round">every cut has a reason</text>
+  </g>
+  <rect x="560" y="48" width="392" height="220" rx="18" fill="none" stroke="#111827" stroke-width="2"/>
+
+  <!-- timeline with two stretches cut out -->
+  <g>
+    <rect x="560" y="292" width="118" height="26" rx="6" fill="#111827"/>
+    <rect x="684" y="292" width="34" height="26" rx="6" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="4 4"/>
+    <rect x="724" y="292" width="96" height="26" rx="6" fill="#111827"/>
+    <rect x="826" y="292" width="22" height="26" rx="6" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="4 4"/>
+    <rect x="854" y="292" width="98" height="26" rx="6" fill="#111827"/>
+    <!-- playhead -->
+    <rect x="779" y="284" width="3" height="42" rx="1.5" fill="#ff5555"/>
+    <circle cx="780.5" cy="284" r="5" fill="#ff5555"/>
+  </g>
+  <text x="560" y="342" font-size="13" fill="#64748b">kept</text>
+  <text x="684" y="342" font-size="13" fill="#64748b">cut: retake</text>
+  <text x="826" y="342" font-size="13" fill="#64748b">cut: silence</text>
+</svg>

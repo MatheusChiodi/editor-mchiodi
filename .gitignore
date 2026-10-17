@@ -1,0 +1,72 @@
+node_modules/
+dist/
+
+# segredos e configuração local (o tópico do ntfy em mce.config.json funciona como senha)
+.env
+.env.*
+mce.config.json
+.claude/settings.local.json
+
+# ── vídeos: nada do que entra ou sai do pipeline vai para o git ──
+# brutos enviados (inclusive inbox/limpa, inbox/normal, inbox/pro, inbox/max)
+inbox/*
+!inbox/.gitkeep
+# entregas: final.mp4, final-shorts.mp4, capas, título, descrição, relatório
+output/*
+!output/.gitkeep
+# trabalho por vídeo: proxy, transcrição, EDLs, renders, frames de capa, prévias do visor, stills
+projects/*
+!projects/.gitkeep
+
+# rede de segurança: mídia nunca é versionada, esteja onde estiver
+*.mp4
+*.mov
+*.mkv
+*.m4v
+*.webm
+*.avi
+*.wmv
+*.flv
+*.mts
+*.m2ts
+*.ts.mp4
+*.mxf
+*.prores
+*.wav
+*.mp3
+*.m4a
+*.aac
+*.flac
+*.ogg
+*.opus
+*.pcm
+*.srt
+*.vtt
+# exceção: os efeitos sonoros-base, sintetizados por `mce assets init` (livres de direitos, poucos KB)
+!assets/sfx/*.wav
+
+# biblioteca pessoal: trilhas, memes, LUTs e material de marca ficam só na máquina
+assets/music/*
+assets/memes/*
+assets/luts/*
+assets/brand/*
+!assets/*/.gitkeep
+!assets/memes/placeholder.png
+
+# saídas avulsas do Remotion
+out/
+motion/out/
+motion/public/*.mp4
+motion/public/*.mov
+
+# sidecar Python
+transcriber/.venv/
+transcriber/.cache/
+__pycache__/
+*.pyc
+
+# estado local
+.queue/
+*.log
+.DS_Store
+Thumbs.db

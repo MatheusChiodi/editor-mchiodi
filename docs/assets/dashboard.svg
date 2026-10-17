@@ -1,0 +1,109 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 624" width="100%" role="img" aria-labelledby="d-title d-desc" font-family="Consolas, 'Cascadia Mono', Menlo, 'DejaVu Sans Mono', monospace" font-size="13.5">
+  <title id="d-title">The live terminal dashboard opened by mce progress --watch</title>
+  <desc id="d-desc">A terminal window. The header shows two edits, one running, plus free RAM, VRAM and free disk. The first card, como-melhorei at level max, lists the nine steps of an edit: analysis, automatic cut, direction, preview and self-evaluation are done; the final render is running at 55 percent with time remaining; final evaluation, Short and report are pending. Below the steps: machine time, the last evaluation, the level budget and the activity history. A second card, teste-fullstack, shows an interrupted final render and the command to resume it. The footer lists the keys. The interface text is in Portuguese, as in the real tool.</desc>
+
+  <!-- window -->
+  <rect x="8" y="8" width="984" height="608" rx="16" fill="#0f172a" stroke="#334155" stroke-width="2"/>
+  <path d="M8 44 V24 Q8 8 24 8 H976 Q992 8 992 24 V44 Z" fill="#1e293b"/>
+  <circle cx="32" cy="26" r="6" fill="#475569"/>
+  <circle cx="52" cy="26" r="6" fill="#475569"/>
+  <circle cx="72" cy="26" r="6" fill="#475569"/>
+  <text x="500" y="31" text-anchor="middle" fill="#94a3b8">mce progress --watch</text>
+
+  <!-- header -->
+  <rect x="28" y="58" width="944" height="26" rx="6" fill="#1e293b"/>
+  <text x="40" y="76" font-weight="700" fill="#f8f8f2">MChiodi Editor</text>
+  <text x="164" y="76" fill="#cbd5e1">2 edições · 1 rodando</text>
+  <text x="960" y="76" text-anchor="end" fill="#cbd5e1">RAM 2,9G · VRAM 1,4/6,0 · disco 234G  09:30:08</text>
+
+  <!-- card 1 -->
+  <rect x="28" y="104" width="944" height="384" rx="10" fill="none" stroke="#475569" stroke-width="1.5"/>
+  <rect x="44" y="94" width="150" height="20" fill="#0f172a"/>
+  <path d="M52 99 l7 5 l-7 5 z" fill="#ff5555"/>
+  <text x="66" y="109" font-weight="700" fill="#f8f8f2">como-melhorei</text>
+  <rect x="800" y="94" width="156" height="20" fill="#0f172a"/>
+  <text x="948" y="109" text-anchor="end" fill="#94a3b8">nível max · EDL v5</text>
+
+  <rect x="48" y="126" width="300" height="12" rx="3" fill="#334155"/>
+  <rect x="48" y="126" width="189" height="12" rx="3" fill="#f8f8f2"/>
+  <text x="362" y="137" fill="#e2e8f0">5/8 etapas · 63%</text>
+
+  <!-- steps -->
+  <g>
+    <path d="M48 165 l4 4 l8 -9" stroke="#34d399" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="70" y="170" fill="#e2e8f0">1 Análise</text>
+    <text x="290" y="170" fill="#94a3b8">proxy, transcrição e takes.md</text>
+
+    <path d="M48 188 l4 4 l8 -9" stroke="#34d399" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="70" y="193" fill="#e2e8f0">2 Corte automático</text>
+    <text x="290" y="193" fill="#94a3b8">07:19 → 07:09 em 15 clipes</text>
+
+    <path d="M48 211 l4 4 l8 -9" stroke="#34d399" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="70" y="216" fill="#e2e8f0">3 Direção</text>
+    <text x="290" y="216" fill="#94a3b8">EDL v5 · nível max · 43 gráficos, 12 cenas, 17 zooms · orçamento 6/6 no alvo</text>
+
+    <path d="M48 234 l4 4 l8 -9" stroke="#34d399" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="70" y="239" fill="#e2e8f0">4 Preview</text>
+    <text x="290" y="239" fill="#94a3b8">preview.mp4</text>
+    <text x="960" y="239" text-anchor="end" fill="#64748b">15:48</text>
+
+    <path d="M48 257 l4 4 l8 -9" stroke="#34d399" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="70" y="262" fill="#e2e8f0">5 Autoavaliação</text>
+    <text x="290" y="262" fill="#94a3b8">aprovada (0 erros, 18 avisos)</text>
+    <text x="960" y="262" text-anchor="end" fill="#64748b">05:33</text>
+
+    <rect x="38" y="270" width="924" height="23" rx="5" fill="#1e293b"/>
+    <path d="M49 275 l9 6.5 l-9 6.5 z" fill="#ff5555"/>
+    <text x="70" y="286" font-weight="700" fill="#f8f8f2">6 Render final</text>
+    <text x="290" y="286" fill="#f8f8f2">gráficos (Remotion)</text>
+    <rect x="446" y="276" width="150" height="11" rx="3" fill="#334155"/>
+    <rect x="446" y="276" width="82" height="11" rx="3" fill="#ff5555"/>
+    <text x="608" y="286" font-weight="700" fill="#f8f8f2">55%</text>
+    <text x="650" y="286" fill="#cbd5e1">faltam ~11:39 · há 16:36</text>
+
+    <circle cx="54" cy="304" r="2.5" fill="#64748b"/>
+    <text x="70" y="309" fill="#94a3b8">7 Avaliação do final</text>
+
+    <circle cx="54" cy="327" r="2.5" fill="#64748b"/>
+    <text x="70" y="332" fill="#94a3b8">8 Short</text>
+    <text x="290" y="332" fill="#64748b">opcional, sem trecho escolhido</text>
+
+    <circle cx="54" cy="350" r="2.5" fill="#64748b"/>
+    <text x="70" y="355" fill="#94a3b8">9 Relatório e capítulos</text>
+  </g>
+
+  <!-- details of the focused edit -->
+  <line x1="48" y1="372" x2="952" y2="372" stroke="#1e293b" stroke-width="1.5"/>
+  <g>
+    <text x="48" y="396" fill="#64748b">tempo</text>
+    <text x="140" y="396" fill="#cbd5e1">25:23 de máquina em 3 execuções · desde 12/10 08:26</text>
+    <text x="48" y="417" fill="#64748b">qualidade</text>
+    <text x="140" y="417" fill="#34d399">aprovada</text>
+    <text x="207" y="417" fill="#cbd5e1">· 0 erros, 18 avisos · v5-preview</text>
+    <text x="48" y="438" fill="#64748b">orçamento</text>
+    <text x="140" y="438" fill="#cbd5e1">no alvo do nível</text>
+    <text x="48" y="459" fill="#64748b">histórico</text>
+    <text x="140" y="459" fill="#cbd5e1">09:11 autoavaliação concluída em 05:33</text>
+    <text x="140" y="478" fill="#cbd5e1">09:13 render final iniciado</text>
+  </g>
+
+  <!-- card 2 -->
+  <rect x="28" y="510" width="944" height="64" rx="10" fill="none" stroke="#334155" stroke-width="1.5"/>
+  <rect x="44" y="500" width="140" height="20" fill="#0f172a"/>
+  <text x="52" y="515" font-weight="700" fill="#cbd5e1">teste-fullstack</text>
+  <rect x="786" y="500" width="170" height="20" fill="#0f172a"/>
+  <text x="948" y="515" text-anchor="end" fill="#94a3b8">nível normal · EDL v4</text>
+  <rect x="48" y="531" width="300" height="12" rx="3" fill="#334155"/>
+  <rect x="48" y="531" width="201" height="12" rx="3" fill="#94a3b8"/>
+  <text x="362" y="542" fill="#cbd5e1">6/9 etapas · 67%</text>
+  <text x="520" y="542" font-weight="700" fill="#ff5555">!</text>
+  <text x="536" y="542" fill="#cbd5e1">Render final interrompido em gráficos</text>
+  <text x="48" y="563" fill="#64748b">retomar</text>
+  <text x="124" y="563" fill="#f8f8f2">pnpm mce render teste-fullstack --final</text>
+
+  <!-- footer: keys -->
+  <g fill="#94a3b8">
+    <path d="M44 600 l4 -6 l4 6 z M56 594 l4 6 l4 -6 z" fill="#94a3b8"/>
+    <text x="72" y="602">edição · Enter foco · o pasta · p vídeo · r relatório · g cenas · c copiar · ? ajuda · q sai</text>
+  </g>
+</svg>
