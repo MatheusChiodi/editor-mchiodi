@@ -29,7 +29,7 @@
     "node": ">=22"
   },
   "dependencies": {
-    "@react-three/fiber": "^9.8.1",
+    "@react-three/fiber": "^9.8.2",
     "@remotion/bundler": "4.0.534",
     "@remotion/captions": "4.0.534",
     "@remotion/cli": "4.0.534",
