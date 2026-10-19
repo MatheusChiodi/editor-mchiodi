@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@react-three/fiber':
-        specifier: ^9.8.1
-        version: 9.8.1(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(three@0.186.1)
+        specifier: ^9.8.2
+        version: 9.8.2(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(three@0.186.1)
       '@remotion/bundler':
         specifier: 4.0.534
         version: 4.0.534(postcss@8.5.29)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
@@ -34,7 +34,7 @@ importers:
         version: 4.0.534(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       '@remotion/three':
         specifier: 4.0.534
-        version: 4.0.534(@react-three/fiber@9.8.1(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(three@0.186.1))(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(remotion@4.0.534(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(three@0.186.1)
+        version: 4.0.534(@react-three/fiber@9.8.2(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(three@0.186.1))(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(remotion@4.0.534(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(three@0.186.1)
       '@remotion/transitions':
         specifier: 4.0.534
         version: 4.0.534(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
@@ -716,8 +716,8 @@ packages:
   '@oxc-project/types@0.153.0':
     resolution: {integrity: sha512-jSNrRIyvPVLL5E1z/tS5zLAprosGz/FuI1PWwEOz59j3E4TTTzSpqKb/RDGqJhhW0QHYISGXxq582wGx6T11Tw==}
 
-  '@react-three/fiber@9.8.1':
-    resolution: {integrity: sha512-GbNP4r6F/gpclFKkLGHzXcuwFWAzLyKsmrQGcDuwK3wQnwLH6F1TfGtEYjHy8OQoGsajwT19B9jtVLLjjfH09w==}
+  '@react-three/fiber@9.8.2':
+    resolution: {integrity: sha512-6s0ejw0bT1myQ/aLLugcil8/zBmNnnHw/AISWF1yfDLOxfX3yYaTS+0IkpJITEnm/SSMLtxje6CJDt0i5Wu1Sw==}
     peerDependencies:
       expo: '>=43.0'
       expo-asset: '>=8.4'
@@ -3002,7 +3002,7 @@ snapshots:
 
   '@oxc-project/types@0.153.0': {}
 
-  '@react-three/fiber@9.8.1(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(three@0.186.1)':
+  '@react-three/fiber@9.8.2(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(three@0.186.1)':
     dependencies:
       '@babel/runtime': 7.29.10
       '@types/webxr': 0.5.24
@@ -3308,9 +3308,9 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  '@remotion/three@4.0.534(@react-three/fiber@9.8.1(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(three@0.186.1))(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(remotion@4.0.534(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(three@0.186.1)':
+  '@remotion/three@4.0.534(@react-three/fiber@9.8.2(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(three@0.186.1))(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(remotion@4.0.534(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(three@0.186.1)':
     dependencies:
-      '@react-three/fiber': 9.8.1(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(three@0.186.1)
+      '@react-three/fiber': 9.8.2(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(three@0.186.1)
       react: 19.3.0
       react-dom: 19.3.0(react@19.3.0)
       remotion: 4.0.534(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
