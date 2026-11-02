@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@react-three/fiber':
-        specifier: ^9.8.1
-        version: 9.8.1(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(three@0.186.1)
+        specifier: ^9.8.2
+        version: 9.8.2(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(three@0.187.0)
       '@remotion/bundler':
         specifier: 4.0.534
         version: 4.0.534(postcss@8.5.29)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
@@ -34,7 +34,7 @@ importers:
         version: 4.0.534(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       '@remotion/three':
         specifier: 4.0.534
-        version: 4.0.534(@react-three/fiber@9.8.1(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(three@0.186.1))(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(remotion@4.0.534(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(three@0.186.1)
+        version: 4.0.534(@react-three/fiber@9.8.2(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(three@0.187.0))(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(remotion@4.0.534(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(three@0.187.0)
       '@remotion/transitions':
         specifier: 4.0.534
         version: 4.0.534(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
@@ -60,8 +60,8 @@ importers:
         specifier: ^16.35.0
         version: 16.35.0
       three:
-        specifier: ^0.186.1
-        version: 0.186.1
+        specifier: ^0.187.0
+        version: 0.187.0
       zod:
         specifier: ^4.6.6
         version: 4.6.6
@@ -716,8 +716,8 @@ packages:
   '@oxc-project/types@0.153.0':
     resolution: {integrity: sha512-jSNrRIyvPVLL5E1z/tS5zLAprosGz/FuI1PWwEOz59j3E4TTTzSpqKb/RDGqJhhW0QHYISGXxq582wGx6T11Tw==}
 
-  '@react-three/fiber@9.8.1':
-    resolution: {integrity: sha512-GbNP4r6F/gpclFKkLGHzXcuwFWAzLyKsmrQGcDuwK3wQnwLH6F1TfGtEYjHy8OQoGsajwT19B9jtVLLjjfH09w==}
+  '@react-three/fiber@9.8.2':
+    resolution: {integrity: sha512-6s0ejw0bT1myQ/aLLugcil8/zBmNnnHw/AISWF1yfDLOxfX3yYaTS+0IkpJITEnm/SSMLtxje6CJDt0i5Wu1Sw==}
     peerDependencies:
       expo: '>=43.0'
       expo-asset: '>=8.4'
@@ -2332,8 +2332,8 @@ packages:
     engines: {node: '>=10'}
     hasBin: true
 
-  three@0.186.1:
-    resolution: {integrity: sha512-blFeqb49wRCSGUGj7gtpfnSGHy2lwDk94RhUmS1c/hTby70kvChbWpkJ4Pm1390LqzzvTmzgXKHPEafJwCb8jA==}
+  three@0.187.0:
+    resolution: {integrity: sha512-Qiu7R+Cmh8CstZsY1uJOSWnVlfo7ZtNLV7mF8Jltk3LB3AtDu9cRZlcnRKkAk8Y4z6KKw35z7Y7Urd7jWY8etA==}
 
   tiny-invariant@1.3.3:
     resolution: {integrity: sha512-+FbBPE1o9QAYvviau/qC5SE3caw21q3xkvWKBtja5vgqOWIHHJ3ioaq1VPfn/Szqctz2bU/oYeKd9/z5BL+PVg==}
@@ -2520,8 +2520,8 @@ packages:
   zod@4.6.6:
     resolution: {integrity: sha512-4UmzQUF5fxvfcYHlbjBmejU+w+hbDnWFx4aS8kBx7nPBHcO2SqPbpAG8snbdg+Xse4pRefR98hgjFgIMCI/UhA==}
 
-  zustand@5.0.15:
-    resolution: {integrity: sha512-MpSEjRiBkA9crSYeOUH32rJC7SVqAbm0Fqcqge/bUi2PPoLcBWKOsG+C8mevmpr8TwXHBVkChbbJiyvkE+i/3A==}
+  zustand@5.0.16:
+    resolution: {integrity: sha512-Uv7e327ihlCfayfja3hDc0M64Upev1LWBKpRobdK4NyovDDPeeX4imWXc/wzC1yc6fkYPoAY/ncKVPAs2jrtQw==}
     engines: {node: '>=12.20.0'}
     peerDependencies:
       '@types/react': '>=18.0.0'
@@ -3002,7 +3002,7 @@ snapshots:
 
   '@oxc-project/types@0.153.0': {}
 
-  '@react-three/fiber@9.8.1(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(three@0.186.1)':
+  '@react-three/fiber@9.8.2(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(three@0.187.0)':
     dependencies:
       '@babel/runtime': 7.29.10
       '@types/webxr': 0.5.24
@@ -3013,9 +3013,9 @@ snapshots:
       react-use-measure: 2.1.7(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       scheduler: 0.28.0
       suspend-react: 0.1.3(react@19.3.0)
-      three: 0.186.1
+      three: 0.187.0
       use-sync-external-store: 1.7.0(react@19.3.0)
-      zustand: 5.0.15(@types/react@19.3.0)(react@19.3.0)(use-sync-external-store@1.7.0(react@19.3.0))
+      zustand: 5.0.16(@types/react@19.3.0)(react@19.3.0)(use-sync-external-store@1.7.0(react@19.3.0))
     optionalDependencies:
       react-dom: 19.3.0(react@19.3.0)
     transitivePeerDependencies:
@@ -3308,13 +3308,13 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  '@remotion/three@4.0.534(@react-three/fiber@9.8.1(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(three@0.186.1))(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(remotion@4.0.534(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(three@0.186.1)':
+  '@remotion/three@4.0.534(@react-three/fiber@9.8.2(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(three@0.187.0))(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(remotion@4.0.534(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(three@0.187.0)':
     dependencies:
-      '@react-three/fiber': 9.8.1(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(three@0.186.1)
+      '@react-three/fiber': 9.8.2(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(three@0.187.0)
       react: 19.3.0
       react-dom: 19.3.0(react@19.3.0)
       remotion: 4.0.534(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
-      three: 0.186.1
+      three: 0.187.0
 
   '@remotion/timeline-utils@4.0.534(react-dom@19.3.0(react@19.3.0))(react@19.3.0)':
     dependencies:
@@ -4550,7 +4550,7 @@ snapshots:
       commander: 2.20.3
       source-map-support: 0.5.21
 
-  three@0.186.1: {}
+  three@0.187.0: {}
 
   tiny-invariant@1.3.3: {}
 
@@ -4709,7 +4709,7 @@ snapshots:
 
   zod@4.6.6: {}
 
-  zustand@5.0.15(@types/react@19.3.0)(react@19.3.0)(use-sync-external-store@1.7.0(react@19.3.0)):
+  zustand@5.0.16(@types/react@19.3.0)(react@19.3.0)(use-sync-external-store@1.7.0(react@19.3.0)):
     optionalDependencies:
       '@types/react': 19.3.0
       react: 19.3.0
