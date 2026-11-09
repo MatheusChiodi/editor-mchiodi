@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 500" width="100%" role="img" aria-labelledby="dg-title dg-desc" font-family="'Segoe UI', Helvetica, Arial, sans-serif">
+  <title id="dg-title">Dragging a graphic anywhere in the Cut preview</title>
+  <desc id="dg-desc">A video frame with a presenter and a graphic card. The card is dragged from its original place to a new one, with snap guides at the thirds and the frame centre and a dashed box around the protected face. On the right, a formula shows that the final position is the original position plus the automatic face shift plus your manual offset, saved as a new EDL version with undo and redo.</desc>
+  <defs>
+    <marker id="dg-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 Z" fill="#ff5555"/>
+    </marker>
+  </defs>
+
+  <rect x="8" y="8" width="984" height="484" rx="24" fill="#f8f8f2" stroke="#e2e8f0" stroke-width="2"/>
+  <text x="32" y="58" font-family="Georgia, 'Times New Roman', serif" font-size="27" font-weight="700" fill="#111827">Drag it where you want</text>
+  <text x="968" y="58" font-size="14" text-anchor="end" fill="#64748b">Drop a graphic anywhere. The render honours it.</text>
+
+  <!-- frame -->
+  <rect x="32" y="88" width="560" height="315" rx="12" fill="#2f4a3a" stroke="#cbd5e1" stroke-width="1.5"/>
+  <!-- guides: thirds + centre -->
+  <path d="M219 88 V403 M406 88 V403" stroke="#34d399" stroke-width="1" stroke-dasharray="4 4" opacity="0.8"/>
+  <path d="M32 193 H592 M32 298 H592" stroke="#34d399" stroke-width="1" stroke-dasharray="4 4" opacity="0.8"/>
+  <!-- presenter -->
+  <circle cx="312" cy="196" r="34" fill="#e7c9a9"/>
+  <path d="M242 356 C246 270 278 244 312 244 C346 244 378 270 382 356 Z" fill="#111827"/>
+  <!-- protected face box -->
+  <rect x="268" y="158" width="88" height="80" rx="6" fill="none" stroke="#fbbf24" stroke-width="2" stroke-dasharray="5 4"/>
+  <text x="312" y="152" font-size="11.5" font-weight="700" text-anchor="middle" fill="#fbbf24">PROTECTED FACE</text>
+
+  <!-- original (ghost) card -->
+  <rect x="56" y="112" width="160" height="72" rx="10" fill="none" stroke="#f8f8f2" stroke-width="2" stroke-dasharray="6 5" opacity="0.7"/>
+  <text x="136" y="152" font-size="12" font-weight="700" text-anchor="middle" fill="#f8f8f2" opacity="0.8">ORIGINAL</text>
+  <!-- moved card -->
+  <rect x="408" y="300" width="164" height="72" rx="10" fill="#ffffff" stroke="#ff5555" stroke-width="2.5"/>
+  <circle cx="430" cy="324" r="8" fill="#ff5555"/>
+  <text x="446" y="329" font-size="14" font-weight="700" fill="#111827">Warning card</text>
+  <text x="424" y="352" font-size="12.5" fill="#475569">Never name a variable x.</text>
+  <!-- drag path (orthogonal) -->
+  <path d="M136 184 V388 H490 V380" fill="none" stroke="#ff5555" stroke-width="2.5" stroke-dasharray="7 5" stroke-linejoin="round" marker-end="url(#dg-arrow)"/>
+
+  <!-- right: formula and features -->
+  <rect x="616" y="88" width="352" height="148" rx="16" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+  <text x="632" y="118" font-size="17" font-weight="700" fill="#111827">Final position</text>
+  <text x="632" y="148" font-family="Consolas, 'Cascadia Mono', Menlo, monospace" font-size="13.5" fill="#334155">component position</text>
+  <text x="632" y="172" font-family="Consolas, 'Cascadia Mono', Menlo, monospace" font-size="13.5" fill="#334155">+ automatic face shift</text>
+  <text x="632" y="196" font-family="Consolas, 'Cascadia Mono', Menlo, monospace" font-size="13.5" fill="#ff5555" font-weight="700">+ your offset {x, y}</text>
+  <text x="632" y="222" font-size="12.5" fill="#64748b">Fractions of the frame, stored in the EDL.</text>
+
+  <rect x="616" y="252" width="352" height="151" rx="16" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+  <text x="632" y="282" font-size="17" font-weight="700" fill="#111827">While you drag</text>
+  <text x="632" y="308" font-size="14" fill="#334155">Soft snap to margins, thirds, centre</text>
+  <text x="632" y="330" font-size="14" fill="#334155">and the face box. Alt releases it.</text>
+  <text x="632" y="356" font-size="14" fill="#334155">A coral dashed frame lights up if the</text>
+  <text x="632" y="378" font-size="14" fill="#334155">graphic would cover your face.</text>
+
+  <!-- keys strip -->
+  <rect x="32" y="419" width="936" height="56" rx="14" fill="#111827"/>
+  <text x="56" y="452" font-size="14" fill="#f8f8f2"><tspan font-weight="700" fill="#ff5555">R</tspan> or double click: reset   ·   <tspan font-weight="700" fill="#ff5555">Alt + arrows</tspan>: nudge (Shift = big step)   ·   <tspan font-weight="700" fill="#ff5555">Ctrl + D</tspan>: duplicate   ·   undo / redo   ·   saved as a new EDL version</text>
+</svg>

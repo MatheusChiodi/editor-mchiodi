@@ -164,10 +164,20 @@ export function pushPoint(state: PushState, point: Point): Point {
   return { x: point.x * state.scale + state.tx, y: point.y * state.scale + state.ty };
 }
 
+/** Foco do rosto num instante do palco: `t` em segundos desde o início do overlay. */
+export interface FocusKey extends Point {
+  t: number;
+}
+
 export interface PresenterSpec {
   slot: PresenterSlot;
   /** onde está o rosto no footage (0–1) */
   focus: Point;
+  /**
+   * O foco ao longo do palco (foco `auto` com apresentador que anda): o enquadramento segue o rosto.
+   * Sem valor (ou com menos de 2 chaves), vale `focus` fixo. Ignorado quando o palco tem `pushes`.
+   */
+  focusTrack?: FocusKey[];
   /** aproximação além do mínimo que cobre o cartão; sem valor, a padrão do slot */
   zoom?: number;
   backdrop: StageBackdrop;
@@ -365,8 +375,57 @@ export function coverTransform(rect: Rect, focus: Point, zoom: number, width: nu
   return { scale, x: place(box.x, box.w, width, focus.x), y: place(box.y, box.h, height, focus.y) };
 }
 
+/** Chaves válidas (finitas, foco 0–1), em ordem de tempo e sem tempos repetidos; menos de 2 chaves = sem trilha. */
+export function cleanFocusTrack(track: readonly FocusKey[] | null | undefined): FocusKey[] {
+  const keys = (track ?? [])
+    .filter((key) => key && [key.t, key.x, key.y].every((value) => typeof value === 'number' && Number.isFinite(value)))
+    .map((key) => ({ t: Math.max(0, key.t), x: clamp01(key.x), y: clamp01(key.y) }))
+    .sort((a, b) => a.t - b.t);
+  const unique = keys.filter((key, index) => index === 0 || key.t - keys[index - 1]!.t > 1e-6);
+  return unique.length >= 2 ? unique : [];
+}
+
+/** Foco em `sec` (desde o início do overlay): interpolação linear entre as chaves, parado antes da primeira e depois da última. */
+export function focusAtSec(spec: Pick<PresenterSpec, 'focus' | 'focusTrack'>, sec: number): Point {
+  const keys = cleanFocusTrack(spec.focusTrack);
+  if (keys.length === 0) return spec.focus;
+  if (sec <= keys[0]!.t) return { x: keys[0]!.x, y: keys[0]!.y };
+  const last = keys[keys.length - 1]!;
+  if (sec >= last.t) return { x: last.x, y: last.y };
+  const index = keys.findIndex((key) => key.t > sec);
+  const a = keys[index - 1]!;
+  const b = keys[index]!;
+  const k = (sec - a.t) / (b.t - a.t);
+  return { x: lerp(a.x, b.x, k), y: lerp(a.y, b.y, k) };
+}
+
+/** Foco no fim do palco: é onde o cartão fica ao colar no palco seguinte. */
+export function endFocus(spec: Pick<PresenterSpec, 'focus' | 'focusTrack'>): Point {
+  const keys = cleanFocusTrack(spec.focusTrack);
+  const last = keys[keys.length - 1];
+  return last ? { x: last.x, y: last.y } : spec.focus;
+}
+
 export function slotTransform(spec: Pick<PresenterSpec, 'slot' | 'focus' | 'zoom'>, width: number, height: number): FootageTransform {
   return coverTransform(slotRect(spec.slot), spec.focus, spec.zoom ?? slotZoom(spec.slot), width, height);
+}
+
+/**
+ * Transformação pousada com a trilha de foco: interpola as TRANSFORMAÇÕES das chaves (não o foco), pois o
+ * ffmpeg interpola a posição linearmente; assim as duas contas são idênticas e o footage cobre o buraco.
+ */
+export function trackedTransform(spec: Pick<PresenterSpec, 'slot' | 'focus' | 'focusTrack' | 'zoom'>, sec: number, width: number, height: number): FootageTransform {
+  const keys = cleanFocusTrack(spec.focusTrack);
+  if (keys.length === 0) return slotTransform(spec, width, height);
+  const at = (key: FocusKey) => slotTransform({ ...spec, focus: key }, width, height);
+  if (sec <= keys[0]!.t) return at(keys[0]!);
+  const last = keys[keys.length - 1]!;
+  if (sec >= last.t) return at(last);
+  const index = keys.findIndex((key) => key.t > sec);
+  const a = at(keys[index - 1]!);
+  const b = at(keys[index]!);
+  const k = (sec - keys[index - 1]!.t) / (keys[index]!.t - keys[index - 1]!.t);
+  return { scale: a.scale, x: lerp(a.x, b.x, k), y: lerp(a.y, b.y, k) };
 }
 
 /**
@@ -386,10 +445,11 @@ export function pushWeights(base: FootageTransform, rect: Rect, push: Pick<Place
  * Transformação do footage no mesmo instante de `holeAt`. As duas são interpolações lineares com os
  * mesmos pesos entre extremos em que o footage cobre o buraco; logo, cobre no caminho inteiro.
  */
-export function transformAt(plan: Pick<StagePlan, 'slot' | 'focus' | 'zoom' | 'from' | 'holdExit' | 'transitionSec' | 'pushes'>, sec: number, durationSec: number, width: number, height: number): FootageTransform {
+export function transformAt(plan: Pick<StagePlan, 'slot' | 'focus' | 'focusTrack' | 'zoom' | 'from' | 'holdExit' | 'transitionSec' | 'pushes'>, sec: number, durationSec: number, width: number, height: number): FootageTransform {
   const { enter, exit } = stageProgress(sec, durationSec, plan.holdExit, plan.transitionSec);
-  const from = plan.from ? slotTransform(plan.from, width, height) : IDENTITY;
-  const to = { ...slotTransform(plan, width, height) };
+  const from = plan.from ? slotTransform({ ...plan.from, focus: endFocus(plan.from) }, width, height) : IDENTITY;
+  const tracked = !plan.pushes?.length && cleanFocusTrack(plan.focusTrack).length > 0;
+  const to = { ...(tracked ? trackedTransform(plan, sec, width, height) : slotTransform(plan, width, height)) };
   const base = { ...to };
   for (const push of plan.pushes ?? []) {
     const weight = pushWeights(base, slotRect(plan.slot), push, width, height);
@@ -542,7 +602,7 @@ export function linkStages<T extends { from: number; durationInFrames: number; p
     const after = next && touches(item, next) ? next : null;
     plans.set(item, {
       ...item.presenter!,
-      from: before ? { slot: before.presenter!.slot, focus: before.presenter!.focus, zoom: before.presenter!.zoom, ...tag(before) } : null,
+      from: before ? { slot: before.presenter!.slot, focus: endFocus(before.presenter!), zoom: before.presenter!.zoom, ...tag(before) } : null,
       holdExit: Boolean(after),
       ...(after ? { next: { slot: after.presenter!.slot, ...tag(after) } } : {}),
     });

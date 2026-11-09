@@ -1,4 +1,5 @@
-import { interpolate, useCurrentFrame, useVideoConfig } from 'remotion';
+import { noise2D } from '@remotion/noise';
+import { interpolate, spring, useCurrentFrame, useVideoConfig } from 'remotion';
 
 import { motion } from './theme';
 
@@ -18,7 +19,7 @@ export function presence(
   fps: number,
   total: number,
   enterSec: number = motion.base,
-  exitSec: number = motion.fast,
+  exitSec: number = motion.leave,
 ): { enter: number; exit: number; value: number } {
   const enter = interpolate(frame, [0, enterSec * fps], [0, 1], { ...clamp, easing: motion.enter });
   const exit = interpolate(frame, [total - exitSec * fps, total], [0, 1], { ...clamp, easing: motion.exit });
@@ -28,6 +29,43 @@ export function presence(
 /** Atraso em segundos do i-ésimo item de uma sequência escalonada. */
 export function stagger(index: number, stepSec = 0.12, startSec = 0): number {
   return startSec + index * stepSec;
+}
+
+/**
+ * Começo de cada item de uma cadeia: o próximo entra quando o anterior termina (`chain` do motion-canvas).
+ * Para itens em paralelo use o mesmo `startSec`; para escalonar, `stagger`.
+ */
+export function chainStarts(durationsSec: readonly number[], gapSec = 0, startSec = 0): number[] {
+  const starts: number[] = [];
+  let cursor = startSec;
+  for (const duration of durationsSec) {
+    starts.push(cursor);
+    cursor += duration + gapSec;
+  }
+  return starts;
+}
+
+/** Progresso 0→1 que se repete a cada `periodSec`; `pingpong` vai e volta (0→1→0) sem salto. */
+export function loopProgress(frame: number, fps: number, periodSec: number, pingpong = false): number {
+  if (!(periodSec > 0)) return 0;
+  const phase = (((frame / fps) % periodSec) + periodSec) % periodSec / periodSec;
+  return pingpong ? 1 - Math.abs(2 * phase - 1) : phase;
+}
+
+/** Mola física (overshoot e assentamento) a partir de `delaySec`; 0 antes, tende a 1 depois. */
+export function springAt(
+  frame: number,
+  fps: number,
+  delaySec = 0,
+  config: { damping?: number; stiffness?: number; mass?: number } = { damping: 12, stiffness: 120, mass: 0.8 },
+): number {
+  const local = frame - delaySec * fps;
+  return local <= 0 ? 0 : spring({ frame: local, fps, config });
+}
+
+/** Ruído suave e determinístico em [-amplitude, amplitude]: movimento orgânico sem `Math.random`. */
+export function wobble(frame: number, fps: number, seed: string | number, amplitude = 1, speedHz = 0.5): number {
+  return noise2D(String(seed), (frame / fps) * speedHz, 0) * amplitude;
 }
 
 /**

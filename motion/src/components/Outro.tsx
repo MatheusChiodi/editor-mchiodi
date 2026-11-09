@@ -85,7 +85,7 @@ export const Outro: React.FC<OutroProps & BaseProps> = ({
         </div>
       </div>
       {layout.slots.map((slot, index) => {
-        const appear = progressAt(frame, fps, stagger(index, 0.14, 0.5), motion.slow);
+        const appear = progressAt(frame, fps, stagger(index, motion.step.base, 0.5), motion.slow);
         return (
           <div key={index} style={{ opacity: appear, translate: `0 ${(1 - appear) * 26}px` }}>
             <svg

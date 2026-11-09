@@ -43,6 +43,25 @@ export const configSchema = z.object({
       minFlagConfidence: z.number().default(0.65),
       /** clipes mais curtos que isso se fundem com o vizinho */
       minClipSec: z.number().default(0.6),
+      /** com análise de movimento: fração mínima da pausa com a tela parada para ela poder ser encurtada */
+      minStillCoverage: z.number().min(0).max(1).default(0.8),
+    })
+    .prefault({}),
+  matting: z
+    .object({
+      device: z.enum(['cuda', 'cpu']).default('cuda'),
+      /** mobilenetv3 é rápido e basta para câmera; resnet50 pesa mais e acerta mais cabelo e mãos */
+      variant: z.enum(['mobilenetv3', 'resnet50']).default('mobilenetv3'),
+    })
+    .prefault({}),
+  motion: z
+    .object({
+      /** fração de pixels que mudam abaixo da qual o quadro conta como parado */
+      stillThreshold: z.number().default(0.002),
+      /** trecho parado mais curto que isso é ignorado */
+      minStillSec: z.number().default(0.8),
+      width: z.number().int().default(160),
+      sampleFps: z.number().default(10),
     })
     .prefault({}),
   edit: z

@@ -4,7 +4,7 @@ import { dirname, join } from 'node:path';
 import type { ProgressFn } from '../lib/ffmpeg.ts';
 import { type ProjectPaths, readJson } from './paths.ts';
 
-export type LiveTask = 'analysis' | 'direction' | 'preview' | 'eval' | 'final' | 'evalFinal' | 'shorts';
+export type LiveTask = 'analysis' | 'direction' | 'preview' | 'eval' | 'final' | 'evalFinal' | 'shorts' | 'music';
 
 /** O que está rodando agora num projeto, gravado pela própria etapa para o `mce progress` mostrar ao vivo. */
 export interface Live {

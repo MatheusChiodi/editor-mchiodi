@@ -8,6 +8,7 @@ import type { ComponentEntry } from '../../components/registry';
 import { alpha, enter, IconBadge, type IconName, Pill, SceneBackground, SceneCard, Statement, window as presenceWindow } from '../../scene-kit';
 import { theme } from '../../theme';
 import { CHAR, clampInt, CLIP, type Extent, fitFont, fitPill, iconOr, MIN_TEXT, pillClamp, sequence, statementHeight, textWidth, timeOr, titleSize } from './kit-a';
+import { fitSceneTimes } from './fit-time';
 
 export interface PilhaItem {
   label: string;
@@ -219,7 +220,7 @@ export const PilhaEmDoisGrupos: React.FC<PilhaEmDoisGruposProps & BaseProps> = (
   const shown = groups.slice(0, PILHA_MAX_GROUPS);
   const counts = pilhaCounts(shown);
   const layout = pilhaLayout(counts, Boolean(note));
-  const times = pilhaTimes(counts, revealAt);
+  const times = fitSceneTimes(pilhaTimes(counts, revealAt), durationInFrames / fps);
   const cardTimes = pilhaGroupTimes(times, groupAt);
   const all = times.flat();
 

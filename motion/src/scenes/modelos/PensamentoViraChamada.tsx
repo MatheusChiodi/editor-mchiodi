@@ -9,6 +9,7 @@ import type { ComponentEntry } from '../../components/registry';
 import { alpha, enter, Eyebrow, IconBadge, type IconName, longShadow, Pill, type Point, popIn, rise, SceneBackground, SceneCard, text, window as presenceWindow, Words } from '../../scene-kit';
 import { motion, theme } from '../../theme';
 import { clampCount, estimateLines, fillTimes, fitFontSize, pickSec, pillWidth } from './fit-b';
+import { fitSceneTimes } from './fit-time';
 
 export type CallSide = 'left' | 'right';
 
@@ -203,7 +204,7 @@ export const PensamentoViraChamada: React.FC<PensamentoViraChamadaProps & BasePr
   const { fps, width } = useVideoConfig();
   const shown = bubbles.slice(0, BUBBLE_RANGE.max);
   const layout = callLayout(width - theme.safe.x * 2, Math.max(1, shown.length));
-  const times = callTimes(shown.length, revealAt);
+  const times = fitSceneTimes(callTimes(shown.length, revealAt), durationInFrames / fps);
   const middle = layout.width / 2;
   const thoughtFit = thoughtFont(thought);
 

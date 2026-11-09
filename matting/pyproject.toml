@@ -1,0 +1,21 @@
+[project]
+name = "editor-mchiodi-matting"
+version = "0.1.0"
+description = "RobustVideoMatting sidecar: video -> alpha matte for MChiodi Editor"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+  "torch",
+  "numpy",
+]
+
+[tool.uv]
+package = false
+environments = ["sys_platform == 'win32'"]
+
+[tool.uv.sources]
+torch = { index = "pytorch-cu128" }
+
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true

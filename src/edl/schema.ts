@@ -85,6 +85,11 @@ export const overlaySchema = z.object({
     .default(null),
   /** `tear`: o overlay (cena de tela cheia) entra por um rasgo de papel, da esquerda para a direita */
   wipe: z.enum(['none', 'tear']).default('none'),
+  /**
+   * Posição manual do gráfico (arrastado no MChiodi Cut): fração do quadro, 0 = posição original.
+   * SOMA com o deslocamento automático que afasta do rosto (src/edl/fit.ts); nunca o remove.
+   */
+  offset: z.object({ x: z.number().min(-1).max(1), y: z.number().min(-1).max(1) }).optional(),
   /** `persistent`: camada fixa que atravessa vários layouts (indicador de progresso) e convive com o gráfico da vez */
   layer: z.enum(['base', 'persistent']).default('base'),
   /**
@@ -191,6 +196,40 @@ export const stabilizeSchema = z.object({
   zoom: z.number().min(0).max(20).default(0),
   reason: z.string().default(''),
 });
+
+/**
+ * Troca de fundo da câmera. `color`/`image`/`video`/`blur` usam uma máscara de pessoa por vídeo (RobustVideoMatting,
+ * sidecar `matting/`); `chroma` tira uma cor com o ffmpeg e não precisa de modelo. Roda sobre o corte, no tempo de saída.
+ */
+export const backgroundSchema = z
+  .object({
+    mode: z.enum(['color', 'image', 'video', 'blur', 'chroma']),
+    /** cor do fundo novo (`color`, e `chroma` sem `file`). Formato #RRGGBB */
+    color: z.string().regex(/^#[0-9a-fA-F]{6}$/, 'use #RRGGBB').default('#101010'),
+    /** `image`/`video`: arquivo em assets/backgrounds (ou caminho absoluto); em `chroma`, fundo novo opcional (imagem ou vídeo, pela extensão) */
+    file: z.string().nullable().default(null),
+    /** `chroma`: cor a remover */
+    keyColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, 'use #RRGGBB').default('#00ff00'),
+    /** `blur`: desfoque do fundo original (sigma) */
+    blur: z.number().min(2).max(60).default(24),
+    /** `chroma`: tolerância da cor (0.01–0.5) e suavização da borda */
+    similarity: z.number().min(0.01).max(0.5).default(0.18),
+    edgeBlend: z.number().min(0).max(0.5).default(0.08),
+    /** `chroma`: remove o reflexo da cor no cabelo e na roupa */
+    despill: z.boolean().default(true),
+    /** refino da máscara (modos com modelo): opening remove respingos, feather suaviza a borda */
+    matte: z
+      .object({
+        /** fração da resolução em que o modelo roda; null = automático (≈512 px no maior lado) */
+        downsample: z.number().min(0.1).max(1).nullable().default(null),
+        opening: z.number().int().min(0).max(8).default(1),
+        feather: z.number().min(0).max(10).default(1.5),
+      })
+      .default({ downsample: null, opening: 1, feather: 1.5 }),
+    /** o que o novo fundo reforça (STYLE.md §1): sem motivo, não entra */
+    reason: z.string().min(1),
+  })
+  .refine((bg) => !['image', 'video'].includes(bg.mode) || bg.file, { path: ['file'], message: 'este modo precisa de `file`' });
 
 export const audioSchema = z.object({
   targetLufs: z.number().default(-14),
@@ -300,6 +339,7 @@ export const edlSchema = z
     music: musicSchema.nullable().default(null),
     grade: gradeSchema.default(gradeSchema.parse({})),
     stabilize: stabilizeSchema.default(stabilizeSchema.parse({})),
+    background: backgroundSchema.nullable().default(null),
     audio: audioSchema.default(audioSchema.parse({})),
     layout: layoutSchema.default(layoutSchema.parse({})),
     chapters: z.array(chapterSchema).default([]),
@@ -381,6 +421,7 @@ export type Zoom = z.infer<typeof zoomSchema>;
 export type Transition = z.infer<typeof transitionSchema>;
 export type Effect = z.infer<typeof effectSchema>;
 export type Grade = z.infer<typeof gradeSchema>;
+export type Background = z.infer<typeof backgroundSchema>;
 export type AudioSettings = z.infer<typeof audioSchema>;
 export type StabilizeSettings = z.infer<typeof stabilizeSchema>;
 export type CaptionSettings = z.infer<typeof captionsSchema>;

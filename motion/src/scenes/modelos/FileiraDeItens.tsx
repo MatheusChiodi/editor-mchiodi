@@ -9,6 +9,7 @@ import type { ComponentEntry } from '../../components/registry';
 import { Arrow, enter, Icon, IconBadge, type IconName, Pill, type Point, rise, SceneBackground, SceneCard, Statement, text } from '../../scene-kit';
 import { theme } from '../../theme';
 import { AREA, CHAR, clampInt, CLIP, type Extent, fitFont, fitPill, iconOr, lineCount, MIN_TEXT, pillClamp, sequence, textWidth, timeOr, titleSize } from './kit-a';
+import { fitSceneTimes } from './fit-time';
 
 export type FileiraFigure = 'card' | 'tray' | 'hero';
 
@@ -282,7 +283,7 @@ export const FileiraDeItens: React.FC<FileiraDeItensProps & BaseProps> = ({
   const count = shown.length;
   const hasHint = kind !== 'hero' && shown.some((item) => item.hint);
   const layout = fileiraLayout(count, kind, { host: Boolean(host), hint: hasHint });
-  const times = fileiraTimes(count, revealAt);
+  const times = fitSceneTimes(fileiraTimes(count, revealAt), durationInFrames / fps);
   const hostAt = timeOr(host?.at, Math.max(0, times[0]! - 1.2));
   const rowAt = layout.host ? Math.min(hostAt, times[0]!) : kind === 'tray' ? Math.max(0, times[0]! - 0.6) : times[0]!;
   const closingSec = timeOr(closingAt, times.at(-1)! + 0.7);

@@ -87,7 +87,7 @@ export const TechRow: React.FC<TechRowProps & BaseProps> = ({
   const placed = techItems(items, revealAt);
   const stack = layout === 'stack';
   const iconSize = size ?? techSize(placed.length, variant, layout);
-  const out = interpolate(frame, [durationInFrames - motion.fast * fps, durationInFrames], [0, 1], { ...clamp, easing: motion.exit });
+  const out = interpolate(frame, [durationInFrames - motion.leave * fps, durationInFrames], [0, 1], { ...clamp, easing: motion.exit });
   const titleIn = interpolate(frame, [0.05 * fps, 0.45 * fps], [0, 1], { ...clamp, easing: motion.enter });
   const outline = { WebkitTextStroke: `6px ${theme.color.ink}`, paintOrder: 'stroke fill', textShadow: '0 4px 18px rgba(0,0,0,0.45)' } as const;
 

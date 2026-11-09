@@ -16,14 +16,16 @@
   "scripts": {
     "mce": "tsx src/cli/index.ts",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit && tsc --noEmit -p cut",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p cut && tsc --noEmit -p music-preview",
     "cut:dev": "vite --config cut/vite.config.ts",
     "cut:build": "vite build --config cut/vite.config.ts",
     "studio": "remotion studio motion/src/index.ts",
     "watch": "tsx src/cli/index.ts watch",
     "install-cli": "tsx scripts/install-cli.ts",
     "uninstall-cli": "tsx scripts/install-cli.ts --uninstall",
-    "sync-tech-icons": "tsx scripts/sync-tech-icons.ts"
+    "sync-tech-icons": "tsx scripts/sync-tech-icons.ts",
+    "music:build": "vite build --config music-preview/vite.config.ts",
+    "music:dev": "vite --config music-preview/vite.config.ts"
   },
   "engines": {
     "node": ">=22"
@@ -35,8 +37,11 @@
     "@remotion/cli": "4.0.534",
     "@remotion/google-fonts": "4.0.534",
     "@remotion/media": "4.0.534",
+    "@remotion/noise": "4.0.534",
+    "@remotion/paths": "4.0.534",
     "@remotion/player": "4.0.534",
     "@remotion/renderer": "4.0.534",
+    "@remotion/shapes": "4.0.534",
     "@remotion/three": "4.0.534",
     "@remotion/transitions": "4.0.534",
     "chokidar": "^5.0.0",

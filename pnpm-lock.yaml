@@ -26,10 +26,19 @@ importers:
       '@remotion/media':
         specifier: 4.0.534
         version: 4.0.534(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+      '@remotion/noise':
+        specifier: 4.0.534
+        version: 4.0.534(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+      '@remotion/paths':
+        specifier: 4.0.534
+        version: 4.0.534(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       '@remotion/player':
         specifier: 4.0.534
         version: 4.0.534(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       '@remotion/renderer':
+        specifier: 4.0.534
+        version: 4.0.534(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+      '@remotion/shapes':
         specifier: 4.0.534
         version: 4.0.534(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       '@remotion/three':
@@ -818,6 +827,9 @@ packages:
     peerDependencies:
       react: '>=16.8.0'
       react-dom: '>=16.8.0'
+
+  '@remotion/noise@4.0.534':
+    resolution: {integrity: sha512-pFEkmE0+Vk2BQtNy2Ag9qQ00RuWpNpe0JTK62ucko8jPrJ4n6wiMIT9j/BnYBbb8AcSpKDpY1Kwp/d6UkDHiAA==}
 
   '@remotion/openai-whisper@4.0.534':
     resolution: {integrity: sha512-YKUkbL7PXTtlIwiBEDD1k/3cqMJXTKh9T8jRvIr/q6Bjbv26Ed0FfAd6ZY3kKX/3x4ozlHF7OTOG/3HMBgKZeA==}
@@ -2227,6 +2239,9 @@ packages:
     resolution: {integrity: sha512-TCfl/2+GTrx0nCo4pEWGvxhOb8c6NsqOU1OpwjtF4lwJAthB8IYVD0fuIMjLMg6JFuG1YBO0t1iETQqJLqkoJA==}
     engines: {node: '>=0.12.18'}
 
+  simplex-noise@4.0.1:
+    resolution: {integrity: sha512-zl/+bdSqW7HJOQ0oDbxrNYaF4F5ik0i7M6YOYmEoIJNtg16NpvWaTTM1Y7oV/7T0jFljawLgYPS81Uu2rsfo1A==}
+
   sisteransi@1.0.5:
     resolution: {integrity: sha512-bLGGlR1QxBcynn2d5YmDX4MGjlZvy2MRBDRNHLJ8VI6l6+9FUiyTFNJ0IveOSP0bcXgVDPRcfGqA0pjaqUpfVg==}
 
@@ -3165,6 +3180,14 @@ snapshots:
       react-dom: 19.3.0(react@19.3.0)
       remotion: 4.0.534(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       zod: 4.5.4
+
+  '@remotion/noise@4.0.534(react-dom@19.3.0(react@19.3.0))(react@19.3.0)':
+    dependencies:
+      remotion: 4.0.534(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+      simplex-noise: 4.0.1
+    transitivePeerDependencies:
+      - react
+      - react-dom
 
   '@remotion/openai-whisper@4.0.534':
     dependencies:
@@ -4489,6 +4512,8 @@ snapshots:
   signal-exit@3.0.7: {}
 
   simple-icons@16.35.0: {}
+
+  simplex-noise@4.0.1: {}
 
   sisteransi@1.0.5: {}
 

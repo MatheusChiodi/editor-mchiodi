@@ -34,7 +34,7 @@ export const LowerThird: React.FC<LowerThirdProps & BaseProps> = ({ title, subti
   const direction = side === 'left' ? -1 : 1;
   const accent = progressAt(frame, fps, 0.1, motion.base);
   const line = (index: number) => {
-    const progress = progressAt(frame, fps, stagger(index, 0.08, 0.1));
+    const progress = progressAt(frame, fps, stagger(index, motion.step.tight, 0.1));
     return { opacity: progress, translate: `0 ${(1 - progress) * 14}px` };
   };
 

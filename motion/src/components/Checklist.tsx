@@ -1,7 +1,7 @@
 import { AbsoluteFill, interpolateColors } from 'remotion';
 
 import { type BaseProps, progressAt, stagger, usePresence } from '../anim';
-import { theme } from '../theme';
+import { motion, theme } from '../theme';
 import { cardSurface, CheckMark, rise, sequenceTimes } from './c1-kit';
 import type { ComponentEntry } from './registry';
 
@@ -69,7 +69,7 @@ export const Checklist: React.FC<ChecklistProps & BaseProps> = ({ title, items, 
           return (
             <div
               key={index}
-              style={{ ...rise(progressAt(frame, fps, stagger(index, 0.1, 0.2))), display: 'flex', alignItems: 'flex-start', gap: 24, marginTop: 22 }}
+              style={{ ...rise(progressAt(frame, fps, stagger(index, motion.step.list, 0.2))), display: 'flex', alignItems: 'flex-start', gap: 24, marginTop: 22 }}
             >
               <div
                 style={{
@@ -78,13 +78,13 @@ export const Checklist: React.FC<ChecklistProps & BaseProps> = ({ title, items, 
                   width: BOX,
                   height: BOX,
                   marginTop: (LINE - BOX) / 2,
-                  borderRadius: 14,
+                  borderRadius: theme.radius.tile,
                   background: theme.color.white,
                   boxShadow: `inset 0 0 0 3px ${theme.color.slate300}`,
                   scale: 1 + 0.1 * fill * (1 - draw),
                 }}
               >
-                <div style={{ position: 'absolute', inset: 0, borderRadius: 14, background: theme.color.emerald, opacity: fill }} />
+                <div style={{ position: 'absolute', inset: 0, borderRadius: theme.radius.tile, background: theme.color.emerald, opacity: fill }} />
                 <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <CheckMark progress={draw} size={36} color={theme.color.ink} strokeWidth={3.4} />
                 </div>

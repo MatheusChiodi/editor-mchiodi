@@ -239,7 +239,7 @@ export const Diagram: React.FC<DiagramProps & BaseProps> = ({
 
   return (
     <AbsoluteFill style={{ opacity: 1 - exit, scale: String(1 - 0.02 * exit) }}>
-      <svg width={width} height={height} style={{ position: 'absolute', filter: 'drop-shadow(0 4px 10px rgba(0,0,0,0.55))' }}>
+      <svg width={width} height={height} style={{ position: 'absolute', filter: theme.shadow.stroke }}>
         {links.map((edge, index) => {
           const fromIndex = indexById.get(edge.from)!;
           const toIndex = indexById.get(edge.to)!;

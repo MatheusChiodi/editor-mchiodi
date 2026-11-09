@@ -4,6 +4,7 @@
  */
 import { useSyncExternalStore } from 'react';
 
+import type { GuardPayload } from '../../src/cut/guard.ts';
 import type { CutOp } from '../../src/cut/ops.ts';
 import type { SpeechContext } from '../../src/cut/snap.ts';
 import type { Edl } from '../../src/edl/schema.ts';
@@ -71,6 +72,8 @@ export interface EditorState {
   /** aviso persistente do último gesto recusado ou encaixado */
   hint: { tone: 'warn' | 'error' | 'info'; text: string } | null;
   graphics: 'all' | 'selected' | 'off';
+  /** plano de rosto livre do servidor (shifts, zooms de ajuste, foco dos palcos); null até chegar */
+  guard: GuardPayload | null;
   focusWord: number | null;
   arsenalPick: { kind: string; item: ArsenalItem } | null;
   /** formulário de confirmação de troca de nível */
@@ -109,6 +112,7 @@ const initial: EditorState = {
   toasts: [],
   hint: null,
   graphics: 'all',
+  guard: null,
   focusWord: null,
   arsenalPick: null,
   levelConfirm: null,
@@ -143,6 +147,13 @@ export function useEditor<T>(selector: (state: EditorState) => T): T {
 }
 
 /** O playhead muda a cada frame: store separado para só o playhead e o relógio re-renderizarem. */
+/** Arraste de gráfico em andamento: o preview mostra o offset provisório antes de virar op. */
+export const dragging = createStore<{ id: string | null; offset: { x: number; y: number } }>({ id: null, offset: { x: 0, y: 0 } });
+
+export function useDragging<T>(selector: (state: { id: string | null; offset: { x: number; y: number } }) => T): T {
+  return useSyncExternalStore(dragging.subscribe, () => selector(dragging.get()));
+}
+
 export const playhead = createStore({ source: 0, playing: false, rate: 0 });
 
 export function usePlayhead<T>(selector: (state: { source: number; playing: boolean; rate: number }) => T): T {

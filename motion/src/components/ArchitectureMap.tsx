@@ -132,7 +132,7 @@ export const ArchitectureMap: React.FC<ArchitectureMapProps & BaseProps> = ({ cl
 
   return (
     <AbsoluteFill style={{ opacity: 1 - exit, scale: String(1 - 0.02 * exit) }}>
-      <svg width={width} height={height} style={{ position: 'absolute', filter: 'drop-shadow(0 4px 10px rgba(0,0,0,0.55))' }}>
+      <svg width={width} height={height} style={{ position: 'absolute', filter: theme.shadow.stroke }}>
         {[0, 1].map((index) => {
           const a = linkPoint(boxes, index, index + 1, 0);
           const b = linkPoint(boxes, index, index + 1, 1);

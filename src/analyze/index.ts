@@ -7,6 +7,7 @@ import type { ProgressFn } from '../lib/ffmpeg.ts';
 import { ensureProject, type ProjectPaths, readJson, slugFromFile, writeJson } from '../project/paths.ts';
 import { findTechMentions } from '../tech/detect.ts';
 import { detectScenes, detectSilences, ingest, measureLoudness, probe } from './media.ts';
+import { detectStills } from './motion.ts';
 import {
   buildPhrases,
   detectFillers,
@@ -23,6 +24,8 @@ export interface AnalyzeOptions {
   slug?: string;
   /** refaz tudo, inclusive proxy e transcrição */
   force?: boolean;
+  /** mede movimento do quadro: pausas com a tela se mexendo deixam de ser cortadas */
+  motion?: boolean;
   onProgress?: ProgressFn;
   log?: (message: string) => void;
 }
@@ -76,9 +79,17 @@ export async function analyze(sourcePath: string, options: AnalyzeOptions = {}):
   if (transcript.words.length === 0) throw new Error('A transcrição não encontrou fala no vídeo');
 
   const loudness = await measureLoudness(paths.audio16k);
-  const [silences, scenes] = await Promise.all([
+  const [silences, scenes, stills] = await Promise.all([
     detectSilences(paths.audio16k, silenceThreshold(loudness.integratedLufs)),
     detectScenes(paths.proxy),
+    options.motion
+      ? detectStills(paths.proxy, source, {
+          width: config.motion.width,
+          sampleFps: config.motion.sampleFps,
+          threshold: config.motion.stillThreshold,
+          minStillSec: config.motion.minStillSec,
+        })
+      : Promise.resolve(undefined),
   ]);
 
   const analysis: Analysis = {
@@ -87,6 +98,7 @@ export async function analyze(sourcePath: string, options: AnalyzeOptions = {}):
     proxy: paths.proxy,
     loudness,
     silences,
+    ...(stills ? { stills } : {}),
     scenes,
     ...analyzeSpeech(transcript, silences),
     createdAt: new Date().toISOString(),

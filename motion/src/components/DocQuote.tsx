@@ -4,6 +4,8 @@ import type { BaseProps } from '../anim';
 import { stageMotion } from '../arsenal/stage';
 import { theme } from '../theme';
 import type { ComponentEntry } from './registry';
+import { entryDeadline, fitMarkStart } from './timing';
+import { minReadSec } from './read-time';
 import { cue, leave, NotePill, pillTilt, type PillTone, plainText, resolveTone, RichText, rise } from './stage-kit';
 
 export interface DocQuoteProps {
@@ -63,7 +65,9 @@ export const DocQuote: React.FC<DocQuoteProps & BaseProps> = ({ source, title, t
   const appear = rise(frame, fps, 0.2, stageMotion.doc.sec);
   const out = leave(frame, fps, durationInFrames);
   const ink = tone === 'ink';
-  const start = markStart(markAt);
+  const start = fitMarkStart(markStart(markAt), durationInFrames / fps, MARK_SEC);
+  const noteAt = note?.at === undefined ? start + MARK_SEC + 0.3 : note.at;
+  const noteFit = Math.max(0, Math.min(noteAt, entryDeadline(durationInFrames / fps, minReadSec(note?.text ?? ''))));
 
   return (
     <AbsoluteFill
@@ -108,7 +112,7 @@ export const DocQuote: React.FC<DocQuoteProps & BaseProps> = ({ source, title, t
         />
       </div>
       {note?.text ? (
-        <NotePill text={note.text} tone={resolveTone(note.tone, 'coral')} tilt={pillTilt(0, 'conclusion')} from="bottom" progress={rise(frame, fps, note.at ?? start + MARK_SEC + 0.3)} />
+        <NotePill text={note.text} tone={resolveTone(note.tone, 'coral')} tilt={pillTilt(0, 'conclusion')} from="bottom" progress={rise(frame, fps, noteFit)} />
       ) : null}
     </AbsoluteFill>
   );

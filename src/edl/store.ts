@@ -67,6 +67,7 @@ export function draftEdl(paths: ProjectPaths, level?: LevelId): Edl {
     phrases: analysis.phrases,
     flags: analysis.flags,
     silences: analysis.silences,
+    stills: analysis.stills,
     durationSec: analysis.source.durationSec,
     fps,
     cuts: config.cuts,

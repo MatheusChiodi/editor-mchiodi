@@ -15,6 +15,7 @@ import { entry as DocQuote } from './DocQuote';
 import { groupC1 } from './index-c1';
 import { groupC2 } from './index-c2';
 import { groupC3 } from './index-c3';
+import { groupC4 } from './index-c4';
 import { entry as Intro } from './Intro';
 import { entry as LowerThird } from './LowerThird';
 import { entry as MemeInsert } from './MemeInsert';
@@ -92,6 +93,7 @@ export const registry: Record<string, ComponentEntry> = {
   ...groupC1,
   ...groupC2,
   ...groupC3,
+  ...groupC4,
   // linguagem do nível max (STYLE.md §0): pílulas, frase serifada e palcos com o apresentador em cartão
   PillStack,
   PhraseReveal,

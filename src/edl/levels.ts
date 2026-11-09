@@ -304,7 +304,7 @@ export const LEVELS: Record<LevelId, LevelProfile> = {
       memeMinGapSec: 40,
       overlayMinReadSec: 1.2,
       graphicMinGapSec: 4,
-      sceneMinGapSec: 20,
+      sceneMinGapSec: 10,
       maxIdleSec: 8,
       // pedido do Matheus: até 80% do vídeo editado ao máximo; só alguns momentos dele falando ou mostrando a tela
       minEditedShare: 0.8,
@@ -318,7 +318,7 @@ export const LEVELS: Record<LevelId, LevelProfile> = {
       // medido na referência: o movimento vem da troca de layout (9–12 gráficos/min), não de zoom nem de transição de corte
       zooms: rate(2, 9),
       graphics: rate(6, 12),
-      scenes: rate(1.5, 3),
+      scenes: rate(3, 6),
       transitions: rate(0.5, 3.5),
       effects: rate(0.5, 3),
       sfx: rate(4, 12),
@@ -332,7 +332,7 @@ export const LEVELS: Record<LevelId, LevelProfile> = {
       'Tela gravada também é editada: dentro de `WindowStage`, com zoom no que é citado, pílulas anotando e o apresentador no canto; tela crua só conta como respiro.',
       'Sobre o talking head: `PillStack` resume cada ideia em 2–5 palavras (última pílula em coral) e `PhraseReveal` crava a tese do bloco com uma palavra em itálico coral.',
       'Enumeração ou comparação vira palco: `SplitExplainer` com `presenter: right`; demonstração vira `WindowStage` com `presenter: pip-br`; fonte citada vira `DocQuote`. O apresentador nunca é cortado: o footage encolhe para o cartão e cresce de volta.',
-      'Cena ilustrativa a cada ~30s, entrando por rasgo de papel (`wipe: "tear"`); o que o arsenal não tem, o motion-designer cria.',
+      'Várias cenas ilustrativas (3–6 por minuto, a cada ~10–20s), entrando por rasgo de papel (`wipe: "tear"`); o que o arsenal não tem, o motion-designer cria.',
       'Todo elemento entra na palavra que o motiva (início da palavra − 2 frames, nunca antes) e fica pelo menos 1,2s + 0,25s por palavra; troca de layout 0,15–0,25s antes da frase.',
       'Varie o lado do cartão (`right`/`left`, `pip-br`/`pip-bl`) e não repita o mesmo palco mais de 2 vezes seguidas.',
       'Continua valendo: um gráfico por vez, nada cobre o rosto na hora da ênfase, todo item tem `reason`.',

@@ -7,6 +7,8 @@ import { Captions } from './captions/Captions';
 import { CAPTION_PRESETS, type CaptionPreset } from './captions/presets';
 import { cineDemos } from './cine/demos';
 import { registry } from './components/registry';
+import { MusicVideo, type MusicVideoProps } from './music/MusicVideo';
+import { musicSamplePlan } from './music/sample';
 import { Overlay } from './Overlay';
 import { Backdrop } from './preview/Backdrop';
 import { sampleCaptions } from './preview/sample-captions';
@@ -37,8 +39,26 @@ const CaptionsPreview: React.FC<{ style: CaptionStyle; preset?: CaptionPreset }>
   </Backdrop>
 );
 
+/** Vídeo de música: tamanho, fps e duração vêm do plano (`mce music`). */
+const musicMetadata: CalculateMetadataFunction<MusicVideoProps> = ({ props }) => ({
+  fps: props.plan.fps,
+  width: props.plan.width,
+  height: props.plan.height,
+  durationInFrames: props.plan.durationInFrames,
+});
+
 export const RemotionRoot: React.FC = () => (
   <>
+    <Composition
+      id="MusicVideo"
+      component={MusicVideo}
+      fps={FPS}
+      width={1920}
+      height={1080}
+      durationInFrames={FPS * 8}
+      defaultProps={{ plan: musicSamplePlan }}
+      calculateMetadata={musicMetadata}
+    />
     <Composition
       id="Overlay"
       component={Overlay}

@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 520" width="100%" role="img" aria-labelledby="pp-title pp-desc" font-family="'Segoe UI', Helvetica, Arial, sans-serif">
+  <title id="pp-title">The Cut preview shows exactly what the render produces</title>
+  <desc id="pp-desc">The EDL feeds one shared set of pure functions: the face guard, the stage transform and the zoom state. The render uses them to build the ffmpeg filters and the Remotion layer. The Cut server exposes the parts that need Node, the face detector and the footprints, through a guard route, and the Cut preview applies the same functions to the video element and the graphics layer. A test requires the two paths to differ by less than one pixel.</desc>
+  <defs>
+    <marker id="pp-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 Z" fill="#64748b"/>
+    </marker>
+    <marker id="pp-arrow-coral" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 Z" fill="#ff5555"/>
+    </marker>
+  </defs>
+
+  <rect x="8" y="8" width="984" height="504" rx="24" fill="#f8f8f2" stroke="#e2e8f0" stroke-width="2"/>
+  <text x="32" y="58" font-family="Georgia, 'Times New Roman', serif" font-size="27" font-weight="700" fill="#111827">Preview equals render</text>
+  <text x="968" y="58" font-size="14" text-anchor="end" fill="#64748b">One piece of math, two consumers.</text>
+
+  <!-- connectors -->
+  <path d="M208 188 V228 H388" fill="none" stroke="#64748b" stroke-width="2" stroke-linejoin="round" marker-end="url(#pp-arrow)"/>
+  <path d="M608 228 H768" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#pp-arrow)"/>
+  <path d="M498 268 V330 H208 V352" fill="none" stroke="#64748b" stroke-width="2" stroke-linejoin="round" marker-end="url(#pp-arrow)"/>
+  <path d="M498 268 V330 H792 V352" fill="none" stroke="#ff5555" stroke-width="2" stroke-linejoin="round" marker-end="url(#pp-arrow-coral)"/>
+  <path d="M900 288 V352" fill="none" stroke="#64748b" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#pp-arrow)"/>
+  <path d="M312 414 H688" fill="none" stroke="#ff5555" stroke-width="2" stroke-dasharray="6 5" marker-start="url(#pp-arrow-coral)" marker-end="url(#pp-arrow-coral)"/>
+
+  <rect x="372" y="396" width="256" height="36" rx="4" fill="#f8f8f2"/>
+  <text x="500" y="419" font-size="13" font-weight="700" text-anchor="middle" fill="#ff5555">DIFFERENCE UNDER 1 PX</text>
+  <text x="912" y="325" font-family="Consolas, 'Cascadia Mono', Menlo, monospace" font-size="12" font-weight="700" fill="#475569">/guard</text>
+
+  <!-- EDL -->
+  <rect x="32" y="100" width="352" height="88" rx="16" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+  <text x="48" y="130" font-size="17" font-weight="700" fill="#111827">The EDL</text>
+  <text x="48" y="154" font-size="14" fill="#334155">Graphics, zooms, stages, offsets.</text>
+  <text x="48" y="174" font-size="14" fill="#334155">The single source of truth.</text>
+
+  <!-- shared core -->
+  <rect x="388" y="188" width="220" height="84" rx="16" fill="#111827"/>
+  <text x="498" y="218" font-size="16" font-weight="700" text-anchor="middle" fill="#f8f8f2">Shared pure functions</text>
+  <text x="498" y="244" font-family="Consolas, 'Cascadia Mono', Menlo, monospace" font-size="12" text-anchor="middle" fill="#cbd5e1">planGuard · transformAt</text>
+  <text x="498" y="260" font-family="Consolas, 'Cascadia Mono', Menlo, monospace" font-size="12" text-anchor="middle" fill="#cbd5e1">zoomStateAt</text>
+
+  <!-- node side -->
+  <rect x="768" y="188" width="200" height="100" rx="16" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+  <text x="784" y="218" font-size="17" font-weight="700" fill="#111827">Cut server</text>
+  <text x="784" y="242" font-size="14" fill="#334155">Needs Node: face detector,</text>
+  <text x="784" y="262" font-size="14" fill="#334155">footprints, focus track.</text>
+
+  <!-- render -->
+  <rect x="32" y="352" width="352" height="124" rx="16" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+  <text x="48" y="382" font-size="17" font-weight="700" fill="#111827">Render</text>
+  <text x="48" y="406" font-family="Consolas, 'Cascadia Mono', Menlo, monospace" font-size="12.5" fill="#475569">ffmpeg filters + Remotion layer</text>
+  <text x="48" y="436" font-size="14" fill="#334155">Stage card, zooms and graphic</text>
+  <text x="48" y="456" font-size="14" fill="#334155">shifts baked into the video.</text>
+
+  <!-- preview -->
+  <rect x="616" y="352" width="352" height="124" rx="16" fill="#ffffff" stroke="#ff5555" stroke-width="1.5"/>
+  <text x="632" y="382" font-size="17" font-weight="700" fill="#111827">Cut preview</text>
+  <text x="632" y="406" font-family="Consolas, 'Cascadia Mono', Menlo, monospace" font-size="12.5" fill="#475569">video transform + Player layer</text>
+  <text x="632" y="436" font-size="14" fill="#334155">What you see while you drag is</text>
+  <text x="632" y="456" font-size="14" fill="#334155">what the final file will show.</text>
+</svg>

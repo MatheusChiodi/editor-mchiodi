@@ -1,10 +1,16 @@
-import { lazy, Suspense, useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 
 import { sourceToOutput } from '../../../src/edl/timeline.ts';
+import footprints from '../../../motion/src/arsenal/footprints.json';
+import type { Footprints } from '../../../src/edl/fit.ts';
+import { footageCssAt, footageInput } from '../lib/footage-css.ts';
 import { formatTimecode } from '../lib/timemap.ts';
 import { attachVideo, frameStep, togglePlay } from '../playback.ts';
-import { currentEdl, currentTimeline, playhead, store, usePlayhead, useEditor } from '../store.ts';
+import { refreshGuard } from '../graphics.ts';
+import { buildPreviewModel, reuseIfSame } from '../lib/preview-model.ts';
+import { currentEdl, currentTimeline, pendingOps, playhead, store, useDragging, usePlayhead, useEditor } from '../store.ts';
 import { api } from '../api.ts';
+import GraphicDrag from './GraphicDrag.tsx';
 import { Button } from './ui.tsx';
 
 // o Remotion e as composições de motion/src pesam: carregam depois da UI
@@ -63,6 +69,9 @@ export function Preview() {
   const ratio = edl.output.width / edl.output.height;
   const { ref, box } = useBox(ratio);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const guard = useEditor((state) => state.guard);
+  const live = useDragging((state) => state);
+  const opsKey = useEditor((state) => JSON.stringify(pendingOps(state)));
   const [videoError, setVideoError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -70,24 +79,58 @@ export function Preview() {
     return () => attachVideo(null);
   }, []);
 
+  // plano de rosto livre do servidor (shifts, foco dos palcos): refeito a cada mudança da EDL ainda não salva
+  useEffect(() => refreshGuard(), [project.slug, project.latest, opsKey]);
+  const only = graphics === 'selected' ? selection : null;
+  // o arraste atualiza o Remotion em prioridade baixa (o ponteiro nunca espera por ele); props iguais não re-renderizam
+  const drag = useDeferredValue(live);
+  const lastModel = useRef<ReturnType<typeof buildPreviewModel> | null>(null);
+  const model = useMemo(() => {
+    lastModel.current = reuseIfSame(lastModel.current, buildPreviewModel({ edl, timeline, words: project.words, only, guard, drag }));
+    return lastModel.current;
+  }, [edl, timeline, project.words, only, guard, drag]);
+
+  // o footage se move como no render: zoom da EDL + ajuste do rosto + efeitos de câmera + palco (src/render/footage-frame.ts)
+  const stageRef = useRef<HTMLDivElement>(null);
+  const [uncovered, setUncovered] = useState<string[]>([]);
+  const overlays = graphics === 'off' || !model.props ? [] : model.props.overlays;
+  const footage = useMemo(() => footageInput(edl, timeline, overlays, guard, footprints as Footprints), [edl, timeline, overlays, guard]);
+  useEffect(() => {
+    const apply = () => {
+      const video = videoRef.current;
+      const stage = stageRef.current;
+      if (!video || !stage) return;
+      const css = footageCssAt(footage, timeline, playhead.get().source, box.width, edl.grade);
+      Object.assign(stage.style, css.stage);
+      Object.assign(video.style, css.video);
+      setUncovered((current) => (current.join() === css.uncovered.join() ? current : css.uncovered));
+    };
+    apply();
+    return playhead.subscribe(apply);
+  }, [footage, timeline, box.width, edl.grade]);
+
   return (
     <main className="flex min-w-0 flex-1 flex-col bg-night">
       <div ref={ref} className="relative flex min-h-0 flex-1 items-center justify-center p-3">
         <div className="relative overflow-hidden rounded-md bg-ink shadow-2xl ring-1 ring-paper/10" style={{ width: box.width, height: box.height }}>
-          <video
-            ref={videoRef}
-            src={project.media.proxy}
-            className="absolute inset-0 h-full w-full"
-            preload="auto"
-            playsInline
-            onLoadedData={() => setVideoError(null)}
-            onError={() => setVideoError('não consegui carregar o proxy (a primeira abertura gera renders/proxy/; aguarde e recarregue)')}
-          />
+          <div ref={stageRef} className="absolute inset-0 overflow-hidden">
+            <video
+              ref={videoRef}
+              src={project.media.proxy}
+              className="absolute inset-0 h-full w-full"
+              preload="auto"
+              playsInline
+              onLoadedData={() => setVideoError(null)}
+              onError={() => setVideoError('não consegui carregar o proxy (a primeira abertura gera renders/proxy/; aguarde e recarregue)')}
+            />
+          </div>
           {graphics !== 'off' && box.width > 0 && (
             <Suspense fallback={null}>
-              <GraphicsLayer edl={edl} timeline={timeline} words={project.words} only={graphics === 'selected' ? selection : null} width={box.width} height={box.height} />
+              <GraphicsLayer model={model} timeline={timeline} width={box.width} height={box.height} />
             </Suspense>
           )}
+          {graphics !== 'off' && box.width > 0 && <GraphicDrag edl={edl} timeline={timeline} width={box.width} height={box.height} />}
+          {uncovered.length > 0 && <div className="absolute top-2 right-2 rounded bg-night/70 px-1.5 py-0.5 text-[10px] text-s300" title="o render aplica estes efeitos de cor/luz; o preview só mostra o enquadramento">sem prévia: {uncovered.join(', ')}</div>}
           {videoError && <div className="absolute inset-x-0 bottom-0 bg-night/80 p-2 text-[11px] text-peach">{videoError}</div>}
           {mode === 'source' && <div className="absolute top-2 left-2 rounded bg-night/70 px-1.5 py-0.5 text-[10px] font-bold text-peach">FONTE INTEIRA · trechos cortados tocam</div>}
         </div>

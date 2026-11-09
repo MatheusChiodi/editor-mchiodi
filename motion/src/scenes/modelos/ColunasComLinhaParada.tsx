@@ -9,6 +9,7 @@ import { formatPtBr } from '../../components/Counter';
 import { alpha, enter, Pill, rise, SceneBackground, SceneCard, Statement, text } from '../../scene-kit';
 import { theme } from '../../theme';
 import { CHAR, clampInt, CLIP, type Extent, fitFont, fitPill, MIN_TEXT, pillClamp, sequence, statementHeight, textWidth, timeOr, titleSize } from './kit-a';
+import { fitSceneTimes } from './fit-time';
 
 export interface ColunasCounter {
   /** quanto cada coluna soma ao total (inteiro) */
@@ -152,7 +153,7 @@ export const ColunasComLinhaParada: React.FC<ColunasComLinhaParadaProps & BasePr
   const { fps } = useVideoConfig();
   const count = clampInt(steps.length, COLUNAS_MIN, COLUNAS_MAX);
   const layout = colunasLayout(count);
-  const starts = colunasTimes(count, revealAt);
+  const starts = fitSceneTimes(colunasTimes(count, revealAt), durationInFrames / fps);
   const flatSec = timeOr(flatAt, starts.at(-1)! + 1.1);
   const cardAt = Math.max(0, Math.min(0.6, starts[0]! - 0.6));
   const card = enter(frame, fps, cardAt, 0.5);

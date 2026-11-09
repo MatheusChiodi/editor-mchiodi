@@ -53,7 +53,7 @@ export function roundSec(seconds: number): number {
 
 /** Um tempo de `revealAt`: o que veio, ou o padrão arredondado. */
 export function pickSec(value: number | undefined, fallback: number): number {
-  return typeof value === 'number' && Number.isFinite(value) ? value : roundSec(fallback);
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : roundSec(fallback);
 }
 
 /** Preenche uma lista de tempos: usa o que veio e, onde falta, segue em sequência depois do anterior. */
@@ -61,7 +61,7 @@ export function fillTimes(count: number, given: readonly (number | undefined)[] 
   const times: number[] = [];
   for (let index = 0; index < count; index += 1) {
     const value = given[index];
-    times.push(typeof value === 'number' && Number.isFinite(value) ? value : roundSec(index === 0 ? firstSec : times[index - 1]! + staggerSec));
+    times.push(typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : roundSec(index === 0 ? firstSec : times[index - 1]! + staggerSec));
   }
   return times;
 }

@@ -36,6 +36,24 @@ describe('keyAction', () => {
   });
 });
 
+describe('atalhos de gráfico', () => {
+  it('R volta à posição original; Ctrl+D duplica', () => {
+    expect(keyAction({ key: 'r' })).toBe('graphicReset');
+    expect(keyAction({ key: 'd', ctrlKey: true })).toBe('graphicDuplicate');
+  });
+  it('Alt+setas empurram (Shift muda só o passo, lido no despacho); setas sozinhas seguem frame a frame', () => {
+    expect(keyAction({ key: 'ArrowLeft', altKey: true })).toBe('graphicNudgeLeft');
+    expect(keyAction({ key: 'ArrowRight', altKey: true, shiftKey: true })).toBe('graphicNudgeRight');
+    expect(keyAction({ key: 'ArrowUp', altKey: true })).toBe('graphicNudgeUp');
+    expect(keyAction({ key: 'ArrowDown', altKey: true })).toBe('graphicNudgeDown');
+    expect(keyAction({ key: 'ArrowLeft' })).toBe('frameBack');
+  });
+  it('em campo de texto não dispara', () => {
+    expect(keyAction({ key: 'r' }, true)).toBeNull();
+    expect(keyAction({ key: 'ArrowLeft', altKey: true }, true)).toBeNull();
+  });
+});
+
 describe('shuttle J/K/L', () => {
   it('L acelera para frente, J para trás, K para', () => {
     expect(shuttle(0, 'shuttleForward')).toBe(1);

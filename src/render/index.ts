@@ -10,7 +10,9 @@ import type { ProgressFn } from '../lib/ffmpeg.ts';
 import { type ProjectPaths, readJson, writeJson } from '../project/paths.ts';
 import { missingScenes, syncScenes } from '../scenes/sync.ts';
 import { collectSfx, gainFilter, limiterFilter, type MusicBed, voiceChain } from './audio.ts';
+import { applyBackground, autoDownsample, needsMatte } from './background.ts';
 import { bumperDurations } from './bumpers.ts';
+import { renderMatte } from './matte.ts';
 import { buildSrt } from './srt.ts';
 import type { ExportPlan } from './formats.ts';
 import { prepareDenoise } from './denoise.ts';
@@ -21,11 +23,12 @@ import { placeBroll, placeLayout, resolveScreen, screenAlign } from './layout.ts
 import { buildOverlayProps, overlayFile, renderBumper, renderOverlay } from './overlay.ts';
 import { formatShortsPick, pickShortsOverlays, shortsEdl, shortsFrame, SHORTS_MAX_SEC, verticalCrop } from './shorts.ts';
 import { resolveShortFocus } from './shorts-focus.ts';
-import { formatStageFocus, stageFocusMap } from './stage-focus.ts';
+import { applyStageTracks, formatStageFocus, stageFocusMap, stageTrackMap } from './stage-focus.ts';
 import { loadStageFocus } from './stage-focus-io.ts';
 import { prepareStabilize } from './stabilize.ts';
 import { placeStages, reframeFilters, windowLayouts } from './reframe.ts';
 import { gradeFilters, placeZooms, zoomFilters } from './video.ts';
+import { loadGuard } from './guard-io.ts';
 
 export type RenderMode = 'preview' | 'final';
 export type RenderVariant = 'main' | 'shorts';
@@ -104,7 +107,11 @@ export async function render(paths: ProjectPaths, source: Edl, options: RenderOp
   const stageFocus = shorts || options.skipOverlay ? null : await loadStageFocus(paths, edl, timeline, { onProgress: options.onProgress });
   if (stageFocus?.missing) log(`aviso: foco dos palcos sem detector (${stageFocus.missing})`);
   for (const line of stageFocus ? formatStageFocus(stageFocus.plans) : []) log(line);
-  const props = buildOverlayProps(edl, timeline, transcript, shorts ? shortsFrame(edl) : undefined, stageFocus ? stageFocusMap(stageFocus.plans) : undefined);
+  const guard = shorts || options.skipOverlay ? { items: [], zooms: [], shifts: new Map(), origin: 'padrão' as const } : await loadGuard(paths, edl, timeline);
+  const uncovered = guard.items.filter((item) => item.status === 'precisa-palco');
+  if (uncovered.length) log(`aviso: ${uncovered.length} gráfico(s) ainda podem cobrir o rosto (${uncovered.map((item) => item.overlay).join(', ')}): dê presenter a eles`);
+  const props = buildOverlayProps(edl, timeline, transcript, shorts ? shortsFrame(edl) : undefined, stageFocus ? stageFocusMap(stageFocus.plans) : undefined, guard.shifts);
+  if (stageFocus) applyStageTracks(props.overlays, stageTrackMap(stageFocus.plans));
   if (shorts) log(formatShortsPick(pickShortsOverlays(source, timeline)));
   const staged = !options.skipOverlay;
   const layout = shorts ? [] : [...placeLayout(edl.layout.segments, timeline), ...(staged ? windowLayouts(props.overlays, fps) : [])];
@@ -143,6 +150,35 @@ export async function render(paths: ProjectPaths, source: Edl, options: RenderOp
     onProgress: options.onProgress,
   });
 
+  // fundo trocado sobre o corte (tempo de saída): zoom, cor e gráficos vêm depois e viajam junto
+  let cutVideo = cut;
+  if (edl.background) {
+    const background = edl.background;
+    const frame = { width: size.width, height: size.height, fps };
+    let matte: string | null = null;
+    if (needsMatte(background)) {
+      matte = join(dir, 'matte.mkv');
+      log(`fundo ${background.mode}: gerando máscara de pessoa (RVM)`);
+      await renderMatte(
+        cut,
+        matte,
+        { ...frame, frames: Math.round(timeline.durationSec * fps), downsample: background.matte.downsample ?? autoDownsample(size.width, size.height), device: config.matting.device, variant: config.matting.variant },
+        options.onProgress,
+      );
+    }
+    cutVideo = join(dir, 'cut.bg.mkv');
+    await applyBackground(background, {
+      input: cut,
+      matte,
+      output: cutVideo,
+      graphFile: join(dir, 'background.graph.txt'),
+      frame,
+      quality: final ? 'mezzanine' : 'preview',
+      durationSec: timeline.durationSec,
+      onProgress: options.onProgress,
+    });
+  }
+
   let overlay: string | null = null;
   writeJson(join(dir, 'overlay.props.json'), props);
   if (!options.skipOverlay && (props.captions.length > 0 || props.overlays.length > 0)) {
@@ -169,7 +205,7 @@ export async function render(paths: ProjectPaths, source: Edl, options: RenderOp
   }
 
   const voice = voiceChain({ ...edl.audio, denoise: denoise.denoise });
-  const measured = await measureChain(cut, voice);
+  const measured = await measureChain(cutVideo, voice);
   log(`voz tratada: ${measured.integratedLufs.toFixed(1)} LUFS → alvo ${edl.audio.targetLufs} LUFS`);
 
   const missing: string[] = [];
@@ -203,7 +239,7 @@ export async function render(paths: ProjectPaths, source: Edl, options: RenderOp
     ...size,
     videoFilters: [
       ...gradeFilters(edl.grade),
-      ...zoomFilters(placeZooms(edl.zooms, timeline), size.width, size.height),
+      ...zoomFilters(placeZooms([...edl.zooms.filter((zoom) => !zoom.id.startsWith('fit-')), ...guard.zooms], timeline), size.width, size.height),
       ...effectFilters(placeEffects(edl.effects, timeline), size, fps),
       // por último: cor, zoom e efeitos viajam junto com o footage para dentro do cartão
       ...(staged ? reframeFilters(placeStages(props.overlays, fps), size.width, size.height) : []),
@@ -216,7 +252,7 @@ export async function render(paths: ProjectPaths, source: Edl, options: RenderOp
   };
   await compose({
     ...composeOptions,
-    cut,
+    cut: cutVideo,
     overlay,
     intro,
     outro,

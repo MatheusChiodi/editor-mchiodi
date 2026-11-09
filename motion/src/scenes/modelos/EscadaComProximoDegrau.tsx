@@ -9,6 +9,7 @@ import type { ComponentEntry } from '../../components/registry';
 import { alpha, Arrow, enter, Eyebrow, IconBadge, type IconName, longShadow, Pill, type Point, popIn, rise, SceneBackground, Statement, text } from '../../scene-kit';
 import { motion, theme } from '../../theme';
 import { clampCount, estimateLines, fillTimes, fitFontSize, pickSec, pillHeight, pillWidth } from './fit-b';
+import { fitSceneTimes } from './fit-time';
 
 export interface EscadaComProximoDegrauStep {
   label: string;
@@ -247,7 +248,7 @@ export const EscadaComProximoDegrau: React.FC<EscadaComProximoDegrauProps & Base
   const shown = (steps.length ? steps : DEFAULT_STEPS).slice(0, STEP_RANGE.max);
   const layout = stairLayout(shown.length, width - theme.safe.x * 2, height - theme.safe.y - 180);
   const count = Math.min(shown.length, layout.count);
-  const times = stairTimes(count, revealAt);
+  const times = fitSceneTimes(stairTimes(count, revealAt), durationInFrames / fps);
   const marker = markerAt(frame, fps, times.steps, layout.anchors.slice(0, count), layout.arc);
   const signIn = enter(frame, fps, times.end, 0.4);
   const strike = enter(frame, fps, times.strike, 0.35);

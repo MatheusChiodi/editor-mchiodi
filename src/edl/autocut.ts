@@ -1,3 +1,4 @@
+import { coverage } from '../analyze/motion.ts';
 import type { Flag, Phrase, Span, Word } from '../analyze/types.ts';
 import type { Config } from '../config.ts';
 import { quantize, round3 } from '../lib/time.ts';
@@ -8,6 +9,8 @@ export interface AutocutInput {
   phrases: Phrase[];
   flags: Flag[];
   silences: Span[];
+  /** trechos com a tela parada (`mce analyze --motion`); ausente = movimento não entra na decisão */
+  stills?: Span[];
   durationSec: number;
   fps: number;
   cuts: Config['cuts'];
@@ -66,7 +69,10 @@ export function autocut(input: AutocutInput): AutocutResult {
     const flagBetween = overlapsAny(between, applied);
     // intervalo longo mas com som (palavra esticada, respiro, "ééé" não transcrito): cortar ali
     // corta em cima de áudio. Só encurta pausa onde há silêncio medido; o resto fica como sugestão.
-    const cuttable = gap > maxPause && silentSeconds(between, input.silences) >= cuts.minSilenceSec;
+    // com análise de movimento (gravação de tela), pausa muda mas com a tela se mexendo é conteúdo: não corta
+    // (mesma regra do auto-editor: só sai o trecho sem som E sem movimento).
+    const stillEnough = !input.stills || coverage(between, input.stills) >= cuts.minStillCoverage;
+    const cuttable = gap > maxPause && silentSeconds(between, input.silences) >= cuts.minSilenceSec && stillEnough;
     if (!cuttable && !flagBetween) {
       block.last = word;
       block.endsSentence = endsSentence;

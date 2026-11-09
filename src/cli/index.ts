@@ -6,6 +6,7 @@ import { analyze } from '../analyze/index.ts';
 import { extractFrame, renderTimelineView, sourceBands, viewPath } from '../analyze/timeline-view.ts';
 import type { Analysis, Transcript } from '../analyze/types.ts';
 import { findReverts, formatRevert } from '../edl/decisions.ts';
+import { loadGuard } from '../render/guard-io.ts';
 import { diffEdl, draftEdl, edlPath, listVersions, loadEdl, saveNewVersion, validateEdl } from '../edl/store.ts';
 import { formatLevels, LEVEL_IDS, type LevelId, levelProfile, parseLevel } from '../edl/levels.ts';
 import { buildTimeline } from '../edl/timeline.ts';
@@ -36,6 +37,10 @@ import { renderGallery } from '../arsenal/gallery.ts';
 import { generateSfx, listAssets } from '../assets/library.ts';
 import { collectEvaluations, evaluate, formatReport } from '../eval/index.ts';
 import { writeReport } from '../report/write.ts';
+import { describeOverlays, findPhrase, insertOverlay, removeOverlay } from '../motion/insert.ts';
+import { checkStageProps } from '../motion/props-check.ts';
+import type { MotifId, MusicPlan } from '../../motion/src/music/types.ts';
+import { exportNle, NLE_FORMAT_IDS, type NleFormat } from '../nle/index.ts';
 import { render, renderDir } from '../render/index.ts';
 import { EXPORT_FITS, EXPORT_FORMATS, type ExportFit, type ExportFormat, planExport } from '../render/formats.ts';
 import { SHORTS_MAX_SEC } from '../render/shorts.ts';
@@ -79,9 +84,10 @@ program
   .description('Proxy, transcrição por palavra, silêncios, retakes e loudness → analysis/takes.md')
   .option('-p, --project <slug>', 'nome do projeto (padrão: nome do arquivo)')
   .option('-f, --force', 'refaz proxy e transcrição')
-  .action(async (video: string, options: { project?: string; force?: boolean }) => {
+  .option('-m, --motion', 'mede movimento do quadro: pausa com a tela se mexendo não é cortada (gravação de tela)')
+  .action(async (video: string, options: { project?: string; force?: boolean; motion?: boolean }) => {
     const paths = await tracked(options.project ?? slugFromFile(video), 'analysis', (onProgress) =>
-      analyze(fromUser(video), { slug: options.project, force: options.force, onProgress, log }),
+      analyze(fromUser(video), { slug: options.project, force: options.force, motion: options.motion, onProgress, log }),
     );
     log(`projeto: ${paths.slug}`);
   });
@@ -104,6 +110,27 @@ program
   .description('Níveis de edição (limpa, normal, pro, max): sem argumento lista; com o nível, mostra alvos, limites e orientação')
   .action((level?: string) => {
     log(formatLevels(level ? parseLevel(level) : undefined));
+  });
+
+program
+  .command('fit <project>')
+  .description('Mostra como o vídeo se ajusta ao recorte de cada gráfico sem palco (o render aplica sozinho); --save grava os zooms fit-* numa nova versão')
+  .option('-v, --edl <n>', 'versão da EDL (padrão: a mais recente)', Number)
+  .option('--save', 'grava os zooms de ajuste na EDL (nova versão)')
+  .action(async (project: string, options: { edl?: number; face?: string; save?: boolean }) => {
+    const paths = requireProject(project);
+    const current = loadEdl(paths, options.edl);
+    const timeline = buildTimeline(current.clips, current.output.fps);
+    const guard = await loadGuard(paths, current, timeline);
+    log(`rosto: ${guard.origin === 'padrão' ? 'padrão (sem detector)' : guard.origin}`);
+    for (const item of guard.items) log(`${item.overlay.padEnd(24)} ${item.component.padEnd(20)} ${item.status.padEnd(14)} ${item.note}`);
+    const needs = guard.items.filter((item) => item.status === 'precisa-palco').length;
+    if (needs) log(`
+${needs} gráfico(s) ainda cobrem o rosto: dê \`presenter\` a eles.`);
+    if (options.save) {
+      const saved = saveNext(paths, { ...current, zooms: [...current.zooms.filter((zoom) => !zoom.id.startsWith('fit-')), ...guard.zooms], notes: 'Ajuste automático do vídeo ao recorte dos gráficos (zooms fit-*).' });
+      log(edlPath(paths, saved.version));
+    }
   });
 
 program
@@ -223,6 +250,263 @@ program
     );
     const result = await tracked(project, 'final', (onProgress) => render(paths, current, { mode: 'final', export: plan, onProgress, log }));
     log(`${result.file}\n${plan.srt}\n${plan.size.width}x${plan.size.height} · teto ${plan.maxrateK} kb/s · ${formatClock(result.durationSec)} em ${formatClock(result.elapsedSec, 0)}`);
+  });
+
+program
+  .command('nle <project>')
+  .description('Exporta os cortes da EDL para editor visual (Shotcut, Kdenlive, OpenShot...) → renders/nle/<projeto>-v<N>.<ext>')
+  .option('-f, --format <formatos>', `um ou mais, separados por vírgula: ${NLE_FORMAT_IDS.join(' | ')} | all`, 'all')
+  .option('-v, --edl <n>', 'versão da EDL (padrão: a mais recente)', Number)
+  .action((project: string, options: { format: string; edl?: number }) => {
+    const wanted = options.format === 'all' ? NLE_FORMAT_IDS : options.format.split(',').map((item) => item.trim());
+    const unknown = wanted.filter((item) => !NLE_FORMAT_IDS.includes(item as NleFormat));
+    if (unknown.length) throw new Error(`--format aceita ${NLE_FORMAT_IDS.join(', ')} ou all (recebi: ${unknown.join(', ')})`);
+    const paths = requireProject(project);
+    const files = exportNle(loadEdl(paths, options.edl), wanted as NleFormat[], join(paths.rendersDir, 'nle'));
+    for (const { file, opensIn } of files) log(`${file}  → ${opensIn}`);
+    log('só os cortes: gráficos, zoom, cor e mixagem ficam no render do mce');
+  });
+
+program
+  .command('music <audio>')
+  .description('Gera um vídeo a partir de uma música (mp3): ouve, acha tempo, batidas e seções, e desenha um vídeo sincronizado. Com --lyrics a letra entra em karaokê; sem, usa o que foi ouvido')
+  .option('-p, --project <slug>', 'nome do projeto (padrão: nome do arquivo)')
+  .option('-l, --lyrics <arquivo>', 'letra em texto, um verso por linha (marcações [Refrão] são ignoradas)')
+  .option('--no-transcribe', 'não transcreve a voz (música instrumental); com --lyrics, a letra é distribuída pelo tempo')
+  .option('-s, --size <LxA>', '1920x1080 | 1080x1920 | 1080x1080', '1920x1080')
+  .option('--fps <n>', 'quadros por segundo', Number, 30)
+  .option('-t, --title <texto>', 'título que aparece no começo')
+  .option('--preview', 'metade da resolução (render rápido para conferir)')
+  .option('--plan-only', 'só analisa e grava o plano (analysis/music.plan.json), sem renderizar')
+  .option('-o, --output <arquivo>', 'arquivo de saída (padrão: output/<projeto>/music.mp4)')
+  .action(async (audio: string, options: { project?: string; lyrics?: string; transcribe: boolean; size: string; fps: number; title?: string; preview?: boolean; planOnly?: boolean; output?: string }) => {
+    const match = /^(\d{3,4})x(\d{3,4})$/.exec(options.size);
+    if (!match) throw new Error('--size aceita LxA, como 1920x1080');
+    const { makeMusicVideo } = await import('../music/index.ts');
+    const result = await tracked(options.project ?? slugFromFile(audio), 'music', (onProgress) =>
+      makeMusicVideo(fromUser(audio), {
+        slug: options.project,
+        lyricsFile: options.lyrics ? fromUser(options.lyrics) : undefined,
+        transcribe: options.transcribe,
+        size: { width: Number(match[1]), height: Number(match[2]) },
+        fps: options.fps,
+        title: options.title,
+        preview: options.preview,
+        planOnly: options.planOnly,
+        output: options.output ? fromUser(options.output) : undefined,
+        onProgress,
+        log,
+      }),
+    );
+    log(result.file ?? result.planFile);
+  });
+
+const mv = program.command('mv').description('Vídeo da música: prévia ao vivo no navegador, edição das cenas e render a partir do plano salvo');
+const musicPlanFile = (slug: string) => join(projectPaths(slug).analysisDir, 'music.plan.json');
+
+function loadMusicPlan(slug: string): MusicPlan {
+  const file = musicPlanFile(slug);
+  if (!existsSync(file)) throw new Error(`Projeto "${slug}" não tem plano de música. Rode: pnpm mce music <arquivo.mp3> --plan-only`);
+  return readJson<MusicPlan>(file);
+}
+
+mv
+  .command('preview <project>')
+  .description('Abre a prévia ao vivo: o vídeo toca no navegador, com a música, sem renderizar; recarrega sozinha quando as cenas mudam')
+  .option('--port <n>', 'porta (padrão: a primeira livre a partir de 4880)', Number)
+  .option('--no-open', 'não abre o navegador')
+  .option('--rebuild', 'refaz a página da prévia (pnpm music:build)')
+  .action(async (project: string, options: { port?: number; open: boolean; rebuild?: boolean }) => {
+    const [{ startMusicPreview }, { findFreePort }, { openInBrowser }] = await Promise.all([import('../music/preview.ts'), import('../preview/studio.ts'), import('../preview/session.ts')]);
+    loadMusicPlan(project);
+    if (options.rebuild || !existsSync(join(ROOT, 'music-preview', 'dist', 'index.html'))) {
+      log('construindo a página da prévia (uma vez)...');
+      await run(process.execPath, [join(ROOT, 'node_modules', 'vite', 'bin', 'vite.js'), 'build', '--config', 'music-preview/vite.config.ts'], { cwd: ROOT });
+    }
+    const server = await startMusicPreview({ slug: project, port: options.port ?? (await findFreePort(4880)), log });
+    log(`prévia ao vivo: ${server.url}`);
+    log('edite as cenas com `mce mv set|split|merge`; a tela atualiza sozinha. Encerrar: Ctrl+C');
+    if (options.open && !(await openInBrowser(server.url))) log('não consegui abrir o navegador; abra a URL acima');
+    await new Promise<void>((done) => process.once('SIGINT', () => void server.close().then(done)));
+  });
+
+mv
+  .command('scenes <project>')
+  .description('Lista as cenas numeradas: tempo, motivo, palavra em destaque e os versos de cada uma')
+  .action(async (project: string) => {
+    const { describeScenes } = await import('../music/edit.ts');
+    const clock = (seconds: number) => `${Math.floor(seconds / 60)}:${(seconds % 60).toFixed(1).padStart(4, '0')}`;
+    for (const row of describeScenes(loadMusicPlan(project))) {
+      log(`#${String(row.n).padEnd(3)} ${clock(row.start)}–${clock(row.end)}  ${row.motif.padEnd(9)} ${row.keyword ? `“${row.keyword}” ` : ''}${row.lyric ? `· ${row.lyric}` : '· instrumental'}`);
+    }
+  });
+
+mv
+  .command('set <project> <n>')
+  .description('Troca o motivo da cena n (a prévia atualiza na hora)')
+  .requiredOption('-m, --motif <id>', 'motivo da cena (veja `mce mv scenes`; ex.: rain, phone, heart, night)')
+  .option('-k, --keyword <texto>', 'palavra em destaque da cena')
+  .option('--no-keyword', 'apaga a palavra em destaque')
+  .action(async (project: string, n: string, options: { motif: string; keyword?: string | boolean }) => {
+    const { setSceneMotif } = await import('../music/edit.ts');
+    const keyword = options.keyword === false ? null : typeof options.keyword === 'string' ? options.keyword : undefined;
+    writeJson(musicPlanFile(project), setSceneMotif(loadMusicPlan(project), Number(n), options.motif as MotifId, keyword));
+    log(`cena ${n} agora é ${options.motif}`);
+  });
+
+mv
+  .command('split <project> <n>')
+  .description('Divide a cena n em um instante (segundos da música)')
+  .requiredOption('--at <s>', 'instante da divisão, em segundos da música', Number)
+  .action(async (project: string, n: string, options: { at: number }) => {
+    const { splitScene } = await import('../music/edit.ts');
+    writeJson(musicPlanFile(project), splitScene(loadMusicPlan(project), Number(n), options.at));
+    log(`cena ${n} dividida em ${options.at}s`);
+  });
+
+mv
+  .command('merge <project> <n>')
+  .description('Junta a cena n com a seguinte (vale o motivo da n)')
+  .action(async (project: string, n: string) => {
+    const { mergeScenes } = await import('../music/edit.ts');
+    writeJson(musicPlanFile(project), mergeScenes(loadMusicPlan(project), Number(n)));
+    log(`cenas ${n} e ${Number(n) + 1} juntas`);
+  });
+
+mv
+  .command('render <project>')
+  .description('Renderiza o vídeo a partir do plano salvo (com as suas edições), sem reanalisar a música')
+  .option('--preview', 'metade da resolução')
+  .option('-o, --output <arquivo>', 'arquivo de saída (padrão: output/<projeto>/music.mp4)')
+  .action(async (project: string, options: { preview?: boolean; output?: string }) => {
+    const { renderMusicVideo } = await import('../music/render.ts');
+    const paths = projectPaths(project);
+    const plan = loadMusicPlan(project);
+    const meta = readJson<{ audio: string }>(join(paths.analysisDir, 'music.json'));
+    if (!existsSync(meta.audio)) throw new Error(`Áudio original não encontrado: ${meta.audio}`);
+    const output = options.output ? fromUser(options.output) : join(paths.outputDir, options.preview ? 'music-preview.mp4' : 'music.mp4');
+    await tracked(project, 'music', (onProgress) =>
+      renderMusicVideo(plan, meta.audio, output, { workDir: paths.rendersDir, scale: options.preview ? 0.5 : 1, concurrency: loadConfig().render.remotionConcurrency, onProgress }),
+    );
+    log(output);
+  });
+
+const motionCmd = program.command('motion').description('Motion graphics no meio do vídeo: explicações, animações e efeitos ancorados no tempo ou na fala');
+
+/** Grava a EDL alterada como a próxima versão (nunca sobrescreve). */
+function saveNext(paths: ReturnType<typeof requireProject>, next: ReturnType<typeof loadEdl>) {
+  const { version: _version, createdAt: _createdAt, ...rest } = next;
+  return saveNewVersion(paths, rest);
+}
+
+motionCmd
+  .command('add <project>')
+  .description('Insere um gráfico/animação no meio do vídeo (nova versão da EDL). Ancore em --at (segundos da fonte) ou --say (frase falada)')
+  .requiredOption('-c, --component <nome>', 'componente (pnpm mce arsenal components) ou scene:<projeto>/<Nome>')
+  .option('--at <s>', 'instante em segundos da FONTE', Number)
+  .option('--say <frase>', 'ancora no início desta frase falada (transcrição)')
+  .option('--nth <n>', 'qual ocorrência da frase, com --say (1 = a primeira)', Number, 1)
+  .option('--offset <s>', 'deslocamento sobre a âncora; negativo entra antes da fala', Number, 0)
+  .option('-d, --duration <s>', 'duração; padrão: a do componente', Number)
+  .option('-p, --props <json>', 'props em JSON, ou @arquivo.json')
+  .option('--sample', 'usa as props de exemplo do componente (para testar o visual)')
+  .requiredOption('-r, --reason <texto>', 'o que o gráfico reforça na fala (obrigatório)')
+  .option('--hide-captions', 'esconde a legenda enquanto o gráfico ocupa a faixa inferior')
+  .option('-v, --edl <n>', 'versão da EDL (padrão: a mais recente)', Number)
+  .action(
+    async (
+      project: string,
+      options: { component: string; at?: number; say?: string; nth: number; offset: number; duration?: number; props?: string; sample?: boolean; reason: string; hideCaptions?: boolean; edl?: number },
+    ) => {
+      if ((options.at === undefined) === (options.say === undefined)) throw new Error('Informe exatamente um: --at <s> ou --say "<frase>"');
+      const paths = requireProject(project);
+      const current = loadEdl(paths, options.edl);
+      const { registry } = await import('../../motion/src/components/registry.ts');
+
+      let anchor = options.at ?? 0;
+      if (options.say !== undefined) {
+        const matches = findPhrase(readJson<Transcript>(paths.words).words, options.say);
+        if (matches.length === 0) throw new Error(`Frase não encontrada na transcrição: "${options.say}"`);
+        const chosen = matches[options.nth - 1];
+        if (!chosen) throw new Error(`A frase aparece ${matches.length}x; --nth ${options.nth} não existe`);
+        if (matches.length > 1 && options.nth === 1) log(`aviso: a frase aparece ${matches.length}x (${matches.map((m) => `${m.start.toFixed(1)}s`).join(', ')}); usando a primeira. Escolha com --nth`);
+        anchor = chosen.start;
+      }
+      const at = Math.max(0, Math.round((anchor + options.offset) * 1000) / 1000);
+
+      const entry = (registry as Record<string, { defaultDuration: number; sample: Record<string, unknown> } | undefined>)[options.component];
+      let props: Record<string, unknown> | undefined;
+      if (options.props) {
+        const raw = options.props.startsWith('@') ? readFileSync(fromUser(options.props.slice(1)), 'utf8') : options.props;
+        props = JSON.parse(raw) as Record<string, unknown>;
+      } else if (options.sample) {
+        props = entry?.sample;
+      }
+
+      for (const issue of checkStageProps(options.component, props, options.duration ?? entry?.defaultDuration ?? 3)) log(`aviso: ${issue}`);
+      const next = insertOverlay(
+        current,
+        { component: options.component, at, duration: options.duration ?? entry?.defaultDuration ?? 3, props, reason: options.reason, hidesCaptions: options.hideCaptions },
+        new Set(Object.keys(registry)),
+      );
+      const saved = saveNext(paths, next);
+      const row = describeOverlays(saved, buildTimeline(saved.clips, saved.output.fps)).find((item) => item.source === at && item.component === options.component);
+      log(`${row?.id ?? options.component} em ${at}s da fonte (${row?.output?.toFixed(2) ?? '?'}s no vídeo final), ${row?.duration ?? options.duration}s → EDL v${saved.version}`);
+      log(`próximo passo: pnpm mce render ${project}`);
+    },
+  );
+
+motionCmd
+  .command('still <component>')
+  .description('Renderiza um frame do componente sobre fundo cinza para conferir o visual antes de inserir no vídeo')
+  .option('-p, --props <json>', 'props em JSON, ou @arquivo.json (padrão: as de exemplo do componente)')
+  .option('--frame <n>', 'frame (30 fps)', Number)
+  .option('-o, --output <file>', 'arquivo de saída (png)')
+  .action(async (component: string, options: { props?: string; frame?: number; output?: string }) => {
+    const { registry } = await import('../../motion/src/components/registry.ts');
+    const entry = (registry as Record<string, { defaultDuration: number; sample: Record<string, unknown> } | undefined>)[component];
+    if (!entry) throw new Error(`Componente "${component}" não existe. Veja: pnpm mce arsenal components`);
+    const raw = options.props?.startsWith('@') ? readFileSync(fromUser(options.props.slice(1)), 'utf8') : options.props;
+    const props = raw ? (JSON.parse(raw) as Record<string, unknown>) : entry.sample;
+    const fps = 30;
+    const total = Math.round(entry.defaultDuration * fps);
+    const frame = options.frame ?? Math.round(total * 0.6);
+    const alpha = join(ROOT, 'projects', '.stills', `motion-${component}-alpha.png`);
+    const output = fromUser(options.output ?? join(ROOT, 'projects', '.stills', `motion-${component}-${frame}.png`));
+    syncScenes();
+    await renderStill('Overlay', frame, alpha, {
+      fps,
+      width: 1920,
+      height: 1080,
+      durationInFrames: total,
+      captions: [],
+      captionStyle: 'long',
+      overlays: [{ id: 'preview', component, from: 0, durationInFrames: total, props, hidesCaptions: false }],
+    });
+    // a camada de gráficos tem alfa: sobre cinza dá para enxergar o que o componente pinta
+    await run('ffmpeg', ['-hide_banner', '-v', 'error', '-y', '-f', 'lavfi', '-i', 'color=c=0x3a4150:s=1920x1080', '-i', alpha, '-filter_complex', '[0][1]overlay', '-frames:v', '1', output]);
+    log(output);
+  });
+
+motionCmd
+  .command('list <project>')
+  .description('Lista os gráficos da EDL com o tempo na fonte e no vídeo final')
+  .option('-v, --edl <n>', 'versão da EDL (padrão: a mais recente)', Number)
+  .action((project: string, options: { edl?: number }) => {
+    const edl = loadEdl(requireProject(project), options.edl);
+    const rows = describeOverlays(edl, buildTimeline(edl.clips, edl.output.fps));
+    if (!rows.length) return log('nenhum gráfico nesta EDL');
+    for (const row of rows) log(`${row.id.padEnd(22)} ${row.component.padEnd(20)} fonte ${row.source.toFixed(2)}s · vídeo ${row.output?.toFixed(2) ?? '—'}s · ${row.duration}s  ${row.reason}`);
+  });
+
+motionCmd
+  .command('remove <project> <id>')
+  .description('Remove um gráfico pelo id (nova versão da EDL)')
+  .option('-v, --edl <n>', 'versão da EDL (padrão: a mais recente)', Number)
+  .action((project: string, id: string, options: { edl?: number }) => {
+    const paths = requireProject(project);
+    const saved = saveNext(paths, removeOverlay(loadEdl(paths, options.edl), id));
+    log(`${id} removido → EDL v${saved.version}`);
   });
 
 program

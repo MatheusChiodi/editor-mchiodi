@@ -20,6 +20,8 @@ export interface OverlayItem {
   /** palco: o footage vira um cartão e o componente desenha sobre papel (já ligado aos palcos vizinhos) */
   stage?: StagePlan | null;
   wipe?: OverlayWipe;
+  /** deslocamento do gráfico em fração do quadro (afasta do rosto); somado ao `offset` manual */
+  shift?: { x: number; y: number };
   /** `persistent`: camada fixa (indicador de progresso) desenhada por cima do gráfico da vez */
   layer?: 'base' | 'persistent';
   /** Short: zona pedida na EDL (`overlays[].shorts`); sem valor, o metadado do componente */

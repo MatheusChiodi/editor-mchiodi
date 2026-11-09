@@ -7,7 +7,7 @@
  * O footage do palco é movido pelo ffmpeg com uma transformação constante por palco (src/render/reframe.ts):
  * não há pan dentro do palco, então o apresentador que anda fica na mediana (ou no meio da faixa, se ela couber).
  */
-import { coverTransform, isWindowSlot, type Point, type PresenterSlot, slotRect, slotZoom } from '../../motion/src/arsenal/stage.ts';
+import { coverTransform, endFocus, type FocusKey, focusAtSec, isWindowSlot, type Point, type PresenterSlot, slotRect, slotZoom } from '../../motion/src/arsenal/stage.ts';
 import type { Edl, Overlay } from '../edl/schema.ts';
 import { sourceToOutput, type Timeline } from '../edl/timeline.ts';
 import type { Finding } from '../eval/checks.ts';
@@ -103,6 +103,99 @@ export function axisTrack(values: readonly number[]): AxisTrack | null {
   return { center: median(sorted), low: quantile(sorted, 0.1), high: quantile(sorted, 0.9), q1: quantile(sorted, 0.25), q3: quantile(sorted, 0.75) };
 }
 
+/** Ajustes do enquadramento que segue o rosto. */
+export const FOLLOW = {
+  /** janela de tempo (s de saída) de cada ponto da trilha: 1 s ignora gesto e balanço, mas acompanha quem anda */
+  binSec: 1,
+  /** amostras mínimas num trecho para ele valer (menos que isso herda o vizinho) */
+  minSamples: 2,
+  /** o foco só segue se andar mais que isso (fração do quadro) em algum eixo: abaixo disso a câmera fixa parece mais firme */
+  deadZone: 0.04,
+  /** velocidade máxima do foco (fração do quadro por segundo): sem chicote quando o detector erra um trecho */
+  maxSpeed: 0.1,
+  /** tolerância (fração do quadro) para descartar chave que a reta entre as vizinhas já descreve */
+  simplify: 0.004,
+} as const;
+
+/** Amostra do rosto/centro já no tempo do palco (`sec` = segundos desde o início do overlay). */
+export interface TrackSample {
+  sec: number;
+  x: number;
+  y: number | null;
+}
+
+const clampRange = (value: number, low: number, high: number) => Math.min(high, Math.max(low, value));
+const pointAxis = (center: number): AxisTrack => ({ center, low: center, high: center, q1: center, q3: center });
+
+/**
+ * Trilha de foco que segue o apresentador: agrupa as amostras em trechos de `binSec`, leva o centro (mediana) de
+ * cada um ao foco do recorte, suaviza, limita a velocidade e tira chaves redundantes. Devolve `[]` quando o
+ * apresentador anda menos que `deadZone` (o foco fixo basta) ou quando faltam amostras.
+ */
+export function buildFocusTrack(samples: readonly TrackSample[], durationSec: number, visible: Point, yFallback: AxisTrack, faceHalf: Point = FACE_HALF): FocusKey[] {
+  if (!(durationSec > 0) || samples.length < FOLLOW.minSamples) return [];
+  const count = Math.max(2, Math.ceil(durationSec / FOLLOW.binSec));
+  const binLen = durationSec / count;
+  const buckets: TrackSample[][] = Array.from({ length: count }, () => []);
+  for (const sample of samples) {
+    if (!Number.isFinite(sample.sec) || !Number.isFinite(sample.x) || sample.sec < 0 || sample.sec > durationSec) continue;
+    buckets[Math.min(count - 1, Math.floor(sample.sec / binLen))]!.push(sample);
+  }
+  const pick = (bucket: TrackSample[]): Point | null => {
+    if (bucket.length < FOLLOW.minSamples) return null;
+    const ys = bucket.flatMap((sample) => (sample.y === null ? [] : [sample.y]));
+    const byY = ys.length * 2 >= bucket.length;
+    return {
+      x: centerToStageFocus(pointAxis(median(bucket.map((sample) => sample.x))), visible.x, faceHalf.x),
+      y: centerToStageFocus(byY ? pointAxis(median(ys)) : yFallback, visible.y, faceHalf.y),
+    };
+  };
+  const raw = buckets.map(pick);
+  const first = raw.find((point): point is Point => point !== null);
+  if (!first) return [];
+  // trecho sem amostra herda o anterior (o primeiro, o primeiro que existir)
+  let previous: Point = first;
+  const filled = raw.map((point) => (previous = point ?? previous));
+  // média móvel de 3 pontos
+  const smooth = filled.map((point, index) => {
+    const window = [filled[index - 1], point, filled[index + 1]].filter((value): value is Point => Boolean(value));
+    return { x: window.reduce((sum, value) => sum + value.x, 0) / window.length, y: window.reduce((sum, value) => sum + value.y, 0) / window.length };
+  });
+  const range = (axis: 'x' | 'y') => Math.max(...smooth.map((point) => point[axis])) - Math.min(...smooth.map((point) => point[axis]));
+  if (Math.max(range('x'), range('y')) < FOLLOW.deadZone) return [];
+  // limite de velocidade: o foco não chicoteia quando o detector erra um trecho
+  const step = FOLLOW.maxSpeed * binLen;
+  const limited = smooth.map((point) => ({ ...point }));
+  for (let index = 1; index < limited.length; index += 1) {
+    for (const axis of ['x', 'y'] as const) limited[index]![axis] = limited[index - 1]![axis] + clampRange(limited[index]![axis] - limited[index - 1]![axis], -step, step);
+  }
+  const keys: FocusKey[] = [{ t: 0, ...limited[0]! }, ...limited.map((point, index) => ({ t: (index + 0.5) * binLen, ...point })), { t: durationSec, ...limited[limited.length - 1]! }];
+  // chave que a reta entre as vizinhas já descreve sai
+  const kept: FocusKey[] = [keys[0]!];
+  for (let index = 1; index < keys.length - 1; index += 1) {
+    const a = kept[kept.length - 1]!;
+    const b = keys[index]!;
+    const c = keys[index + 1]!;
+    const k = (b.t - a.t) / (c.t - a.t);
+    if (Math.max(Math.abs(a.x + (c.x - a.x) * k - b.x), Math.abs(a.y + (c.y - a.y) * k - b.y)) > FOLLOW.simplify) kept.push(b);
+  }
+  kept.push(keys[keys.length - 1]!);
+  return kept.map((key) => ({ t: round4(key.t), x: round4(key.x), y: round4(key.y) }));
+}
+
+/** Corte do rosto (0–1, percentil 90) ao longo da trilha, medido contra o centro de cada amostra no instante dela. */
+export function trackCut(track: readonly FocusKey[], samples: readonly TrackSample[], visible: Point, yFallback: AxisTrack, faceHalf: Point = FACE_HALF): Point {
+  if (track.length === 0 || samples.length === 0) return { x: 0, y: 0 };
+  const spec = { focus: { x: 0.5, y: 0.5 }, focusTrack: [...track] };
+  const cuts = samples.map((sample) => {
+    const focus = focusAtSec(spec, sample.sec);
+    return { x: faceOutside(focus.x, visible.x, sample.x, faceHalf.x), y: faceOutside(focus.y, visible.y, sample.y ?? yFallback.center, faceHalf.y) };
+  });
+  // um gesto isolado (a mão vira "rosto") não conta como rosto cortado
+  const p90 = (values: number[]) => quantile([...values].sort((a, b) => a - b), 0.9);
+  return { x: p90(cuts.map((cut) => cut.x)), y: p90(cuts.map((cut) => cut.y)) };
+}
+
 export interface StageFocusPlan {
   id: string;
   slot: PresenterSlot;
@@ -119,6 +212,8 @@ export interface StageFocusPlan {
   cut: Point;
   /** amostras usadas */
   samples: number;
+  /** foco que segue o apresentador ao longo do palco (vazio = o apresentador fica parado: vale `focus`) */
+  track: FocusKey[];
 }
 
 export interface StageFocusOptions {
@@ -163,7 +258,15 @@ export function planStageFocus(
         ? { x: centerToStageFocus(x, visible.x, FACE_HALF.x), y: centerToStageFocus(yTrack, visible.y, FACE_HALF.y) }
         : DEFAULT_STAGE_FOCUS
       : (presenter.focus as Point);
-    const cut = x ? { x: trackOutside(focus.x, visible.x, x, FACE_HALF.x), y: trackOutside(focus.y, visible.y, yTrack, FACE_HALF.y) } : { x: 0, y: 0 };
+    // trilha: só em foco auto, com amostras; as amostras ganham o tempo do palco (saída − início do overlay)
+    const trackSamples: TrackSample[] = auto
+      ? kept.flatMap((sample) => {
+          const at = sourceToOutput(timeline, sample.t);
+          return at === null || (byFace && !sample.face) ? [] : [{ sec: at - out, x: byFace ? sample.face!.x : sample.x, y: byFace ? sample.face!.y : null }];
+        })
+      : [];
+    const track = auto && x ? buildFocusTrack(trackSamples, overlay.duration, visible, yTrack) : [];
+    const cut = !x ? { x: 0, y: 0 } : track.length ? trackCut(track, trackSamples, visible, yTrack) : { x: trackOutside(focus.x, visible.x, x, FACE_HALF.x), y: trackOutside(focus.y, visible.y, yTrack, FACE_HALF.y) };
     plans.push({
       id: overlay.id,
       slot: presenter.slot,
@@ -174,6 +277,7 @@ export function planStageFocus(
       visible,
       cut,
       samples: kept.length,
+      track,
     });
   }
   return plans;
@@ -186,6 +290,37 @@ export function stageFocusMap(plans: readonly StageFocusPlan[]): Map<string, Poi
   return new Map(plans.map((plan) => [plan.id, plan.focus]));
 }
 
+/** Mapa id → trilha de foco (só dos palcos que seguem o apresentador). */
+export function stageTrackMap(plans: readonly StageFocusPlan[]): Map<string, FocusKey[]> {
+  return new Map(plans.filter((plan) => plan.track.length > 0).map((plan) => [plan.id, plan.track]));
+}
+
+interface TrackableItem {
+  id: string;
+  from: number;
+  durationInFrames: number;
+  stage?: { focus: Point; focusTrack?: FocusKey[]; from: { focus: Point } | null } | null;
+}
+
+/**
+ * Cola a trilha nos palcos já montados por `buildOverlayProps` (que fica como está): `stage.focusTrack` e, no
+ * palco seguinte colado, `from.focus` = foco de saída do anterior, para o cartão não saltar na emenda.
+ */
+export function applyStageTracks(items: readonly TrackableItem[], tracks: ReadonlyMap<string, FocusKey[]>, toleranceFrames = 2): void {
+  if (tracks.size === 0) return;
+  const staged = items.filter((item) => item.stage).sort((a, b) => a.from - b.from);
+  for (const item of staged) {
+    const track = tracks.get(item.id);
+    if (track) item.stage!.focusTrack = track;
+  }
+  staged.forEach((item, index) => {
+    const previous = staged[index - 1];
+    if (item.stage?.from && previous?.stage && Math.abs(previous.from + previous.durationInFrames - item.from) <= toleranceFrames) {
+      item.stage.from.focus = endFocus(previous.stage);
+    }
+  });
+}
+
 const cutsFace = (plan: StageFocusPlan) => Math.max(plan.cut.x, plan.cut.y) > FACE_CUT_TOLERANCE;
 
 /** Linhas para o log do render: um resumo por palco auto e um aviso por rosto cortado. */
@@ -196,7 +331,7 @@ export function formatStageFocus(plans: readonly StageFocusPlan[]): string[] {
     if (plan.mode === 'auto') {
       lines.push(
         plan.presenter
-          ? `foco auto: ${where} em x=${plan.focus.x.toFixed(3)} y=${plan.focus.y.toFixed(3)} (apresentador ${plan.presenter.x.low.toFixed(2)}–${plan.presenter.x.high.toFixed(2)}, ${plan.samples} amostras)`
+          ? `foco auto: ${where} em x=${plan.focus.x.toFixed(3)} y=${plan.focus.y.toFixed(3)} (apresentador ${plan.presenter.x.low.toFixed(2)}–${plan.presenter.x.high.toFixed(2)}, ${plan.samples} amostras${plan.track.length ? `, seguindo o rosto em ${plan.track.length} chaves` : ''})`
           : `aviso: foco auto do ${where} sem amostra do apresentador; usando ${DEFAULT_STAGE_FOCUS.x}/${DEFAULT_STAGE_FOCUS.y}`,
       );
     }

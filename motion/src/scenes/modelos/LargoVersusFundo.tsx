@@ -6,11 +6,12 @@
 import { useMemo } from 'react';
 import { AbsoluteFill, interpolate, useCurrentFrame, useVideoConfig } from 'remotion';
 
-import type { BaseProps } from '../../anim';
+import { type BaseProps, presence } from '../../anim';
 import type { ComponentEntry } from '../../components/registry';
 import { at } from '../../scene-kit/timing';
 import { Burst, clamp, easeInOut, mixPose, orbitPose, pop, progress, projectToScreen, Stage, Tooltip, voxelPalette, VoxelWorld } from '../../scene-kit/voxel';
 import { BREAK_FRAMES, digCount, digPlan, type DigReveal, digTimes, labelAnchors, layerType, oreFrame, orePosition, worldBlocks } from './largo-fundo-logic';
+import { fitSceneTimes } from './fit-time';
 
 export interface LargoVersusFundoSide {
   label: string;
@@ -36,7 +37,7 @@ export const LargoVersusFundo: React.FC<LargoVersusFundoProps & BaseProps> = ({ 
   const frame = useCurrentFrame();
   const { fps, width, height } = useVideoConfig();
   const blocksPerSide = digCount(count);
-  const times = digTimes(blocksPerSide, revealAt);
+  const times = fitSceneTimes(digTimes(blocksPerSide, revealAt), durationInFrames / fps);
   const ore = orePosition(blocksPerSide);
   const anchors = labelAnchors(blocksPerSide);
 
@@ -50,7 +51,7 @@ export const LargoVersusFundo: React.FC<LargoVersusFundoProps & BaseProps> = ({ 
   const close = orbitPose({ target: [0.6, -3.1, 0], distance: 26.5, azimuth: 6, elevation: 13 });
   const pose = mixPose(far, close, progress(frame, at(times.deep, fps), found + fps, easeInOut));
 
-  const fade = interpolate(frame, [0, 6, durationInFrames - 6, durationInFrames], [0, 1, 1, 0], clamp);
+  const fade = presence(frame, fps, durationInFrames).value;
   const flash = interpolate(frame, [found, found + 3, found + 14], [0, 0.35, 0], clamp);
 
   return (

@@ -34,7 +34,7 @@ export const TechBadge: React.FC<TechBadgeProps & BaseProps> = ({ tech, corner: 
   const right = corner.endsWith('right');
   const bottom = corner.startsWith('bottom');
   const enter = interpolate(frame, [0, motion.base * fps], [0, 1], { ...clamp, easing: motion.enter });
-  const exit = interpolate(frame, [durationInFrames - motion.fast * fps, durationInFrames], [0, 1], { ...clamp, easing: motion.exit });
+  const exit = interpolate(frame, [durationInFrames - motion.leave * fps, durationInFrames], [0, 1], { ...clamp, easing: motion.exit });
   const icon = interpolate(frame, [0.08 * fps, (0.08 + motion.base) * fps], [0, 1], { ...clamp, easing: motion.pop });
   const text = label === false ? null : (label ?? techOrPlaceholder(tech).name);
 
