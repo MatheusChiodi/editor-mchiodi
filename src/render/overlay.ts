@@ -17,7 +17,7 @@ export const CHROMIUM_OPTIONS = { gl: 'angle' } as const;
 
 let bundled: Promise<string> | null = null;
 
-function bundleMotion(): Promise<string> {
+export function bundleMotion(): Promise<string> {
   bundled ??= bundle({ entryPoint: MOTION_ENTRY, publicDir: ASSETS_DIR });
   return bundled;
 }
@@ -95,14 +95,15 @@ export async function renderBumper(compositionId: string, seconds: number, optio
 }
 
 /** Um frame de qualquer composição registrada no Root (componentes, cenas, legendas). */
-export async function renderStill(compositionId: string, frame: number, output: string): Promise<void> {
+export async function renderStill(compositionId: string, frame: number, output: string, inputProps?: Record<string, unknown>): Promise<void> {
   const serveUrl = await bundleMotion();
-  const composition = await selectComposition({ serveUrl, id: compositionId, chromiumOptions: CHROMIUM_OPTIONS });
+  const composition = await selectComposition({ serveUrl, id: compositionId, inputProps, chromiumOptions: CHROMIUM_OPTIONS });
   await renderStillFrame({
     serveUrl,
     composition,
     frame: Math.min(frame, composition.durationInFrames - 1),
     output,
+    inputProps,
     imageFormat: 'png',
     chromiumOptions: CHROMIUM_OPTIONS,
   });

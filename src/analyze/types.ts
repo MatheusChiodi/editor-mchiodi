@@ -72,6 +72,8 @@ export interface Analysis {
   proxy: string;
   loudness: Loudness;
   silences: Span[];
+  /** trechos com o quadro parado; só existe se a análise rodou com `--motion` */
+  stills?: Span[];
   scenes: number[];
   phrases: Phrase[];
   flags: Flag[];

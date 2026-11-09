@@ -13,6 +13,7 @@ import { revealTimes } from '../../themes/shared/math';
 import { type AnalogyBaseProps, AnalogyStage, Plaque } from '../../themes/shared/model';
 import type { Actor } from '../../themes/types';
 import { theme as brand } from '../../theme';
+import { fitSceneTimes } from './fit-time';
 
 export interface AnalogiaEquipeMember {
   /** o papel real (conteúdo): "Front-end" */
@@ -90,7 +91,7 @@ export const AnalogiaEquipe: React.FC<AnalogiaEquipeProps & BaseProps> = ({
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const shown = members.slice(0, MAX_MEMBERS);
-  const times = revealTimes(shown.length, revealAt, 1.1, 0.45);
+  const times = fitSceneTimes(revealTimes(shown.length, revealAt, 1.1, 0.45), durationInFrames / fps);
   const layout = analogiaEquipeLayout(shown.length);
 
   const actors: Actor[] = [

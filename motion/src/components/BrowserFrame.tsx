@@ -1,7 +1,7 @@
 import { AbsoluteFill } from 'remotion';
 
 import { type BaseProps, progressAt, stagger, usePresence } from '../anim';
-import { theme } from '../theme';
+import { motion, theme } from '../theme';
 import { clip, fitWire, Icon, WireBlock, type WireBlockSpec } from './c2-kit';
 import type { ComponentEntry } from './registry';
 import { withAlpha } from './SectionTitle';
@@ -173,7 +173,7 @@ export const BrowserFrame: React.FC<BrowserFrameProps & BaseProps> = ({ url, tit
               block={block}
               height={layout.heights[index]!}
               scale={Math.max(0.8, layout.scale)}
-              appear={progressAt(frame, fps, stagger(index, 0.14, start))}
+              appear={progressAt(frame, fps, stagger(index, motion.step.base, start))}
             />
           ))}
         </div>

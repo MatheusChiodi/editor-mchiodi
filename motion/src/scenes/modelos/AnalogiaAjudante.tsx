@@ -14,6 +14,7 @@ import { revealTimes } from '../../themes/shared/math';
 import { type AnalogyBaseProps, AnalogyStage, type Box, ItemCard, Plaque, rowBoxes } from '../../themes/shared/model';
 import type { Actor } from '../../themes/types';
 import { theme as brand } from '../../theme';
+import { fitSceneTimes } from './fit-time';
 
 export interface AnalogiaAjudanteItem {
   label: string;
@@ -99,7 +100,7 @@ export const AnalogiaAjudante: React.FC<AnalogiaAjudanteProps & BaseProps> = ({
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const shown = items.slice(0, MAX_ITEMS);
-  const times = revealTimes(shown.length, revealAt, helperAt + 1.1, 0.6);
+  const times = fitSceneTimes(revealTimes(shown.length, revealAt, helperAt + 1.1, 0.6), durationInFrames / fps);
   const layout = analogiaAjudanteLayout(shown.length, shown.some((item) => item.hint));
   const lastSec = times.at(-1) ?? helperAt;
   const closeIn = enter(frame, fps, closingAt ?? lastSec + 0.8);

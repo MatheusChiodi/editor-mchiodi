@@ -81,3 +81,40 @@ export function zoomFilters(zooms: PlacedZoom[], width: number, height: number):
     `crop=${width}:${height}:x='${width}*(${z}-1)*${focus('x')}':y='${height}*(${z}-1)*${focus('y')}'`,
   ];
 }
+
+/** Mesma curva de `zoomEnvelope`, calculada em número (preview no navegador). */
+export function zoomEnvelopeAt(zoom: PlacedZoom, t: number): number {
+  if (t < zoom.start || t > zoom.end) return 0;
+  if (zoom.mode === 'punch') return 1;
+  if (zoom.mode === 'ken-burns') return Math.min(1, Math.max(0, (t - zoom.start) / (zoom.end - zoom.start)));
+  const ramp = Math.min(RAMP, (zoom.end - zoom.start) / 3);
+  const smooth = (p: number) => p * p * (3 - 2 * p);
+  const up = Math.min(1, Math.max(0, (t - zoom.start) / ramp));
+  const down = Math.min(1, Math.max(0, (t - (zoom.end - ramp)) / ramp));
+  return smooth(up) * (1 - smooth(down));
+}
+
+/** Escala e foco do footage em `t` (segundos do vídeo final), somando os zooms ativos como o filtro faz. */
+export function zoomStateAt(zooms: PlacedZoom[], t: number): { scale: number; focus: { x: number; y: number } } {
+  let scale = 1;
+  const focus = { x: 0, y: 0 };
+  for (const zoom of zooms) {
+    if (t < zoom.start || t > zoom.end) continue;
+    scale += (zoom.scale - 1) * zoomEnvelopeAt(zoom, t);
+    focus.x += zoom.focus.x;
+    focus.y += zoom.focus.y;
+  }
+  return { scale, focus };
+}
+
+/** CSS equivalente da cor da EDL para o preview (aproximação: exposição, contraste, saturação; LUT, balanço e nitidez ficam de fora). */
+export function gradeCss(grade: Grade): string {
+  const preset = PRESETS[grade.preset];
+  const parts: string[] = [];
+  if (grade.exposure !== 0) parts.push(`brightness(${fixed(2 ** grade.exposure)})`);
+  const contrast = preset.contrast * grade.contrast;
+  const saturation = preset.saturation * grade.saturation;
+  if (contrast !== 1) parts.push(`contrast(${fixed(contrast)})`);
+  if (saturation !== 1) parts.push(`saturate(${fixed(saturation)})`);
+  return parts.length ? parts.join(' ') : 'none';
+}

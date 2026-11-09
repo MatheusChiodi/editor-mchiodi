@@ -9,6 +9,7 @@ import type { ComponentEntry } from '../../components/registry';
 import { alpha, enter, Eyebrow, IconBadge, type IconName, longShadow, rise, SceneBackground, SceneCard, Statement } from '../../scene-kit';
 import { theme } from '../../theme';
 import { clampCount, estimateLines, estimateWidth, fillTimes, pickSec, roundSec } from './fit-b';
+import { fitSceneTimes } from './fit-time';
 
 export interface CrachaComDesbloqueiosReveal {
   /** o crachá desce e vira */
@@ -167,7 +168,7 @@ export const CrachaComDesbloqueios: React.FC<CrachaComDesbloqueiosProps & BasePr
   const shown = (items.length ? items : DEFAULT_ITEMS).slice(0, ITEM_RANGE.max);
   const columnWidth = usableWidth - 720;
   const layout = badgeLayout(shown, estimateLines(title, columnWidth, TITLE_FONT, 'display'), usableWidth, height - theme.safe.y - 180);
-  const times = unlockTimes(shown.length, revealAt);
+  const times = fitSceneTimes(unlockTimes(shown.length, revealAt), durationInFrames / fps);
   const drop = enter(frame, fps, times.badge, 0.6);
   const flip = badgeFlip(enter(frame, fps, times.badge, FLIP_SECONDS));
   const content = enter(frame, fps, times.badge + FLIP_SECONDS * 0.45, 0.5);

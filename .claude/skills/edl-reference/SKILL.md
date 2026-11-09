@@ -164,6 +164,17 @@ Um grade só para o vídeo inteiro.
 - Mudar `smoothing`/`zoom` não refaz a análise. Sem libvidstab no ffmpeg (`pnpm mce doctor`), avisa e renderiza sem estabilizar.
 - Quando usar: STYLE.md §4. Diga o porquê em `reason`.
 
+## Fundo da câmera (`background`)
+
+`null` por padrão (sem troca). `reason` é obrigatório. Roda sobre o corte, no tempo de saída, antes de zoom, cor e gráficos.
+- `mode`: `color` (`color` #RRGGBB), `image` / `video` (`file` em `assets/backgrounds/`, em laço, cobre o quadro), `blur` (`blur` 2–60,
+  desfoca o fundo original) — os quatro usam máscara de pessoa por vídeo (RobustVideoMatting, sidecar `matting/`, GPU).
+- `chroma`: tira `keyColor` (padrão #00ff00) com `similarity` 0.01–0.5 e `edgeBlend`; `despill` limpa o reflexo. Sem modelo.
+  O fundo novo é `file` (imagem ou vídeo, pela extensão) ou a cor lisa `color`.
+- `matte` (modos com modelo): `downsample` 0.1–1 (null = automático, ~512 px no maior lado), `opening` 0–8 (tira respingos da
+  máscara), `feather` 0–10 (suaviza a borda). Estado recorrente do modelo reinicia em corte seco de cena.
+- Ambiente: `cd matting ; uv sync`. O modelo (15 MB) baixa na primeira máscara. `config.matting.device|variant` (`resnet50` acerta mais cabelo e mão).
+
 ## Capítulos (`chapters`)
 
 `[{ "title": "Gancho", "at": 0.5 }, ...]`: mínimo 3, o primeiro vira 0:00, pelo menos 10s entre eles. Saem em `capitulos.txt` pelo `pnpm mce report`.

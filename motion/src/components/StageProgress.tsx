@@ -103,7 +103,7 @@ export const StageProgress: React.FC<StageProgressProps & BaseProps> = ({ label 
             padding: '0 20px',
             display: 'flex',
             alignItems: 'center',
-            borderRadius: 12,
+            borderRadius: theme.radius.chip,
             background: 'rgba(17,24,39,0.86)',
             color: theme.color.paper,
             fontFamily: theme.font.body,
@@ -111,7 +111,7 @@ export const StageProgress: React.FC<StageProgressProps & BaseProps> = ({ label 
             fontSize: 26,
             letterSpacing: '0.16em',
             textTransform: 'uppercase',
-            boxShadow: '0 3px 4px rgba(15,23,42,0.22), 0 12px 36px rgba(15,23,42,0.14)',
+            boxShadow: theme.shadow.pill,
           }}
         >
           {label}
@@ -126,10 +126,10 @@ export const StageProgress: React.FC<StageProgressProps & BaseProps> = ({ label 
                 position: 'relative',
                 width: CHIP,
                 height: CHIP,
-                borderRadius: 12,
+                borderRadius: theme.radius.chip,
                 overflow: 'hidden',
                 background: theme.color.paper,
-                boxShadow: 'inset 0 -3px 0 rgba(15,23,42,0.14), 0 3px 4px rgba(15,23,42,0.22), 0 12px 36px rgba(15,23,42,0.14)',
+                boxShadow: `inset 0 -3px 0 rgba(15,23,42,0.14), ${theme.shadow.pill}`,
                 // o passo atual é maior, além de coral
                 scale: String(1 + 0.17 * glow),
                 zIndex: glow > 0.01 ? 1 : 0,
@@ -165,14 +165,14 @@ export const StageProgress: React.FC<StageProgressProps & BaseProps> = ({ label 
               padding: '0 18px',
               display: 'flex',
               alignItems: 'center',
-              borderRadius: 12,
+              borderRadius: theme.radius.chip,
               background: theme.color.paper,
               color: theme.color.ink,
               fontFamily: theme.font.body,
               fontWeight: 600,
               fontSize: 28,
               whiteSpace: 'nowrap',
-              boxShadow: 'inset 0 -3px 0 rgba(15,23,42,0.14), 0 3px 4px rgba(15,23,42,0.22), 0 12px 36px rgba(15,23,42,0.14)',
+              boxShadow: `inset 0 -3px 0 rgba(15,23,42,0.14), ${theme.shadow.pill}`,
               opacity: Math.min(1, nameIn * 3),
               translate: `${(1 - nameIn) * (right ? 14 : -14)}px 0`,
             }}

@@ -9,6 +9,7 @@ import type { ComponentEntry } from '../../components/registry';
 import { Arrow, enter, Eyebrow, Icon, type IconName, Pill, type Point, popIn, rise, SceneBackground, SceneCard, Statement, text } from '../../scene-kit';
 import { motion, theme } from '../../theme';
 import { estimateLines, fitFontSize, pickSec, pillHeight, pillWidth } from './fit-b';
+import { fitSceneTimes } from './fit-time';
 
 export interface EtiquetaRiscadaETrocadaReveal {
   /** o ícone se desenha e o título entra */
@@ -145,7 +146,7 @@ export const EtiquetaRiscadaETrocada: React.FC<EtiquetaRiscadaETrocadaProps & Ba
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const layout = swapLayout(wrongLabel, rightLabel);
-  const times = swapTimes(revealAt);
+  const times = fitSceneTimes(swapTimes(revealAt), durationInFrames / fps);
   const strike = strikeLine(layout.wrongWidth, layout.height);
   const heading = swapTitleFont(title);
   const stack = swapStackHeight({ title, hasEyebrow: Boolean(eyebrow), hasCardEyebrow: Boolean(cardEyebrow), note, pill: layout.height });

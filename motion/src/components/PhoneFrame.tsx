@@ -1,7 +1,7 @@
 import { AbsoluteFill, useVideoConfig } from 'remotion';
 
 import { type BaseProps, progressAt, stagger, usePresence } from '../anim';
-import { theme } from '../theme';
+import { motion, theme } from '../theme';
 import { fitWire, WireBlock, type WireBlockSpec } from './c2-kit';
 import type { ComponentEntry } from './registry';
 
@@ -113,7 +113,7 @@ export const PhoneFrame: React.FC<PhoneFrameProps & BaseProps> = ({ title, block
                 block={block}
                 height={layout.heights[index]!}
                 scale={SCALE * Math.max(0.85, layout.scale)}
-                appear={progressAt(frame, fps, stagger(index, 0.14, BLOCKS_START))}
+                appear={progressAt(frame, fps, stagger(index, motion.step.base, BLOCKS_START))}
               />
             ))}
           </div>

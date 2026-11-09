@@ -4,7 +4,8 @@ import type { BaseProps } from '../anim';
 import { easeOutQuad, stageMotion } from '../arsenal/stage';
 import { theme } from '../theme';
 import type { ComponentEntry } from './registry';
-import { cue, cueTimes, leave, NotePill, type PillRole, type PillTone, pillTilt, resolveTone, rise } from './stage-kit';
+import { entryTimes, readTimes } from './timing';
+import { cue, leave, NotePill, type PillRole, type PillTone, pillTilt, resolveTone, rise } from './stage-kit';
 
 export type PillCorner = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
 
@@ -96,7 +97,8 @@ export const PillStack: React.FC<PillStackProps & BaseProps> = ({ title, items, 
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const pills = stackItems(items);
-  const times = cueTimes(pills.map((pill) => pill.at), title ? PILL_START + 0.4 : PILL_START - 0.3, PILL_STEP);
+  // cada pílula entra quando é dita; se o overlay é curto, puxa para dar tempo de ler e comprime a cascata padrão
+  const times = entryTimes(pills.map((pill) => pill.at), title ? PILL_START + 0.4 : PILL_START - 0.3, PILL_STEP, durationInFrames / fps, readTimes(pills.map((pill) => pill.text)));
   const out = leave(frame, fps, durationInFrames);
   const scrim = cue(frame, fps, 0, 0.5) * (1 - out);
   const right = corner.endsWith('right');

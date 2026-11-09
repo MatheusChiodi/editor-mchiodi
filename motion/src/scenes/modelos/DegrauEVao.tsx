@@ -8,6 +8,7 @@ import type { ComponentEntry } from '../../components/registry';
 import { enter, IconBadge, type IconName, Pill, type Point, popIn, rise, SceneBackground, SceneCard, Statement, text } from '../../scene-kit';
 import { theme } from '../../theme';
 import { CHAR, clampInt, CLIP, type Extent, fitFont, fitPill, iconOr, MIN_TEXT, pillClamp, sequence, statementHeight, timeOr, titleSize } from './kit-a';
+import { fitSceneTimes } from './fit-time';
 
 export interface DegrauBase {
   label: string;
@@ -159,7 +160,7 @@ export const DegrauEVao: React.FC<DegrauEVaoProps & BaseProps> = ({
   const labels = degrauRowLabels(wall);
   const layout = degrauLayout(labels.length);
   const reveal = degrauReveal(revealAt);
-  const times = degrauRowTimes(reveal.wall, labels.length, rowsAt);
+  const times = fitSceneTimes(degrauRowTimes(reveal.wall, labels.length, rowsAt), durationInFrames / fps);
   const baseIn = enter(frame, fps, reveal.base, 0.5);
   const gap = enter(frame, fps, reveal.gap, 0.7);
   const closingIn = enter(frame, fps, reveal.closing, 0.4);

@@ -1,7 +1,7 @@
 import { AbsoluteFill, useVideoConfig } from 'remotion';
 
 import { type BaseProps, progressAt, stagger, usePresence } from '../anim';
-import { theme } from '../theme';
+import { motion, theme } from '../theme';
 import { cardSurface } from './c1-kit';
 import { eyebrow, LineBand } from './c2-kit';
 import type { ComponentEntry } from './registry';
@@ -159,7 +159,7 @@ export const DataTable: React.FC<DataTableProps & BaseProps> = ({ columns, rows,
             ))}
           </div>
           {body.map((row, index) => {
-            const appear = progressAt(frame, fps, stagger(index, 0.1, ROWS_START));
+            const appear = progressAt(frame, fps, stagger(index, motion.step.list, ROWS_START));
             const isMarked = index === highlightRow;
             return (
               <div

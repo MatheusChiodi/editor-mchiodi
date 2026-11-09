@@ -7,7 +7,9 @@ import { Icon, isIconName } from '../scene-kit/icons';
 import { techFor, TechGlyph } from '../tech/glyph';
 import { theme } from '../theme';
 import type { ComponentEntry } from './registry';
-import { cueTimes, markupWords, NotePill, pillTilt, type PillTone, resolveTone, RichText, rise, wordReveal, wordTimes } from './stage-kit';
+import { entryDeadline, entryTimes, fitEntryTimes, readTimes } from './timing';
+import { minReadSec } from './read-time';
+import { markupWords, NotePill, pillTilt, type PillTone, resolveTone, RichText, rise, wordReveal, wordTimes } from './stage-kit';
 
 export interface ExplainerCard {
   /** ícone do kit (`server`, `database`, `browser`, `phone`, `code`, `gear`, `bolt`, `lock`, `user`, `cloud`, `check`, `x`) ou `tech:<id>` (logo da tecnologia); sem ele, o número do cartão */
@@ -55,14 +57,23 @@ export function explainerTitleSize(title: string): number {
 }
 
 /** Instante de cada palavra do título: quando é dita (`wordAt`) ou em cascata a partir de `start`. */
-export function titleTimes(wordCount: number, wordAt?: readonly (number | undefined)[], start: number = TITLE_START): number[] {
-  return wordTimes(wordAt, wordCount, start);
+export function titleTimes(wordCount: number, wordAt?: readonly (number | undefined)[], start: number = TITLE_START, durationSec?: number): number[] {
+  const times = wordTimes(wordAt, wordCount, start);
+  // com a duração conhecida, a última palavra ainda precisa de tempo na tela antes da saída
+  return durationSec === undefined ? times : fitEntryTimes(times, durationSec, undefined, TITLE_STEP);
+}
+
+/** Entrada da pílula de nota: `at` dado ou depois do último cartão; nunca tão tarde que não dê para ler. */
+export function noteEntry(at: number | undefined, text: string, lastAt: number, durationSec?: number): number {
+  const wanted = typeof at === 'number' && Number.isFinite(at) && at >= 0 ? at : lastAt + CARD_STEP;
+  return durationSec === undefined ? wanted : Math.max(0, Math.min(wanted, entryDeadline(durationSec, minReadSec(text))));
 }
 
 /** Os cartões começam depois do título inteiro, a menos que `revealAt` diga quando. */
-export function cardTimes(count: number, wordCount: number, revealAt: readonly number[] = [], lastWordAt?: number): number[] {
+export function cardTimes(count: number, wordCount: number, revealAt: readonly number[] = [], lastWordAt?: number, durationSec?: number, labels?: readonly string[]): number[] {
   const last = lastWordAt ?? TITLE_START + Math.max(0, wordCount - 1) * TITLE_STEP;
-  return cueTimes(Array.from({ length: count }, (_, index) => revealAt[index]), last + stageMotion.word.sec + 0.4, CARD_STEP);
+  // com duração, o último cartão precisa de leitura mínima (1,2 s + 0,25 s por palavra) e a cascata comprime se não couber
+  return entryTimes(Array.from({ length: count }, (_, index) => revealAt[index]), last + stageMotion.word.sec + 0.4, CARD_STEP, durationSec, labels ? readTimes(labels) : undefined);
 }
 
 /**
@@ -86,14 +97,15 @@ export const SplitExplainer: React.FC<SplitExplainerProps & BaseProps> = ({ eyeb
   const total = 2 + shown.length + (hasNote ? 1 : 0);
   const timing = contentTiming(stage?.plan, durationInFrames / fps, total);
   const wordStart = timing.startSec + stageMotion.eyebrow.leadSec;
-  const wordCues = titleTimes(words.length, wordAt, wordStart);
-  const times = cardTimes(shown.length, words.length, revealAt, wordCues.at(-1) ?? wordStart);
+  const durationSec = durationInFrames / fps;
+  const wordCues = titleTimes(words.length, wordAt, wordStart, durationSec);
+  const times = cardTimes(shown.length, words.length, revealAt, wordCues.at(-1) ?? wordStart, durationSec, shown.map((card) => `${card.label} ${card.caption ?? ''}`));
   const dense = shown.length > 3;
   const out = (enterIndex: number) => exitCue(sec, timing.exitSec, total - 1 - enterIndex);
   // o rótulo é só fade, 3 f antes da primeira palavra, e nunca espera um título que demora a ser dito
   const eyebrowAt = Math.max(0, Math.min(timing.startSec, (wordCues[0] ?? wordStart) - stageMotion.eyebrow.leadSec));
   const eyebrowIn = easeOutQuad((sec - eyebrowAt) / stageMotion.eyebrow.sec);
-  const noteAt = note?.at ?? (times.at(-1) ?? wordCues.at(-1) ?? wordStart) + CARD_STEP;
+  const noteAt = noteEntry(note?.at, note?.text ?? '', times.at(-1) ?? wordCues.at(-1) ?? wordStart, durationSec);
 
   return (
     <AbsoluteFill style={{ background: BACKDROP.paper }}>
@@ -152,7 +164,7 @@ export const SplitExplainer: React.FC<SplitExplainerProps & BaseProps> = ({ eyeb
                   style={{
                     width: dense ? 76 : 104,
                     height: dense ? 76 : 104,
-                    borderRadius: 14,
+                    borderRadius: theme.radius.tile,
                     // logo de tecnologia fica em ladrilho neutro: a cor da marca não disputa com o coral
                     background: tech ? 'rgba(15,23,42,0.05)' : 'rgba(255,85,85,0.12)',
                     display: 'flex',

@@ -67,14 +67,14 @@ export function sequence(count: number, given: readonly (number | null | undefin
   const times: number[] = [];
   for (let index = 0; index < Math.max(0, count); index += 1) {
     const value = given?.[index];
-    times.push(typeof value === 'number' && Number.isFinite(value) ? value : index === 0 ? firstSec : times[index - 1]! + staggerSec);
+    times.push(typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : index === 0 ? firstSec : times[index - 1]! + staggerSec);
   }
   return times;
 }
 
 /** Tempo informado ou o padrão: props de tempo vêm do JSON da EDL, então podem faltar ou vir quebradas. */
 export function timeOr(value: unknown, fallback: number): number {
-  return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : fallback;
 }
 
 /** Ícone pelo nome (vem do JSON da EDL): nome desconhecido cai no `fallback` em vez de quebrar o render. */

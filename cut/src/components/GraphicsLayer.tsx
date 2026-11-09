@@ -3,13 +3,11 @@
  * pela mesma função (src/render/overlay-props.ts). Fica parada; o playhead do editor manda o frame (seekTo).
  */
 import { Player, type PlayerRef } from '@remotion/player';
-import { Component, type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
+import { Component, type ReactNode, useEffect, useRef, useState } from 'react';
 
 import { Overlay } from '../../../motion/src/Overlay';
-import type { Word } from '../../../src/analyze/types.ts';
-import type { Edl } from '../../../src/edl/schema.ts';
 import { sourceToOutput, type Timeline } from '../../../src/edl/timeline.ts';
-import { buildOverlayProps } from '../../../src/render/overlay-props.ts';
+import type { PreviewModel } from '../lib/preview-model.ts';
 import { playhead } from '../store.ts';
 
 class Boundary extends Component<{ children: ReactNode; reset: unknown }, { error: string | null; reset: unknown }> {
@@ -27,34 +25,18 @@ class Boundary extends Component<{ children: ReactNode; reset: unknown }, { erro
 }
 
 interface Props {
-  edl: Edl;
+  /** props da composição (o Preview as monta: o palco e os zooms de ajuste leem as mesmas) */
+  model: PreviewModel;
+  /** fps/duração da timeline, para o playhead virar frame */
   timeline: Timeline;
-  words: Pick<Word, 'text' | 'start' | 'end' | 'score'>[];
-  /** só estes itens (chaves `overlays:<id>`…); null = todos */
-  only: string[] | null;
   width: number;
   height: number;
 }
 
-export default function GraphicsLayer({ edl, timeline, words, only, width, height }: Props) {
+export default function GraphicsLayer({ model, timeline, width, height }: Props) {
   const player = useRef<PlayerRef>(null);
   const [cut, setCut] = useState(false);
-
-  const built = useMemo(() => {
-    const keep = (kind: string, id: string) => only === null || only.includes(`${kind}:${id}`);
-    // overlay ancorado em trecho cortado derrubaria a composição inteira: fica de fora (a timeline o marca)
-    const scoped: Edl = {
-      ...edl,
-      overlays: edl.overlays.filter((item) => keep('overlays', item.id) && sourceToOutput(timeline, item.at) !== null),
-      effects: edl.effects.filter((item) => keep('effects', item.id)),
-      transitions: edl.transitions.filter((item) => keep('transitions', item.id)),
-    };
-    try {
-      return { props: buildOverlayProps(scoped, timeline, { words: words as Word[] }), error: null };
-    } catch (error) {
-      return { props: null, error: error instanceof Error ? error.message : String(error) };
-    }
-  }, [edl, timeline, words, only]);
+  const built = model;
 
   useEffect(() => {
     const sync = () => {

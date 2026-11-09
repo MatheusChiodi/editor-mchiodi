@@ -114,7 +114,7 @@ export const SectionTitle: React.FC<SectionTitleProps & BaseProps> = ({ eyebrow,
             </div>
           ) : null}
           {lines.map((line, lineIndex) => {
-            const reveal = progressAt(frame, fps, stagger(lineIndex, 0.12, 0.3), motion.slow);
+            const reveal = progressAt(frame, fps, stagger(lineIndex, motion.step.base, 0.3), motion.slow);
             return (
               // a folga embaixo evita que a máscara corte as descendentes (g, p, ç)
               <div key={lineIndex} style={{ overflow: 'hidden', paddingBottom: '0.16em', marginBottom: '-0.16em' }}>

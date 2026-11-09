@@ -8,6 +8,7 @@ import type { ComponentEntry } from '../../components/registry';
 import { Arrow, Counter, enter, Icon, IconBadge, type IconName, Pill, type Point, popIn, SceneBackground, SceneCard, Statement, text } from '../../scene-kit';
 import { theme } from '../../theme';
 import { CHAR, clampInt, CLIP, type Extent, fitFont, fitPill, iconOr, MIN_TEXT, pillClamp, sequence, statementHeight, timeOr, titleSize } from './kit-a';
+import { fitSceneTimes } from './fit-time';
 
 export interface HubCenter {
   /** sigla ou nome curto no disco (até ~8 letras); sem ele, vale o ícone */
@@ -161,7 +162,7 @@ export const HubComSatelites: React.FC<HubComSatelitesProps & BaseProps> = ({
   const { fps } = useVideoConfig();
   const shown = satellites.slice(0, HUB_MAX);
   const layout = hubLayout(shown.length);
-  const times = hubTimes(shown.length, revealAt);
+  const times = fitSceneTimes(hubTimes(shown.length, revealAt), durationInFrames / fps);
   const hubIn = enter(frame, fps, hubAt, 0.5);
   const hubPop = popIn(frame, fps, hubAt, 0.5);
   const ring = enter(frame, fps, hubAt + 0.2, 0.8);

@@ -8,6 +8,7 @@ import { Overlays } from './components/Overlays.tsx';
 import { Timeline, timelineViewport } from './components/Timeline.tsx';
 import { TopBar } from './components/TopBar.tsx';
 import { planDelete } from './lib/gestures.ts';
+import { duplicateGraphics, nudgeGraphics, resetGraphic } from './graphics.ts';
 import { keyAction } from './lib/keys.ts';
 import { clampPps, fitPps } from './lib/timemap.ts';
 import { frameStep, seek, shuttleKey, step, stop, togglePlay } from './playback.ts';
@@ -85,6 +86,15 @@ function onKey(event: KeyboardEvent): void {
       return store.set({ mode: state.mode === 'output' ? 'source' : 'output' });
     case 'still':
       return store.set({ still: api.stillUrl(state.project.slug, playhead.get().source) });
+    case 'graphicReset':
+      return void resetGraphic();
+    case 'graphicDuplicate':
+      return void duplicateGraphics();
+    case 'graphicNudgeLeft':
+    case 'graphicNudgeRight':
+    case 'graphicNudgeUp':
+    case 'graphicNudgeDown':
+      return void nudgeGraphics(action.slice('graphicNudge'.length).toLowerCase() as 'left' | 'right' | 'up' | 'down', event.shiftKey);
     case 'goStart':
       return seek(timeline?.clips[0]?.sourceStart ?? 0);
     case 'goEnd':

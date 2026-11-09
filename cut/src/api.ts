@@ -1,5 +1,6 @@
 /** Cliente da API do `mce cut` (src/cut/server.ts). Tudo em segundos da FONTE. */
 import type { Span } from '../../src/analyze/types.ts';
+import type { GuardPayload } from '../../src/cut/guard.ts';
 import type { CutOp } from '../../src/cut/ops.ts';
 import type { SnapResult } from '../../src/cut/snap.ts';
 import type { LevelId, LevelProfile } from '../../src/edl/levels.ts';
@@ -131,6 +132,8 @@ export const api = {
   diff: (slug: string, a: number, b: number) => request<{ a: number; b: number; lines: string[] }>(`${base(slug)}/diff?a=${a}&b=${b}`),
   snap: (slug: string, t: number) => request<SnapResult>(`${base(slug)}/snap?t=${t}`),
   preview: (slug: string, baseVersion: number, ops: CutOp[]) => request<PreviewResult>(`${base(slug)}/preview`, { body: { baseVersion, ops } }),
+  /** garantia de rosto livre da EDL com as ops ainda não salvas (shifts, zooms de ajuste, foco dos palcos) */
+  guard: (slug: string, baseVersion: number, ops: CutOp[]) => request<GuardPayload>(`${base(slug)}/guard`, { body: { baseVersion, ops } }),
   save: (slug: string, baseVersion: number, ops: CutOp[], message?: string) =>
     request<SaveResult>(`${base(slug)}/save`, { body: { baseVersion, ops, ...(message ? { message } : {}) } }),
   revert: (slug: string, version: number, baseVersion: number) => request<{ version: number }>(`${base(slug)}/revert`, { body: { version, baseVersion } }),

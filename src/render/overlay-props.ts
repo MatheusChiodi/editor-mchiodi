@@ -33,8 +33,19 @@ export function stagePresenter(overlay: Pick<Overlay, 'component' | 'props' | 'p
 /** Foco de um palco `"auto"` que não foi resolvido (mesmo valor de DEFAULT_STAGE_FOCUS em stage-focus.ts). */
 const AUTO_FALLBACK: Point = { x: 0.5, y: 0.4 };
 
+/**
+ * Deslocamento final do gráfico: o automático (afasta do rosto, `shifts`) MAIS o `offset` manual do editor.
+ * O manual nunca remove o automático. Sem nada (ou soma zero) não há campo. No Short o `offset` não vale
+ * (a caixa vertical é decidida por `shorts`).
+ */
+export function shiftField(auto: Point | undefined, offset: Point | undefined): { shift?: Point } {
+  const x = Math.round(((auto?.x ?? 0) + (offset?.x ?? 0)) * 1e4) / 1e4;
+  const y = Math.round(((auto?.y ?? 0) + (offset?.y ?? 0)) * 1e4) / 1e4;
+  return x === 0 && y === 0 ? {} : { shift: { x, y } };
+}
+
 /** Traduz a EDL (tempo da fonte) nas props da composição `Overlay` (frames do vídeo final). */
-export function buildOverlayProps(edl: Edl, timeline: Timeline, transcript: { words: Word[] }, vertical?: VerticalFrame, stageFocus?: ReadonlyMap<string, Point>): OverlayProps {
+export function buildOverlayProps(edl: Edl, timeline: Timeline, transcript: { words: Word[] }, vertical?: VerticalFrame, stageFocus?: ReadonlyMap<string, Point>, shifts?: ReadonlyMap<string, Point>): OverlayProps {
   const { fps, width, height } = edl.output;
   const totalFrames = Math.round(timeline.durationSec * fps);
   const presenters = new Map<string, PresenterSpec>();
@@ -52,6 +63,7 @@ export function buildOverlayProps(edl: Edl, timeline: Timeline, transcript: { wo
       props: overlay.props,
       hidesCaptions: overlay.hidesCaptions,
       ...(overlay.wipe !== 'none' ? { wipe: overlay.wipe } : {}),
+      ...shiftField(shifts?.get(overlay.id), vertical ? undefined : overlay.offset),
       ...(overlay.layer === 'persistent' ? { layer: 'persistent' as const } : {}),
       ...(vertical && overlay.shorts ? { vertical: overlay.shorts } : {}),
     };

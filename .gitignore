@@ -40,8 +40,15 @@ projects/*
 *.ogg
 *.opus
 *.pcm
+*.wma
+*.aif
+*.aiff
+*.mka
+*.ogv
+*.3gp
 *.srt
 *.vtt
+*.lrc
 # exceção: os efeitos sonoros-base, sintetizados por `mce assets init` (livres de direitos, poucos KB)
 !assets/sfx/*.wav
 
@@ -52,6 +59,8 @@ assets/luts/*
 assets/brand/*
 # b-roll: os vídeos e o índice (com origem/licença) ficam só na máquina
 assets/broll/*
+# fundos trocáveis (imagem/vídeo do `background` da EDL): material do usuário, só na máquina
+assets/backgrounds/*
 !assets/*/.gitkeep
 !assets/memes/placeholder.png
 
@@ -61,17 +70,32 @@ motion/out/
 motion/public/*.mp4
 motion/public/*.mov
 
+# letras de música (texto do usuário, muitas vezes com direitos autorais): só na máquina
+letras/
+lyrics/
+**/letra*.txt
+**/lyrics*.txt
+
 # sidecar Python
 transcriber/.venv/
 transcriber/.cache/
+matting/.venv/
+matting/models/
+# modelos baixados (RVM etc.), onde quer que estejam
+*.torchscript
+*.pth
+*.onnx
 __pycache__/
 *.pyc
 
 # estado local
 .queue/
+# servidores de prévia ao vivo (PIDs e projeto atual, scripts/ensure-preview.mjs)
+.preview/
 *.log
 .DS_Store
 Thumbs.db
 
 # build da UI do MChiodi Cut (pnpm cut:build)
 cut/dist/
+music-preview/dist/

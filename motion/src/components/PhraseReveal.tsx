@@ -4,6 +4,7 @@ import type { BaseProps } from '../anim';
 import { stageMotion } from '../arsenal/stage';
 import { theme } from '../theme';
 import type { ComponentEntry } from './registry';
+import { fitEntryTimes } from './timing';
 import { cue, leave, markupWords, NotePill, plainText, RichText, rise, wordReveal, wordTimes } from './stage-kit';
 
 export interface PhraseRevealProps {
@@ -30,6 +31,12 @@ export function phraseFontSize(text: string): number {
   return length <= 22 ? PHRASE_MAX : Math.max(72, Math.round(PHRASE_MAX * Math.sqrt(22 / length)));
 }
 
+/** Instante de cada palavra: dito (`wordAt`) ou cascata; a última palavra ainda precisa de tempo na tela antes da saída. */
+export function phraseTimes(wordAt: readonly (number | undefined)[] | undefined, count: number, hasEyebrow: boolean, durationSec?: number): number[] {
+  const times = wordTimes(wordAt, count, hasEyebrow ? WORD_START + 0.3 : WORD_START);
+  return durationSec === undefined ? times : fitEntryTimes(times, durationSec, undefined, WORD_STEP);
+}
+
 /**
  * Frase-chave em serifada grande, revelada palavra por palavra no ritmo da fala, com o trecho de
  * sentido em itálico coral. Fica ao lado do rosto, nunca em cima dele.
@@ -39,7 +46,7 @@ export const PhraseReveal: React.FC<PhraseRevealProps & BaseProps> = ({ text, ey
   const { fps } = useVideoConfig();
   const words = markupWords(text);
   // cada palavra entra quando é dita (`wordAt`); sem ele, cascata fixa depois do rótulo
-  const times = wordTimes(wordAt, words.length, eyebrow ? WORD_START + 0.3 : WORD_START);
+  const times = phraseTimes(wordAt, words.length, Boolean(eyebrow), durationInFrames / fps);
   const out = leave(frame, fps, durationInFrames);
   const footage = surface === 'footage';
   const align = side === 'center' ? 'center' : side === 'right' ? 'flex-end' : 'flex-start';

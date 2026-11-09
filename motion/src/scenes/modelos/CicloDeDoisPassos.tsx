@@ -9,6 +9,7 @@ import type { ComponentEntry } from '../../components/registry';
 import { alpha, Arrow, enter, Eyebrow, IconBadge, type IconName, Pill, type Point, popIn, rise, SceneBackground, SceneCard, text, window as presenceWindow, Words } from '../../scene-kit';
 import { motion, theme } from '../../theme';
 import { clampCount, fitFontSize, pickSec } from './fit-b';
+import { fitSceneTimes } from './fit-time';
 
 export interface CicloDeDoisPassosStep {
   label: string;
@@ -245,7 +246,7 @@ export const CicloDeDoisPassos: React.FC<CicloDeDoisPassosProps & BaseProps> = (
   const { fps, width } = useVideoConfig();
   const sec = frame / fps;
   const layout = cycleLayout(width - theme.safe.x * 2);
-  const times = cycleTimes(revealAt);
+  const times = fitSceneTimes(cycleTimes(revealAt), durationInFrames / fps);
   const lines = { ...DEFAULT_CAPTIONS, ...captions };
   const max = meterMaxOf(meterMax);
   const endSec = durationInFrames / fps + 1;

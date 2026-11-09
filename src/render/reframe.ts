@@ -1,5 +1,7 @@
 import {
   type FootageTransform,
+  cleanFocusTrack,
+  endFocus,
   IDENTITY,
   normalizePushes,
   type PlacedPush,
@@ -9,6 +11,7 @@ import {
   slotTransform,
   type StagePlan,
   stageRamps,
+  trackedTransform,
   windowBodyRect,
   windowSide,
 } from '../../motion/src/arsenal/stage.ts';
@@ -65,17 +68,34 @@ export function pushSumExpr(pushes: readonly PlacedPush[], originSec: number, we
  * pousa em `to` (mais o que os pushes somam, `pushed`) e volta ao repouso `rest`, na curva da troca.
  * É a mesma conta de `transformAt` em motion/src/arsenal/stage.ts; o teste compara as duas.
  */
-export function stageTermExpr(stage: PlacedStage, from: number, to: number, rest: number, pushed = ''): string {
+export function stageTermExpr(stage: PlacedStage, from: number, to: number, rest: number, pushed = '', toExpr = ''): string {
   const duration = stage.end - stage.start;
   const ramps = stageRamps(duration, stage.plan.transitionSec);
   // fim exclusivo: dois palcos colados nunca somam no frame da emenda
   const active = `gte(t,${fixed(stage.start)})*lt(t,${fixed(stage.end)})`;
   const enter = curveExpr(rampExpr(stage.start, ramps.enter));
-  const travel = pushed ? `(${signed(to - from)}+${pushed})` : signed(to - from);
+  // com trilha de foco o destino varia no tempo (toExpr): viagem = destino(t) - origem
+  const travel = toExpr ? `(${toExpr}-${signed(from)})` : pushed ? `(${signed(to - from)}+${pushed})` : signed(to - from);
   const landed = `(${signed(from)}+${travel}*${enter})`;
   if (stage.plan.holdExit) return `${active}*(${landed}-${signed(rest)})`;
   const exit = curveExpr(rampExpr(stage.end - ramps.exit, ramps.exit));
   return `${active}*(${landed}-${signed(rest)})*(1-${exit})`;
+}
+
+/**
+ * Posição pousada que muda no tempo (trilha de foco): parte da primeira chave e soma, para cada trecho entre
+ * chaves, o deslocamento multiplicado por uma rampa linear 0–1. Sem condicionais; igual a `trackedTransform`.
+ */
+export function trackExpr(stage: PlacedStage, key: 'x' | 'y', width: number, height: number): string | null {
+  const keys = cleanFocusTrack(stage.plan.focusTrack);
+  if (keys.length === 0 || stage.plan.pushes?.length) return null;
+  const values = keys.map((item) => trackedTransform({ ...stage.plan, focusTrack: keys }, item.t, width, height)[key]);
+  const terms = keys.slice(1).map((item, index) => {
+    const previous = keys[index]!;
+    const delta = values[index + 1]! - values[index]!;
+    return Math.abs(delta) < 1e-6 ? '' : `${signed(delta)}*${rampExpr(stage.start + previous.t, item.t - previous.t)}`;
+  });
+  return `(${[signed(values[0]!), ...terms.filter(Boolean)].join('+')})`;
 }
 
 /** Escala e posição do footage em função de `t`, somando todos os palcos (eles não se sobrepõem). */
@@ -83,11 +103,12 @@ export function stageExpressions(stages: PlacedStage[], width: number, height: n
   const sum = (key: keyof FootageTransform) =>
     stages
       .map((stage) => {
-        const from = stage.plan.from ? slotTransform(stage.plan.from, width, height) : IDENTITY;
+        const from = stage.plan.from ? slotTransform({ ...stage.plan.from, focus: endFocus(stage.plan.from) }, width, height) : IDENTITY;
         const to = slotTransform(stage.plan, width, height);
+        const toExpr = key === 'x' || key === 'y' ? (trackExpr(stage, key, width, height) ?? '') : '';
         const pushes = stage.plan.pushes ?? [];
         const pushed = pushes.length ? pushSumExpr(pushes, stage.start, (push) => pushWeights(to, slotRect(stage.plan.slot), push, width, height)[key]) : '';
-        return stageTermExpr(stage, from[key], to[key], IDENTITY[key], pushed);
+        return stageTermExpr(stage, from[key], to[key], IDENTITY[key], pushed, toExpr);
       })
       .join('+');
   return {

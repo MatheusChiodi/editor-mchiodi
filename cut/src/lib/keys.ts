@@ -21,7 +21,13 @@ export type KeyAction =
   | 'toggleView'
   | 'still'
   | 'goStart'
-  | 'goEnd';
+  | 'goEnd'
+  | 'graphicReset'
+  | 'graphicDuplicate'
+  | 'graphicNudgeLeft'
+  | 'graphicNudgeRight'
+  | 'graphicNudgeUp'
+  | 'graphicNudgeDown';
 
 export interface KeyInput {
   key: string;
@@ -45,7 +51,14 @@ export function keyAction(input: KeyInput, inTextField = false): KeyAction | nul
     else if (key === '=' || key === '+') action = 'zoomIn';
     else if (key === '-') action = 'zoomOut';
     else if (key === '0') action = 'zoomFit';
-  } else if (!input.altKey) {
+    else if (key === 'd') action = 'graphicDuplicate';
+  } else if (input.altKey) {
+    // Alt+setas empurram o gráfico selecionado (Shift: passo grosso); Alt sozinho no arraste solta o snap
+    if (key === 'ArrowLeft') action = 'graphicNudgeLeft';
+    else if (key === 'ArrowRight') action = 'graphicNudgeRight';
+    else if (key === 'ArrowUp') action = 'graphicNudgeUp';
+    else if (key === 'ArrowDown') action = 'graphicNudgeDown';
+  } else {
     switch (key) {
       case ' ':
         action = 'playPause';
@@ -91,6 +104,9 @@ export function keyAction(input: KeyInput, inTextField = false): KeyAction | nul
       case 'f':
         action = 'still';
         break;
+      case 'r':
+        action = 'graphicReset';
+        break;
       case 'Home':
         action = 'goStart';
         break;
@@ -121,4 +137,7 @@ export const SHORTCUTS: { keys: string; label: string }[] = [
   { keys: '+ / − / Ctrl+0', label: 'zoom da timeline / caber tudo' },
   { keys: 'Tab', label: 'vista editada ↔ fonte inteira' },
   { keys: 'F', label: 'still do frame atual' },
+  { keys: 'arrastar gráfico', label: 'mover no preview (Alt solta o snap; duplo clique ou R volta ao original)' },
+  { keys: 'Alt+← → ↑ ↓', label: 'empurrar o gráfico selecionado (Shift: passo grosso)' },
+  { keys: 'Ctrl+D', label: 'duplicar o gráfico selecionado' },
 ];

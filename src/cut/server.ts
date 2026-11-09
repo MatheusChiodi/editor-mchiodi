@@ -18,6 +18,8 @@
  * GET  /api/projects/:slug/diff?a=&b=               → { a, b, lines[] } (diffEdl)
  * GET  /api/projects/:slug/snap?t=                  → SnapResult: borda válida mais próxima de t + aviso se caía em palavra
  * POST /api/projects/:slug/preview  { baseVersion, ops }            → aplica sem gravar: { edl, timeline, notes, warnings, snaps }
+ * GET  /api/projects/:slug/guard?version=         → garantia de rosto livre da versão: { origin, items[], zooms[], shifts{id:{x,y}}, faces{}, stageFocus{}, warnings[] }
+ * POST /api/projects/:slug/guard    { baseVersion, ops }            → o mesmo, para a EDL com as ops ainda não salvas (preview do Cut)
  * POST /api/projects/:slug/save     { baseVersion, ops, message? }  → { version, edl, notes, warnings, snaps }
  *                                    409 { error: 'conflict', baseVersion, currentVersion, diff[], since[] } se a base ficou velha
  *                                    422 { error, opIndex } se uma operação viola a EDL (schema, reason, snap)
@@ -77,6 +79,7 @@ import { listProjects } from '../project/pipeline.ts';
 import { bumperDurations } from '../render/bumpers.ts';
 import { planExport } from '../render/formats.ts';
 import { buildSrt, importSrt } from '../render/srt.ts';
+import { previewGuard } from './guard.ts';
 import { headlessEnv } from '../watcher/headless.ts';
 import { jobOutputRel, jobSucceeded, srtSidecarRel, JOB_KINDS, type JobRequest, mceArgs, spawnMce, type SpawnedJob } from './jobs.ts';
 import { ensureProxy, ensureWaveform } from './media.ts';
@@ -526,6 +529,10 @@ export async function startCutServer(options: CutServerOptions = {}): Promise<Cu
       const body = parseWith(previewBody, await readBody(req));
       const result = previewOps(paths, body);
       return sendJson(res, 200, { edl: result.edl, timeline: buildTimeline(result.edl.clips, result.edl.output.fps), notes: result.notes, warnings: result.warnings, snaps: result.snaps });
+    }
+    if (rest === '/guard' && (get || method === 'POST')) {
+      const edl = get ? loadEdl(paths, url.searchParams.get('version') ? Number(url.searchParams.get('version')) : undefined) : previewOps(paths, parseWith(previewBody, await readBody(req))).edl;
+      return sendJson(res, 200, await previewGuard(paths, edl, buildTimeline(edl.clips, edl.output.fps)));
     }
     if (rest === '/save' && method === 'POST') {
       const body = parseWith(saveBody, await readBody(req));

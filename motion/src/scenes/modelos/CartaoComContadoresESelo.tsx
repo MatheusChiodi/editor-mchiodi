@@ -10,6 +10,7 @@ import { formatPtBr } from '../../components/Counter';
 import { alpha, Counter, enter, Eyebrow, Icon, IconBadge, type IconName, pillShadow, popIn, rise, SceneBackground, SceneCard, text } from '../../scene-kit';
 import { theme } from '../../theme';
 import { CHAR, clampInt, type Extent, fitFont, iconOr, lineCount, MIN_TEXT, pillWidth, textWidth, timeOr } from './kit-a';
+import { fitSceneTimes } from './fit-time';
 
 export interface CartaoCard {
   /** quem assina o cartão (linha do topo) */
@@ -203,7 +204,7 @@ export const CartaoComContadoresESelo: React.FC<CartaoComContadoresESeloProps & 
   const { fps } = useVideoConfig();
   const shown = counters.slice(0, CARTAO_MAX_COUNTERS);
   const layout = cartaoLayout(shown.length);
-  const reveal = cartaoReveal(revealAt);
+  const reveal = fitSceneTimes(cartaoReveal(revealAt), durationInFrames / fps);
   const cardIn = enter(frame, fps, reveal.card, 0.5);
   const phase = cartaoPhase(frame / fps, reveal.action);
   const lines = cartaoBodyTimes(reveal.card, reveal.action);

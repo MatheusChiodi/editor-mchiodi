@@ -87,7 +87,7 @@ export const BarChart: React.FC<BarChartProps & BaseProps> = ({ title, bars, uni
           </div>
         ) : null}
         {bars.map((bar, index) => {
-          const start = stagger(index, 0.12, START);
+          const start = stagger(index, motion.step.base, START);
           const grow = progressAt(frame, fps, start, motion.slow);
           const fade = progressAt(frame, fps, start, motion.fast);
           return (

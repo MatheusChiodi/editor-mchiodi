@@ -114,3 +114,6 @@ export function frameStep(direction: 1 | -1): void {
   const fps = timeline()?.fps ?? 30;
   step(direction / fps);
 }
+
+// gancho para conferir o preview por script (skill preview-igual-ao-render): window.__cutSeek(segundosDaFonte)
+if (typeof window !== 'undefined') (window as unknown as { __cutSeek: typeof seek }).__cutSeek = seek;

@@ -1,4 +1,4 @@
-import { AbsoluteFill, Sequence } from 'remotion';
+import { AbsoluteFill, Sequence, useVideoConfig } from 'remotion';
 
 import { StageLayer } from './arsenal/StageLayer';
 import { Captions } from './captions/Captions';
@@ -14,6 +14,14 @@ export function resolveComponent(name: string): ComponentEntry | undefined {
   return name.startsWith(SCENE_PREFIX) ? sceneRegistry[name.slice(SCENE_PREFIX.length)] : registry[name];
 }
 
+/** Afasta o gráfico do rosto (e aplica o arraste manual): translação em px a partir de frações do quadro. */
+const Shifted: React.FC<{ shift?: { x: number; y: number }; size?: { width: number; height: number }; children: React.ReactNode }> = ({ shift, size, children }) => {
+  const config = useVideoConfig();
+  if (!shift || (shift.x === 0 && shift.y === 0)) return <>{children}</>;
+  const { width, height } = size ?? config;
+  return <AbsoluteFill style={{ transform: `translate(${shift.x * width}px, ${shift.y * height}px)` }}>{children}</AbsoluteFill>;
+};
+
 const OverlaySequence: React.FC<{ item: OverlayItem; entry: ComponentEntry; fps: number; size?: { width: number; height: number } }> = ({ item, entry, fps, size }) => {
   const Component = entry.component;
   return (
@@ -26,7 +34,9 @@ const OverlaySequence: React.FC<{ item: OverlayItem; entry: ComponentEntry; fps:
       {...(size ?? {})}
     >
       <StageLayer stage={item.stage} wipe={item.wipe} opaque={entry.opaque} durationInFrames={item.durationInFrames}>
-        <Component {...item.props} durationInFrames={item.durationInFrames} />
+        <Shifted shift={item.shift} size={size}>
+          <Component {...item.props} durationInFrames={item.durationInFrames} />
+        </Shifted>
       </StageLayer>
     </Sequence>
   );

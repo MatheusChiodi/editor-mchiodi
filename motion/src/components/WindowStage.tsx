@@ -23,7 +23,8 @@ import {
 import { theme } from '../theme';
 import type { ComponentEntry } from './registry';
 import { type ClickRing, type FocusBox, FocusLayer, validBoxes, validClicks } from './ScreenFocus';
-import { cue, cueTimes, NotePill, PILL_MIN_FONT, type PillTone, pillTilt, resolveTone, rise } from './stage-kit';
+import { cue, NotePill, PILL_MIN_FONT, type PillTone, pillTilt, resolveTone, rise } from './stage-kit';
+import { entryTimes, readTimes } from './timing';
 
 export type WindowLineTone = 'prompt' | 'output' | 'ok' | 'dim' | 'accent';
 export type WindowKind = 'terminal' | 'screen' | 'footage';
@@ -129,9 +130,10 @@ export const WindowStage: React.FC<WindowStageProps & BaseProps> = ({ title = 'T
   const keepOut = Boolean(plan?.next && sameStage(plan.next, { ...self, slot: plan.slot }));
 
   const shownLines = lines.slice(0, MAX_LINES);
-  const lineTimes = cueTimes(shownLines.map((line) => line.at), LINE_START, LINE_STEP);
+  // overlay curto: as linhas e as pílulas puxam para dar tempo de ler e a cascata padrão comprime
+  const lineTimes = entryTimes(shownLines.map((line) => line.at), LINE_START, LINE_STEP, total);
   const shownNotes = notes.slice(0, noteLimit(plan?.slot));
-  const noteTimes = cueTimes(shownNotes.map((note) => note.at), LINE_START + 0.6, 1.8);
+  const noteTimes = entryTimes(shownNotes.map((note) => note.at), LINE_START + 0.6, 1.8, total, readTimes(shownNotes.map((note) => note.text)));
   const timing = contentTiming(plan, total, 1 + shownNotes.length);
   // o footage dentro da janela é movido pelo ffmpeg com os pushes do palco; nos outros casos a conta é a mesma, feita aqui
   const pushes = kind === 'footage' && plan?.pushes ? plan.pushes : normalizePushes(push, total);

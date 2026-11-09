@@ -238,7 +238,7 @@ export const Callout: React.FC<CalloutProps & BaseProps> = ({ durationInFrames, 
 
   return (
     <AbsoluteFill style={{ opacity: 1 - exit }}>
-      <svg width={width} height={height} style={{ position: 'absolute', filter: 'drop-shadow(0 3px 8px rgba(0,0,0,0.6))' }}>
+      <svg width={width} height={height} style={{ position: 'absolute', filter: theme.shadow.stroke }}>
         {geometry.strokes.map((stroke, index) => {
           const local = interpolate(draw, [stroke.from, stroke.to], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
           if (local <= 0) return null;

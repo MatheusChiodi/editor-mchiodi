@@ -36,7 +36,7 @@ export const SceneBackground: React.FC<SceneBackgroundProps> = ({ tone = 'paper'
   const colors = toneColors(tone);
   const night = tone === 'night';
   const drift = Math.sin((frame / fps) * 0.6) * 40;
-  const opacity = durationInFrames ? presence(frame, fps, durationInFrames, motion.fast, motion.fast).value : 1;
+  const opacity = durationInFrames ? presence(frame, fps, durationInFrames, motion.fast, motion.leave).value : 1;
 
   return (
     <AbsoluteFill style={{ backgroundColor: colors.background, opacity, overflow: 'hidden' }}>

@@ -169,6 +169,22 @@ describe('MChiodi Cut: servidor', () => {
     expect(((await (await api('/projects')).json()) as { projects: { latest: number }[] }).projects[0]!.latest).toBe(2);
   });
 
+  it('guard: plano de rosto livre da EDL com ops pendentes, sem gravar nada', async () => {
+    const insert = { type: 'insertItem', kind: 'overlays', item: { id: 'ovg', component: 'Callout', at: 2.2, duration: 1, reason: 'reforça', offset: { x: 0.1, y: 0 } } };
+    const response = await post('/projects/demo/guard', { baseVersion: 2, ops: [insert] });
+    expect(response.status).toBe(200);
+    const guard = (await response.json()) as { origin: string; items: { overlay: string; status: string }[]; zooms: unknown[]; shifts: Record<string, unknown>; faces: Record<string, { x: number; y: number }>; stageFocus: Record<string, unknown> };
+    expect(['detector', 'manual', 'padrão']).toContain(guard.origin);
+    expect(guard.items.map((item) => item.overlay)).toEqual(['ovg']);
+    expect(guard.faces.ovg).toMatchObject({ x: expect.any(Number), y: expect.any(Number) });
+    expect(Array.isArray(guard.zooms)).toBe(true);
+    // sem as ops, o overlay não existe
+    const plain = (await (await api('/projects/demo/guard?version=2')).json()) as { items: unknown[] };
+    expect(plain.items).toEqual([]);
+    expect((await post('/projects/demo/guard', { baseVersion: 2, ops: [{ type: 'bogus' }] })).status).toBe(400);
+    expect(((await (await api('/projects')).json()) as { projects: { latest: number }[] }).projects[0]!.latest).toBe(2);
+  }, 60_000);
+
   it('reverter gera nova versão com o conteúdo antigo', async () => {
     const response = await post('/projects/demo/revert', { version: 1, baseVersion: 2 });
     const body = (await response.json()) as { version: number; notes: string };
