@@ -14,11 +14,11 @@ gosto: as regras de corte, legenda, identidade, áudio e cor valem em todos. A f
 |---|---|---|---|---|
 | zooms (inclui efeito de câmera) | até 1 | até 3 | 2–6 | 2–9 |
 | gráficos | até 0,5 | até 4 | 3–6 | 6–12 |
-| cenas ilustrativas | nenhuma | até 1 | 0,75–2 | 1,5–3 |
+| cenas ilustrativas | nenhuma | até 1 | 0,75–2 | 3–6 |
 | transições | até 0,25 | até 1,5 | 0,5–2 | 0,5–3,5 |
 | efeitos | até 0,2 | até 1,5 | 0,5–2 | 0,5–3 |
 | SFX | até 0,5 | até 4 | 2–8 | 4–12 |
-| distância mínima: zoom / gráfico / cena / transição / meme | 45 / 30 / — / 60 / — s | 20 / 12 / 60 / 20 / 90 s | 10 / 6 / 30 / 10 / 60 s | 6 / 4 / 20 / 6 / 40 s |
+| distância mínima: zoom / gráfico / cena / transição / meme | 45 / 30 / — / 60 / — s | 20 / 12 / 60 / 20 / 90 s | 10 / 6 / 30 / 10 / 60 s | 6 / 4 / 10 / 6 / 40 s |
 | transições diferentes / de energia alta | 1 / 0 | 3 / 3 | 6 / 6 | 10 / 10 |
 | trilha e vinhetas | opcionais | opcionais | sempre | sempre |
 | tela parada (sem nada novo) | — | — | — | até 8 s |

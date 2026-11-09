@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 560" width="100%" role="img" aria-labelledby="mv-title mv-desc" font-family="'Segoe UI', Helvetica, Arial, sans-serif">
+  <title id="mv-title">From an mp3 to a cinematic story video</title>
+  <desc id="mv-desc">An mp3, with the lyrics when you have them, is analysed in Node: spectrum, tempo and beats, sections. The lyrics are aligned to the audio. A story director plans about sixty shots in six acts, each with a character, a setting, a camera move and a transition. The plan is a JSON file. A live preview in the browser plays the plan before rendering, you can edit scenes with commands, and the final render adds cinema finishing with the original music.</desc>
+  <defs>
+    <marker id="mv-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 Z" fill="#64748b"/>
+    </marker>
+    <marker id="mv-arrow-coral" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 Z" fill="#ff5555"/>
+    </marker>
+  </defs>
+
+  <rect x="8" y="8" width="984" height="544" rx="24" fill="#f8f8f2" stroke="#e2e8f0" stroke-width="2"/>
+  <text x="32" y="58" font-family="Georgia, 'Times New Roman', serif" font-size="27" font-weight="700" fill="#111827">Music in, story out</text>
+  <text x="968" y="58" font-size="14" text-anchor="end" fill="#64748b">mce music song.mp3 [--lyrics letra.txt]: always cinema mode, always a story.</text>
+
+  <!-- connectors -->
+  <path d="M248 160 H272" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#mv-arrow)"/>
+  <path d="M488 160 H512" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#mv-arrow)"/>
+  <path d="M728 160 H752" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#mv-arrow)"/>
+  <path d="M860 208 V268 H500 V288" fill="none" stroke="#64748b" stroke-width="2" stroke-linejoin="round" marker-end="url(#mv-arrow)"/>
+  <path d="M500 412 V432 H268 V452" fill="none" stroke="#64748b" stroke-width="2" stroke-linejoin="round" marker-end="url(#mv-arrow)"/>
+  <path d="M500 412 V432 H700 V452" fill="none" stroke="#ff5555" stroke-width="2" stroke-linejoin="round" marker-end="url(#mv-arrow-coral)"/>
+
+  <!-- 1 -->
+  <rect x="32" y="112" width="216" height="96" rx="16" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+  <circle cx="58" cy="138" r="13" fill="#111827"/>
+  <text x="58" y="143" font-size="14" font-weight="700" text-anchor="middle" fill="#f8f8f2">1</text>
+  <text x="80" y="144" font-size="17" font-weight="700" fill="#111827">mp3 + lyrics</text>
+  <text x="48" y="172" font-size="14" fill="#334155">Lyrics optional. Without</text>
+  <text x="48" y="192" font-size="14" fill="#334155">them the song is transcribed.</text>
+  <!-- 2 -->
+  <rect x="272" y="112" width="216" height="96" rx="16" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+  <circle cx="298" cy="138" r="13" fill="#111827"/>
+  <text x="298" y="143" font-size="14" font-weight="700" text-anchor="middle" fill="#f8f8f2">2</text>
+  <text x="320" y="144" font-size="17" font-weight="700" fill="#111827">Listen</text>
+  <text x="288" y="172" font-size="14" fill="#334155">FFT, bass/mid/treble, tempo,</text>
+  <text x="288" y="192" font-size="14" fill="#334155">beats and song sections.</text>
+  <!-- 3 -->
+  <rect x="512" y="112" width="216" height="96" rx="16" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+  <circle cx="538" cy="138" r="13" fill="#111827"/>
+  <text x="538" y="143" font-size="14" font-weight="700" text-anchor="middle" fill="#f8f8f2">3</text>
+  <text x="560" y="144" font-size="17" font-weight="700" fill="#111827">Align lyrics</text>
+  <text x="528" y="172" font-size="14" fill="#334155">Each verse lands on its time;</text>
+  <text x="528" y="192" font-size="14" fill="#334155">stray words are dropped.</text>
+  <!-- 4 director -->
+  <rect x="752" y="112" width="216" height="96" rx="16" fill="#111827"/>
+  <circle cx="778" cy="138" r="13" fill="#ff5555"/>
+  <text x="778" y="143" font-size="14" font-weight="700" text-anchor="middle" fill="#ffffff">4</text>
+  <text x="800" y="144" font-size="17" font-weight="700" fill="#f8f8f2">Story director</text>
+  <text x="768" y="172" font-size="14" fill="#cbd5e1">About 60 shots, six acts,</text>
+  <text x="768" y="192" font-size="14" fill="#cbd5e1">cuts on beats and sections.</text>
+
+  <!-- plan -->
+  <rect x="32" y="288" width="936" height="124" rx="16" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+  <text x="48" y="318" font-size="17" font-weight="700" fill="#111827">The plan</text>
+  <text x="130" y="318" font-family="Consolas, 'Cascadia Mono', Menlo, monospace" font-size="13" fill="#475569">analysis/music.plan.json, in frames: same plan, same video</text>
+  <g font-size="13.5" font-weight="600" fill="#334155">
+    <rect x="48" y="338" width="132" height="52" rx="10" fill="#f1f5f9"/><text x="114" y="361" text-anchor="middle">Character</text><text x="114" y="379" text-anchor="middle" font-weight="400" font-size="12">pose, mood</text>
+    <rect x="196" y="338" width="132" height="52" rx="10" fill="#f1f5f9"/><text x="262" y="361" text-anchor="middle">Setting</text><text x="262" y="379" text-anchor="middle" font-weight="400" font-size="12">room, street, shore</text>
+    <rect x="344" y="338" width="132" height="52" rx="10" fill="#f1f5f9"/><text x="410" y="361" text-anchor="middle">Weather, time</text><text x="410" y="379" text-anchor="middle" font-weight="400" font-size="12">rain, night</text>
+    <rect x="492" y="338" width="132" height="52" rx="10" fill="#f1f5f9"/><text x="558" y="361" text-anchor="middle">Camera</text><text x="558" y="379" text-anchor="middle" font-weight="400" font-size="12">push, pan, shake</text>
+    <rect x="640" y="338" width="132" height="52" rx="10" fill="#f1f5f9"/><text x="706" y="361" text-anchor="middle">Transition</text><text x="706" y="379" text-anchor="middle" font-weight="400" font-size="12">14 frames</text>
+    <rect x="788" y="338" width="164" height="52" rx="10" fill="#f1f5f9"/><text x="870" y="361" text-anchor="middle">Lyric inserts</text><text x="870" y="379" text-anchor="middle" font-weight="400" font-size="12">phone, heart, rain...</text>
+  </g>
+
+  <!-- outputs -->
+  <rect x="32" y="452" width="472" height="80" rx="16" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+  <text x="48" y="480" font-size="17" font-weight="700" fill="#111827">Live preview</text>
+  <text x="48" y="502" font-size="14" fill="#334155">Watch the scenes assemble in the browser, edit them with</text>
+  <text x="48" y="520" font-family="Consolas, 'Cascadia Mono', Menlo, monospace" font-size="12.5" fill="#475569">mce mv scenes | set | split | merge</text>
+  <rect x="520" y="452" width="448" height="80" rx="16" fill="#ffffff" stroke="#ff5555" stroke-width="1.5"/>
+  <text x="536" y="480" font-size="17" font-weight="700" fill="#111827">Cinema render</text>
+  <text x="536" y="502" font-size="14" fill="#334155">Bloom, grain, vignette, 2.39:1 letterbox, the</text>
+  <text x="536" y="520" font-size="14" fill="#334155">original song mixed in by ffmpeg.</text>
+</svg>

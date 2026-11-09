@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 560" width="100%" role="img" aria-labelledby="fg-title fg-desc" font-family="'Segoe UI', Helvetica, Arial, sans-serif">
+  <title id="fg-title">Face guard: no graphic ever covers the presenter</title>
+  <desc id="fg-desc">For every graphic without a presenter stage, the editor measures the area the component occupies and the face position from the detector. If they do not touch, nothing changes. Otherwise it tries, in order: a zoom on the video that moves the face to the free side, shifting the graphic away from the face, and as a last resort a warning asking for a presenter card.</desc>
+  <defs>
+    <marker id="fg-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 Z" fill="#64748b"/>
+    </marker>
+    <marker id="fg-arrow-coral" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 Z" fill="#ff5555"/>
+    </marker>
+  </defs>
+
+  <rect x="8" y="8" width="984" height="544" rx="24" fill="#f8f8f2" stroke="#e2e8f0" stroke-width="2"/>
+  <text x="32" y="58" font-family="Georgia, 'Times New Roman', serif" font-size="27" font-weight="700" fill="#111827">Your face is never covered</text>
+  <text x="968" y="58" font-size="14" text-anchor="end" fill="#64748b">Planned per graphic, same code in the render and in the Cut preview.</text>
+
+  <!-- connectors (drawn before boxes) -->
+  <path d="M248 160 H288" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#fg-arrow)"/>
+  <path d="M488 160 H528" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#fg-arrow)"/>
+  <!-- "no" down to the three fixes -->
+  <path d="M628 208 V258" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#fg-arrow)"/>
+  <path d="M628 258 H148 V288" fill="none" stroke="#64748b" stroke-width="2" stroke-linejoin="round" marker-end="url(#fg-arrow)"/>
+  <path d="M628 258 H500 V288" fill="none" stroke="#64748b" stroke-width="2" stroke-linejoin="round" marker-end="url(#fg-arrow)"/>
+  <path d="M628 258 H852 V288" fill="none" stroke="#ff5555" stroke-width="2" stroke-dasharray="6 5" stroke-linejoin="round" marker-end="url(#fg-arrow-coral)"/>
+  <!-- "free" up to the no-change box -->
+  <path d="M628 112 V92 H868 V112" fill="none" stroke="#64748b" stroke-width="2" stroke-linejoin="round" marker-end="url(#fg-arrow)"/>
+
+  <rect x="500" y="72" width="108" height="24" rx="4" fill="#f8f8f2"/>
+  <text x="554" y="89" font-size="12" font-weight="700" text-anchor="middle" fill="#475569">NO OVERLAP</text>
+  <rect x="640" y="226" width="88" height="24" rx="4" fill="#f8f8f2"/>
+  <text x="684" y="243" font-size="12" font-weight="700" text-anchor="middle" fill="#475569">OVERLAP</text>
+
+  <!-- step 1: footprint -->
+  <rect x="32" y="112" width="216" height="96" rx="16" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+  <text x="48" y="142" font-size="17" font-weight="700" fill="#111827">Area it occupies</text>
+  <text x="48" y="166" font-family="Consolas, 'Cascadia Mono', Menlo, monospace" font-size="12.5" fill="#475569">footprints.json</text>
+  <text x="48" y="190" font-size="13.5" fill="#334155">measured on the alpha</text>
+
+  <!-- step 2: face -->
+  <rect x="288" y="112" width="200" height="96" rx="16" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+  <text x="304" y="142" font-size="17" font-weight="700" fill="#111827">Where your face is</text>
+  <text x="304" y="166" font-family="Consolas, 'Cascadia Mono', Menlo, monospace" font-size="12.5" fill="#475569">focus-detect.json</text>
+  <text x="304" y="190" font-size="13.5" fill="#334155">median in that stretch</text>
+
+  <!-- step 3: decision -->
+  <rect x="528" y="112" width="200" height="96" rx="16" fill="#111827"/>
+  <text x="628" y="150" font-size="17" font-weight="700" text-anchor="middle" fill="#f8f8f2">Do they touch?</text>
+  <text x="628" y="176" font-size="13.5" text-anchor="middle" fill="#cbd5e1">face box + safety margin</text>
+
+  <!-- no change -->
+  <rect x="768" y="112" width="200" height="96" rx="16" fill="#ecfdf5" stroke="#6ee7b7" stroke-width="1.5"/>
+  <text x="784" y="142" font-size="17" font-weight="700" fill="#065f46">Nothing to do</text>
+  <text x="784" y="168" font-size="13.5" fill="#047857">the graphic stays where</text>
+  <text x="784" y="188" font-size="13.5" fill="#047857">the component draws it</text>
+
+  <!-- fixes -->
+  <rect x="32" y="288" width="232" height="188" rx="16" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+  <circle cx="58" cy="316" r="13" fill="#111827"/>
+  <text x="58" y="321" font-size="14" font-weight="700" text-anchor="middle" fill="#f8f8f2">1</text>
+  <text x="80" y="322" font-size="17" font-weight="700" fill="#111827">Zoom the video</text>
+  <text x="48" y="354" font-size="14" fill="#334155">Smallest zoom (1.08 to 1.45)</text>
+  <text x="48" y="376" font-size="14" fill="#334155">that moves your face into the</text>
+  <text x="48" y="398" font-size="14" fill="#334155">free side of the frame.</text>
+  <text x="48" y="430" font-family="Consolas, 'Cascadia Mono', Menlo, monospace" font-size="12.5" fill="#475569">fit-&lt;id&gt; zoom, ease</text>
+  <text x="48" y="454" font-size="13" fill="#64748b">Side cards: Checklist, TipCard</text>
+
+  <rect x="384" y="288" width="232" height="188" rx="16" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+  <circle cx="410" cy="316" r="13" fill="#111827"/>
+  <text x="410" y="321" font-size="14" font-weight="700" text-anchor="middle" fill="#f8f8f2">2</text>
+  <text x="432" y="322" font-size="17" font-weight="700" fill="#111827">Shift the graphic</text>
+  <text x="400" y="354" font-size="14" fill="#334155">Smallest move that clears</text>
+  <text x="400" y="376" font-size="14" fill="#334155">the face. Never into the</text>
+  <text x="400" y="398" font-size="14" fill="#334155">caption area at the bottom.</text>
+  <text x="400" y="430" font-family="Consolas, 'Cascadia Mono', Menlo, monospace" font-size="12.5" fill="#475569">shift {x, y} + your offset</text>
+  <text x="400" y="454" font-size="13" fill="#64748b">Centre cards: Stamp, TextReveal</text>
+
+  <rect x="736" y="288" width="232" height="188" rx="16" fill="#fff1f1" stroke="#ff5555" stroke-width="1.5" stroke-dasharray="6 5"/>
+  <circle cx="762" cy="316" r="13" fill="#ff5555"/>
+  <text x="762" y="321" font-size="14" font-weight="700" text-anchor="middle" fill="#ffffff">3</text>
+  <text x="784" y="322" font-size="17" font-weight="700" fill="#111827">Ask for a stage</text>
+  <text x="752" y="354" font-size="14" fill="#334155">Nothing fits. The render and</text>
+  <text x="752" y="376" font-size="14" fill="#334155">mce fit warn you to give the</text>
+  <text x="752" y="398" font-size="14" fill="#334155">graphic a presenter card.</text>
+  <text x="752" y="430" font-family="Consolas, 'Cascadia Mono', Menlo, monospace" font-size="12.5" fill="#475569">status: precisa-palco</text>
+  <text x="752" y="454" font-size="13" fill="#64748b">Last resort, never silent</text>
+
+  <text x="32" y="520" font-size="13.5" fill="#475569">Try it:</text>
+  <text x="84" y="520" font-family="Consolas, 'Cascadia Mono', Menlo, monospace" font-size="13.5" fill="#111827">mce fit &lt;project&gt;</text>
+  <text x="250" y="520" font-size="13.5" fill="#475569">lists the decision for every graphic. Add</text>
+  <text x="552" y="520" font-family="Consolas, 'Cascadia Mono', Menlo, monospace" font-size="13.5" fill="#111827">--save</text>
+  <text x="608" y="520" font-size="13.5" fill="#475569">to write the zooms into a new EDL version.</text>
+</svg>

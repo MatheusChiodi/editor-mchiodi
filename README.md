@@ -28,10 +28,14 @@ the editing process. Claude is the director; the tools only execute.
 - [Installation (Windows)](#installation-windows)
 - [Quick start](#quick-start)
 - [Editing levels](#editing-levels)
+- [Graphics that never cover your face](#graphics-that-never-cover-your-face)
 - [Following an edit](#following-an-edit)
 - [The arsenal](#the-arsenal)
 - [Packaging for YouTube](#packaging-for-youtube)
 - [MChiodi Cut (visual editor)](#mchiodi-cut-visual-editor)
+- [Music videos](#music-videos)
+- [Camera background, motion cuts and other editors](#camera-background-motion-cuts-and-other-editors)
+- [Skills that grow](#skills-that-grow)
 - [Command reference](#command-reference)
 - [Configuration](#configuration)
 - [Project layout](#project-layout)
@@ -257,11 +261,11 @@ changes the *amount*, not the taste: the rules for cuts, captions, identity, aud
 |---|---|---|---|---|
 | Zooms (camera effects count) | 0–1 | 0–3 | 2–6 | 2–9 |
 | Graphics | 0–0.5 | 0–4 | 3–6 | 6–12 |
-| Illustrative scenes | none | 0–1 | 0.75–2 | 1.5–3 |
+| Illustrative scenes | none | 0–1 | 0.75–2 | 3–6 |
 | Transitions | 0–0.25 | 0–1.5 | 0.5–2 | 0.5–3.5 |
 | Effects | 0–0.2 | 0–1.5 | 0.5–2 | 0.5–3 |
 | Sound effects | 0–0.5 | 0–4 | 2–8 | 4–12 |
-| Minimum gap: zoom / graphic / scene / transition | 45 / 30 / n/a / 60 s | 20 / 12 / 60 / 20 s | 10 / 6 / 30 / 10 s | 6 / 4 / 20 / 6 s |
+| Minimum gap: zoom / graphic / scene / transition | 45 / 30 / n/a / 60 s | 20 / 12 / 60 / 20 s | 10 / 6 / 30 / 10 s | 6 / 4 / 10 / 6 s |
 | Different transitions / high-energy ones per video | 1 / 0 | 3 / 3 | 6 / 6 | 10 / 10 |
 | Music and intro/outro bumpers | optional | optional | always | always |
 | Longest stretch with nothing new on screen | not enforced | not enforced | not enforced | 8 s |
@@ -319,6 +323,29 @@ is inside a `WindowStage` with zooms, pills and the presenter in the corner.
 The full analysis of the reference video this language was measured from is in
 [`docs/referencia-max.md`](docs/referencia-max.md) (in Portuguese). Only the language is borrowed: no artwork, text or
 branding from it.
+
+## Graphics that never cover your face
+
+A graphic without a presenter stage is drawn on top of the footage. Since the max level packs a new graphic every few
+seconds, one of them will sooner or later land on your face. The render now guarantees it never does, and it plans
+that **per graphic**, from the measured area of the component and from where the face detector found you in that exact
+stretch.
+
+<p align="center">
+  <img src="docs/assets/face-guard.svg" alt="Face guard decision flow: the editor measures the area a graphic occupies and where the face is. With no overlap nothing changes. Otherwise it tries a zoom on the video that moves the face to the free side, then shifting the graphic away from the face, and finally warns that the graphic needs a presenter stage." width="100%">
+</p>
+
+```powershell
+pnpm mce fit <slug>          # one line per graphic: livre, ajustado, deslocado, zoom-manual or precisa-palco
+pnpm mce fit <slug> --save   # write the zoom decisions into a new EDL version (fit-<id>)
+pnpm tsx scripts/measure-footprints.ts [Component...]   # re-measure what a component occupies
+```
+
+- The footprints live in `motion/src/arsenal/footprints.json`, measured on the rendered alpha. Run the script again when
+  you create a component or change its layout.
+- Presenter stages (`SplitExplainer`, `WindowStage`, `DocQuote`) already shrink the footage into a card, and the framing
+  of your face **follows you** during the stage instead of using a fixed point.
+- `precisa-palco` is never silent: the render prints a warning and `mce fit` lists the graphic. Give it a `presenter`.
 
 ## Following an edit
 
@@ -496,6 +523,90 @@ Principles:
   decisions: Claude does not undo them unless you ask, `mce edl save` warns when a new version reverts one, and the
   Claude panel shows the same warning in the proposal's diff.
 
+### Drag a graphic anywhere
+
+Select a graphic in the preview and drag it where you want. The new place is stored as `offset: { x, y }` in the EDL
+(fractions of the frame), so the render honours it, and it **adds to** the automatic face shift instead of replacing it.
+
+<p align="center">
+  <img src="docs/assets/drag-graphics.svg" alt="A video frame with a presenter and a warning card dragged from the top left to the bottom right, with snap guides at the thirds and a dashed box around the protected face. A panel shows that the final position is the component position plus the automatic face shift plus the manual offset." width="100%">
+</p>
+
+- Soft snap to margins, thirds, the centre and the face box; hold `Alt` to drop the snap.
+- A coral dashed frame lights up when the graphic would cover your face.
+- `R` or a double click resets, `Alt` + arrows nudge (with `Shift` for a big step), `Ctrl` + `D` duplicates.
+- Every drop is an operation on the EDL: it can be undone and redone, and nothing is written until you save a new version.
+
+### The preview equals the render
+
+The Cut preview draws what the final file will show: the stage card with your face framing, the zooms (the ones in the
+EDL and the automatic `fit-*` ones), the graphic shifts and your offsets. Both sides call the same pure functions
+(`planGuard`, `transformAt`, `zoomStateAt`); what needs Node (the face detector, the footprints) comes from the
+server's `/guard` route. A test requires the two paths to agree within one pixel.
+
+<p align="center">
+  <img src="docs/assets/preview-parity.svg" alt="The EDL feeds shared pure functions. The render uses them to build ffmpeg filters and the Remotion layer; the Cut server exposes the Node-only parts through a guard route and the Cut preview applies the same functions to the video and the graphics layer. The two results differ by less than one pixel." width="100%">
+</p>
+
+> The `mce cut` server loads its code once. After changing anything under `src/`, restart it
+> (`pnpm mce cut <slug>`) and run `pnpm cut:build` if you touched `cut/`; an old server silently drops fields it does
+> not know, such as `offset`.
+
+## Music videos
+
+Give it an mp3 (and, when you have them, the lyrics) and it draws a cinematic video that **tells a story**: a drawn
+character in settings that follow the song, with camera moves, transitions and film finishing. It is always cinema mode
+and always a story, never just effects presenting the music.
+
+<p align="center">
+  <img src="docs/assets/music-video.svg" alt="From an mp3 to a story video: the audio is analysed (spectrum, tempo, beats, sections), the lyrics are aligned, a story director plans about sixty shots in six acts, the plan is saved as JSON, and then either a live preview in the browser or the cinema render consumes it." width="100%">
+</p>
+
+```powershell
+pnpm mce music "song.mp3" --lyrics letra.txt     # lyrics are optional; without them the voice is transcribed
+pnpm mce music "song.mp3" --plan-only            # analyse and save analysis/music.plan.json, no render
+pnpm mce mv preview <slug>                       # live preview in the browser, reloads when scenes change
+pnpm mce mv scenes <slug>                        # numbered scenes: time, motif, highlighted word, verses
+pnpm mce mv set <slug> <n> --motif rain           # change the motif of scene n (the preview updates at once)
+pnpm mce mv split <slug> <n> --at 41.5            # split scene n at a time of the song (seconds)
+pnpm mce mv merge <slug> <n>                     # merge scene n with the next
+pnpm mce mv render <slug>                        # render the saved plan, without analysing the song again
+```
+
+- All audio math runs in Node (own FFT, bass/mid/treble bands, tempo by phase comb on the bass flux, beat and section
+  detection); the Remotion layer only draws the plan, so the same plan always gives the same video.
+- The tempo can be unreliable on some songs. Below a confidence of 0.15 the cuts follow the real bass hits instead.
+- The preview server starts by itself whenever you ask Claude to create or edit a video (a `UserPromptSubmit` hook,
+  `scripts/ensure-preview.mjs`), so you can watch before rendering.
+
+## Camera background, motion cuts and other editors
+
+- **Background removal and replacement.** The `background` field of the EDL replaces or removes the camera background
+  (solid color, image, video or blur). Two engines: a chroma key in ffmpeg (`keyColor`, `similarity`, despill), and
+  RobustVideoMatting for a plain background through the `matting/` sidecar (`cd matting ; uv sync`, GPU). It runs on the
+  cut video, so only the frames that survived the cut are matted.
+- **Cut by motion.** `pnpm mce analyze <video> --motion` also measures how much the picture changes, so a silent pause
+  where the screen is moving (a screen recording) is not cut.
+- **Motion graphics in the middle of a video.** `pnpm mce motion add <slug> -c <Component> --say "phrase" -r "reason"`
+  anchors a graphic to a spoken phrase; `motion still`, `motion list` and `motion remove` complete it. The vector
+  components `PathDraw`, `ShapeMorph`, `Burst` and `OrganicBlob` are in the arsenal.
+- **Open the cuts in another editor.** `pnpm mce nle <slug> [-f mlt,fcp7,edl,otio]` exports the EDL cuts for Shotcut,
+  Kdenlive, OpenShot and others into `renders/nle/`.
+
+## Skills that grow
+
+The project's rule: whenever something new is built **and validated** (tests pass and you looked at a real frame), a
+skill is written in the same delivery that makes Claude a specialist at doing it again. Before creating or editing a
+video, Claude reads `.claude/skills/` first.
+
+<p align="center">
+  <img src="docs/assets/skills-loop.svg" alt="A loop in four steps: build something new, validate it with tests and a real frame, write a skill that teaches Claude to do it again, and reuse it on the next video, where the skills are read first." width="100%">
+</p>
+
+There is a skill per scene type (`cena-*`), per cinema detail, per pipeline step, and for the cross-cutting rules:
+`ajuste-do-video-ao-recorte` (face-safe graphics), `arrastar-grafico-no-editor`, `movimento-fluido`,
+`palco-foco-e-sincronia` and `preview-igual-ao-render`.
+
 ## Command reference
 
 `mce` alone lists the commands; `mce scenes`, `mce edl`, `mce assets` and `mce pack` list their subcommands;
@@ -553,6 +664,17 @@ Principles:
 | `mce scenes watch [slug] [--port <n>] [--no-open] [--previews off\|strip\|video] [--force]` | Start the scene viewer |
 | `mce scenes open [slug]` / `mce scenes stop` | Reopen the browser / shut the viewer down |
 | `mce assets init [-f]` / `mce assets list` | Generate the base sound effects / list music, SFX, memes, LUTs and brand files |
+
+**Music, background and graphics in the middle of a video**
+
+| Command | What it does |
+|---|---|
+| `mce music <audio> [-l <lyrics>] [--plan-only] [--preview] [-s <WxH>]` | Story video from an mp3, always in cinema mode |
+| `mce mv preview\|scenes\|set\|split\|merge\|render <slug>` | Live preview, scene edits and render of the saved music plan |
+| `mce motion add\|still\|list\|remove` | Insert a graphic anchored to a time (`--at`) or a spoken phrase (`--say`) |
+| `mce fit <slug> [--save]` | How each graphic without a stage is kept off your face (zoom, shift or stage) |
+| `mce nle <slug> [-f mlt,fcp7,edl,otio]` | Export the cuts to Shotcut, Kdenlive, OpenShot and others |
+| `mce analyze <video> --motion` | Also measure picture motion, so a silent pause with a moving screen is kept |
 
 **Package and automate**
 
@@ -643,7 +765,10 @@ src/
   eval/        self-evaluation of the rendered video, level budget
   broll/       assisted b-roll: library index, speech-driven suggestions, Pexels fetch
   retention/   YouTube Studio retention mapped to source time, lessons across projects
-  cut/         MChiodi Cut: typed ops over the EDL (silence snap), "Matheus:" notes, local server
+  cut/         MChiodi Cut: typed ops over the EDL (silence snap), "Matheus:" notes, local server, /guard
+  music/       mce music: audio analysis (FFT, tempo, sections), lyric alignment, story director, music render
+  motion/      mce motion: insert graphics into the EDL by time or spoken phrase
+  nle/         mce nle: export the cuts to MLT (Shotcut), FCP7 XML, CMX3600 EDL and OTIO
   pack/        thumbnail frames, thumbnail rendering, title/description checks
   preview/     scene viewer (Remotion Studio + index)
   report/      relatorio.md and capitulos.txt
@@ -652,6 +777,8 @@ src/
   project/     paths, per-project memory (project.md), status, dashboard
   cli/         the mce commands
 cut/           MChiodi Cut UI (React + Vite + Tailwind 4); pure logic in cut/src/lib/
+music-preview/ live preview page of the music video (Vite + @remotion/player)
+matting/       Python sidecar (RobustVideoMatting): person mask for the camera background
 motion/src/    Remotion: theme, captions, components/ (+ registry), arsenal/ (entrances, stingers, fx, stage),
                scene-kit/ (paper and voxel), scenes/<slug>/, scenes/modelos/, thumbnail/
 transcriber/   Python sidecar (WhisperX): transcribe.py
@@ -659,7 +786,7 @@ scripts/       install-cli.ts (the global mce command)
 tests/         Vitest: unit tests and integration tests on synthetic media
 docs/          referencia-max.md (analysis behind the max level), assets/ (the illustrations in this README)
 assets/        sfx/ (generated), music/, memes/, luts/, brand/, broll/ + index.json (your own library, not versioned)
-.claude/       skills (edit-video, edl-reference), agents (motion-designer, packager), settings.json
+.claude/       skills (edit-video, edl-reference and one per scene, effect and pipeline step), agents, settings.json
 
 inbox/                     drop videos here for mce watch            (not versioned)
 projects/<slug>/           analysis/, edl/, renders/, pack/, project.md, activity.log   (not versioned)
@@ -817,6 +944,10 @@ Conventions, from [`CLAUDE.md`](CLAUDE.md):
   full insert down to the captions) and never covers the caption band. The face band is an assumption (30–60 % of
   the height, `shorts.faceBand` to change it), not a detection. Stage layouts (`presenter`), the persistent layer and
   wide components (lower third, subscribe CTA) stay out of the Short.
+- **Face safety is geometric.** The face comes from a detector sampled twice a second. Without it the guard assumes a
+  centred face, and a graphic that fits nowhere is reported as `precisa-palco` instead of being moved blindly.
+- **Not everything was checked in the real tools.** The `mce nle` files were not opened in Shotcut, Kdenlive or OpenShot
+  here, SAM2 (mask by click) is not implemented, and the music tempo has low confidence on some songs.
 - **One edit at a time.** The queue is sequential by design; the machine it was built on has 16 GB of RAM.
 - **Unattended mode trusts the director.** There is no human review step between the evaluation and the final render.
   Read `relatorio.md` before publishing.

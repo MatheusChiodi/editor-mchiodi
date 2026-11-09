@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 420" width="100%" role="img" aria-labelledby="sl-title sl-desc" font-family="'Segoe UI', Helvetica, Arial, sans-serif">
+  <title id="sl-title">Every new capability becomes a skill</title>
+  <desc id="sl-desc">A loop in four steps. Build something new, such as a scene, an effect or an editing step. Validate it with passing tests and a frame you actually looked at. Write a skill in the skills folder that teaches Claude to do it again. On the next video Claude reads the skills first, so each video makes the system a better specialist.</desc>
+  <defs>
+    <marker id="sl-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 Z" fill="#64748b"/>
+    </marker>
+    <marker id="sl-arrow-coral" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 Z" fill="#ff5555"/>
+    </marker>
+  </defs>
+
+  <rect x="8" y="8" width="984" height="404" rx="24" fill="#f8f8f2" stroke="#e2e8f0" stroke-width="2"/>
+  <text x="32" y="58" font-family="Georgia, 'Times New Roman', serif" font-size="27" font-weight="700" fill="#111827">The more it edits, the smarter it gets</text>
+  <text x="968" y="58" font-size="14" text-anchor="end" fill="#64748b">.claude/skills/&lt;name&gt;/SKILL.md</text>
+
+  <path d="M248 160 H272" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#sl-arrow)"/>
+  <path d="M488 160 H512" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#sl-arrow)"/>
+  <path d="M728 160 H752" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#sl-arrow)"/>
+  <path d="M860 208 V300 H140 V228" fill="none" stroke="#ff5555" stroke-width="2" stroke-dasharray="6 5" stroke-linejoin="round" marker-end="url(#sl-arrow-coral)"/>
+
+  <rect x="300" y="284" width="400" height="32" rx="4" fill="#f8f8f2"/>
+  <text x="500" y="305" font-size="13" font-weight="700" text-anchor="middle" fill="#ff5555">NEXT VIDEO: SKILLS ARE READ FIRST</text>
+
+  <rect x="32" y="112" width="216" height="116" rx="16" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+  <circle cx="58" cy="138" r="13" fill="#111827"/>
+  <text x="58" y="143" font-size="14" font-weight="700" text-anchor="middle" fill="#f8f8f2">1</text>
+  <text x="80" y="144" font-size="17" font-weight="700" fill="#111827">Build</text>
+  <text x="48" y="174" font-size="14" fill="#334155">A scene type, an effect,</text>
+  <text x="48" y="194" font-size="14" fill="#334155">a pipeline step.</text>
+
+  <rect x="272" y="112" width="216" height="116" rx="16" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+  <circle cx="298" cy="138" r="13" fill="#111827"/>
+  <text x="298" y="143" font-size="14" font-weight="700" text-anchor="middle" fill="#f8f8f2">2</text>
+  <text x="320" y="144" font-size="17" font-weight="700" fill="#111827">Validate</text>
+  <text x="288" y="174" font-size="14" fill="#334155">Tests and typecheck pass,</text>
+  <text x="288" y="194" font-size="14" fill="#334155">and a real frame was seen.</text>
+
+  <rect x="512" y="112" width="216" height="116" rx="16" fill="#111827"/>
+  <circle cx="538" cy="138" r="13" fill="#ff5555"/>
+  <text x="538" y="143" font-size="14" font-weight="700" text-anchor="middle" fill="#ffffff">3</text>
+  <text x="560" y="144" font-size="17" font-weight="700" fill="#f8f8f2">Write the skill</text>
+  <text x="528" y="174" font-size="14" fill="#cbd5e1">When to use, where the code</text>
+  <text x="528" y="194" font-size="14" fill="#cbd5e1">is, recipe, pitfalls, checks.</text>
+
+  <rect x="752" y="112" width="216" height="116" rx="16" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+  <circle cx="778" cy="138" r="13" fill="#111827"/>
+  <text x="778" y="143" font-size="14" font-weight="700" text-anchor="middle" fill="#f8f8f2">4</text>
+  <text x="800" y="144" font-size="17" font-weight="700" fill="#111827">Reuse</text>
+  <text x="768" y="174" font-size="14" fill="#334155">Claude is now a specialist</text>
+  <text x="768" y="194" font-size="14" fill="#334155">at that exact thing.</text>
+
+  <text x="32" y="352" font-size="14" fill="#334155">Dozens of skills already: one per scene type, per cinema detail, per pipeline step, plus the rules for</text>
+  <text x="32" y="374" font-size="14" fill="#334155">face-safe graphics, smooth motion and preview parity.</text>
+</svg>

@@ -46,6 +46,15 @@ src/eval/       autoavaliação do vídeo renderizado
 src/broll/      b-roll assistido: índice da biblioteca, sugestão por fala, busca no Pexels (`mce broll`)
 src/retention/  retenção do YouTube Studio mapeada à fonte, lições entre projetos (`mce retention`)
 src/cut/        MChiodi Cut: ops sobre a EDL com snap em silêncio, notes "Matheus:", servidor local (`mce cut`)
+src/music/      `mce music <mp3>`: ouve a música (FFT própria, graves/médios/agudos, tempo e batidas, seções), alinha a letra (fornecida
+                ou transcrita), o **diretor de história** (`story.ts`) planeja ~60 planos com arco narrativo (personagem + cenário +
+                inserts da letra, câmera e transição por plano) e renderiza o vídeo em **modo cinema** com a música original;
+                `mce mv preview|scenes|set|split|merge|render` = prévia ao vivo, edição das cenas e render do plano salvo
+motion/src/music/  composição `MusicVideo` (Remotion), `story/` (personagem `rig.ts`+`Character.tsx`, cenários `Settings.tsx`,
+                plano `Shot.tsx`), `motifs.tsx` (13 ilustrações), `cinema.tsx` + `cinema-math.ts` (câmera, transições, acabamento)
+music-preview/  página da prévia ao vivo (Vite + `@remotion/player`); `pnpm music:dev` (5190) e `pnpm music:build`
+src/motion/     `mce motion add|list|remove|still`: insere gráfico/animação no meio do vídeo, ancorado em --at ou na fala (--say)
+src/nle/        `mce nle`: exporta os cortes da EDL (MLT/Shotcut, FCP7 XML, CMX3600 EDL, OTIO)
 src/report/     relatorio.md e capitulos.txt
 src/scenes/     índice das cenas sob medida
 src/watcher/    fila, sessão headless (claude -p), notificação
@@ -55,9 +64,20 @@ motion/src/     Remotion: theme, anim, captions, components/ (+ registry), arsen
                 scene-kit/ (papel e voxel), scenes/<projeto>/
 cut/            UI do MChiodi Cut (React+Vite+Tailwind 4; `pnpm cut:dev`/`cut:build` → cut/dist); lógica pura em cut/src/lib/
 transcriber/    sidecar Python (WhisperX); só `transcribe.py`
+matting/        sidecar Python (RobustVideoMatting): vídeo → máscara de pessoa; só `matte.py` (usado por `background` na EDL)
 .claude/        skills (edit-video, edl-reference), agents (motion-designer), settings
 projects/<slug>/{analysis,edl,renders}/ + project.md     (fora do git)
 ```
+
+## Skills por funcionalidade (regra permanente do Matheus)
+
+Toda vez que terminar **e validar** algo novo (um tipo de cena, personagem, cenário, efeito, etapa do pipeline), crie na mesma entrega
+uma skill em `.claude/skills/<nome>/SKILL.md` que transforme o Claude num especialista em fazer aquilo de novo. Em pedido futuro de
+criar ou editar vídeo, **consulte as skills antes de improvisar** (`ls .claude/skills`). Uma skill por tipo de cena e por detalhe.
+- Vale como "validado": testes passando (`pnpm test`, `pnpm typecheck`) **e** o resultado visto (`mce motion still`, prévia ao vivo ou frame renderizado).
+- Formato: frontmatter `name` (kebab-case, `cena-<tipo>` para cenas) e `description` que diz *quando* usar; corpo com: quando usar, onde
+  está o código (arquivo:função), props/parâmetros e faixas válidas, receita passo a passo, armadilhas já encontradas, como validar.
+- Ao mudar uma funcionalidade, atualize a skill dela. Skill desatualizada é pior que nenhuma.
 
 ## Decisões técnicas (não desfazer sem medir)
 
@@ -71,6 +91,19 @@ projects/<slug>/{analysis,edl,renders}/ + project.md     (fora do git)
 - **Filtros de áudio atrasam o som** (`afftdn` 25 ms, lookahead do `alimiter` 5 ms): toda cadeia compensa a própria latência
   (`compensate`). Um teste de integração garante que um impulso sai onde entrou.
 - O corte automático só encurta pausa que tem **silêncio medido**; intervalo "com som e sem palavra" fica como sugestão.
+- `mce analyze --motion` mede movimento (fração de pixels que mudam, quadro 160 px cinza+desfoque) e grava `stills`; com ele o corte
+  automático não encurta pausa muda em que a tela se mexe (só sai o que não tem som E não tem movimento, como no auto-editor).
+- Troca de fundo roda sobre `cut.mkv` (tempo de saída), não sobre a fonte: a máscara só é calculada nos quadros que ficaram.
+  Estado recorrente do RVM reinicia em corte seco de cena; máscara com borda macia, sem limiar duro.
+- **Vídeo de música é sempre modo cinema e sempre uma história** (pedido permanente do Matheus): muitas cenas curtas (alvo 2,5–4,2 s,
+  cortes nas batidas), personagem animado em cenários, câmera e transição por plano, acabamento (bloom, grão, vinheta, letterbox),
+  nunca só "efeitos apresentando a música". Skills: `video-de-musica` (entrada), `diretor-de-historia`, `personagem-animado`,
+  `cena-*`, `cinema-*`, `previa-ao-vivo`. Ao iniciar qualquer vídeo, subir a prévia ao vivo (hook `scripts/ensure-preview.mjs`).
+- Vídeo de música (`mce music`): todo cálculo de áudio roda em Node e vira um plano (`analysis/music.plan.json`, em quadros); o Remotion
+  só desenha o plano (`motion/src/music/`), então o mesmo plano dá sempre o mesmo vídeo. A música original é mixada pelo ffmpeg, nunca
+  passa pelo Remotion. Tempo por pente de fase com fluxo do grave (o chimbal nos contratempos enganava a oitava); com confiança < 0,15
+  as batidas vêm dos golpes reais do grave (`bassOnsets`). Cenas: o verso chama o motivo por palavra-chave (`src/music/scenes.ts`);
+  palavra solta casada longe do verso é descartada no alinhamento da letra.
 - `initial_prompt` do Whisper fica vazio: em trecho sem fala o modelo transcreve o próprio prompt.
 - Rótulos de filtergraph são globais: prefixe por domínio (`[vox…]`, `[l…]`) para não colidir (`[vmain]` já colidiu).
 - `tpad` duas vezes em sequência perde o preenchimento do fim: use um só.
